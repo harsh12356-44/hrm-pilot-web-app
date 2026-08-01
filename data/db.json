@@ -1,0 +1,157 @@
+{
+  "employees": [
+    {
+      "id": "emp-1",
+      "employeeId": "HB001",
+      "name": "Harshit Bhootra",
+      "email": "harshit@hrmpilot.com",
+      "department": "Engineering",
+      "role": "ADMIN",
+      "status": "ACTIVE",
+      "casualAllowance": 6,
+      "plannedAllowance": 6,
+      "sickAllowance": 6
+    },
+    {
+      "id": "emp-2",
+      "employeeId": "AS002",
+      "name": "Ananya Sharma",
+      "email": "ananya@hrmpilot.com",
+      "department": "Human Resources",
+      "role": "MANAGER",
+      "status": "ACTIVE",
+      "casualAllowance": 6,
+      "plannedAllowance": 6,
+      "sickAllowance": 6
+    },
+    {
+      "id": "emp-3",
+      "employeeId": "RK003",
+      "name": "Rajesh Kumar",
+      "email": "rajesh@hrmpilot.com",
+      "department": "Sales",
+      "role": "EMPLOYEE",
+      "status": "ACTIVE",
+      "casualAllowance": 6,
+      "plannedAllowance": 6,
+      "sickAllowance": 6
+    },
+    {
+      "id": "emp-4",
+      "employeeId": "PP004",
+      "name": "Priya Patel",
+      "email": "priya@hrmpilot.com",
+      "department": "Engineering",
+      "role": "EMPLOYEE",
+      "status": "ACTIVE",
+      "casualAllowance": 6,
+      "plannedAllowance": 6,
+      "sickAllowance": 6
+    },
+    {
+      "id": "emp-5",
+      "employeeId": "VS005",
+      "name": "Vikram Singh",
+      "email": "vikram@hrmpilot.com",
+      "department": "Marketing",
+      "role": "EMPLOYEE",
+      "status": "ACTIVE",
+      "casualAllowance": 6,
+      "plannedAllowance": 6,
+      "sickAllowance": 6
+    }
+  ],
+  "leaveRecords": [
+    {
+      "id": "l-1",
+      "employeeId": "emp-3",
+      "leaveType": "Casual Leave",
+      "startDate": "2026-07-10",
+      "endDate": "2026-07-11",
+      "daysCount": 2,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Family emergency",
+      "createdAt": "2026-08-01T05:42:21.415Z"
+    },
+    {
+      "id": "l-2",
+      "employeeId": "emp-4",
+      "leaveType": "Planned Leave",
+      "startDate": "2026-07-15",
+      "endDate": "2026-07-18",
+      "daysCount": 4,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Vacation trip",
+      "createdAt": "2026-08-01T05:42:21.415Z"
+    }
+  ],
+  "attendanceLogs": [],
+  "settings": {
+    "companyName": "HRM Pilot",
+    "companyLogoUrl": "",
+    "shiftStartTime": "09:00",
+    "lunchBreakMinutes": 60,
+    "halfDayThresholdMinutes": 240,
+    "loginUrl": "/login",
+    "employeePortalUrl": "/employee",
+    "managerPortalUrl": "/manager"
+  },
+  "payrollPreviews": [],
+  "holidays": [
+    {
+      "id": "h-1",
+      "name": "Independence Day",
+      "date": "2026-08-15",
+      "isOptional": false
+    },
+    {
+      "id": "h-2",
+      "name": "Mahatma Gandhi Jayanti",
+      "date": "2026-10-02",
+      "isOptional": false
+    },
+    {
+      "id": "h-3",
+      "name": "Diwali Festival",
+      "date": "2026-11-08",
+      "isOptional": false
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "aud-1785569101601",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Create Department",
+      "objectType": "Department",
+      "objectId": "QA",
+      "newValue": "Quality Assurance",
+      "timestamp": "2026-08-01T07:25:01.601Z"
+    },
+    {
+      "id": "aud-1",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "System Initialized",
+      "objectType": "System",
+      "objectId": "sys-0",
+      "timestamp": "2026-08-01T07:25:01.315Z"
+    }
+  ],
+  "attendanceImports": [],
+  "notifications": [
+    {
+      "id": "notif-1",
+      "employeeId": "emp-1",
+      "type": "leave_submitted",
+      "title": "New Leave Request Received",
+      "message": "Rajesh Kumar has requested Casual Leave from 2026-07-10 to 2026-07-11.",
+      "isRead": false,
+      "createdAt": "2026-08-01T07:25:01.315Z"
+    }
+  ]
+}
