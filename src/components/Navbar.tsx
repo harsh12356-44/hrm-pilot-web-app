@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, Check, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Bell, Check, X, LogOut } from 'lucide-react';
 import { NotificationItem } from '@/lib/types';
 
 interface NavbarProps {
@@ -11,6 +12,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ currentRole = 'ADMIN', onRoleChange }: NavbarProps) {
+  const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
 
@@ -41,6 +43,11 @@ export default function Navbar({ currentRole = 'ADMIN', onRoleChange }: NavbarPr
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleLogout = () => {
+    document.cookie = 'hrm_user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+    router.push('/login');
   };
 
   return (
@@ -140,12 +147,24 @@ export default function Navbar({ currentRole = 'ADMIN', onRoleChange }: NavbarPr
 
         <div className="flex items-center space-x-3 pl-3 border-l border-slate-800">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow">
-            HB
+            {currentRole === 'ADMIN' ? 'HB' : currentRole === 'MANAGER' ? 'AS' : 'RK'}
           </div>
           <div className="hidden md:block text-left">
-            <p className="text-xs font-semibold text-white">Harshit Bhootra</p>
-            <p className="text-[10px] text-slate-400">Super Administrator</p>
+            <p className="text-xs font-semibold text-white">
+              {currentRole === 'ADMIN' ? 'Harshit Bhootra' : currentRole === 'MANAGER' ? 'Ananya Sharma' : 'Rajesh Kumar'}
+            </p>
+            <p className="text-[10px] text-slate-400">
+              {currentRole === 'ADMIN' ? 'Super Administrator' : currentRole === 'MANAGER' ? 'HR Manager' : 'Sales Executive'}
+            </p>
           </div>
+          <button
+            onClick={handleLogout}
+            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition text-xs flex items-center space-x-1"
+            title="Logout of session"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline font-semibold">Logout</span>
+          </button>
         </div>
       </div>
     </header>

@@ -5,13 +5,25 @@
 - **Location**: `d:\Ravina\Antigravity\hrm-pilot-web-app`
 - **GitHub Repository**: [https://github.com/harsh12356-44/hrm-pilot-web-app](https://github.com/harsh12356-44/hrm-pilot-web-app)
 - **Live Vercel Production URL**: [https://hrm-pilot-web-app.vercel.app](https://hrm-pilot-web-app.vercel.app)
+- **Live Login Portal**: [https://hrm-pilot-web-app.vercel.app/login](https://hrm-pilot-web-app.vercel.app/login)
 - **Production Database**: Supabase Cloud PostgreSQL Project `hrm-pilot-db` (`fzkwrphhjebngiinevrr`).
 - **Architecture**: Standalone Full-Stack SaaS Web App (Next.js 15 App Router, React 19, TypeScript, Tailwind CSS v4, Prisma ORM, SheetJS `xlsx`, Lucide Icons).
-- **Feature Parity**: 100% Absolute Feature Parity with `HRM-PILOT` WordPress Plugin + Automated CI/CD Vercel Deployments.
 
 ---
 
-## 2. Completed Modules & Feature Directory
+## 2. Live Role Credentials & Login Matrix
+
+| User Role | Designation | Email Address | Password | Accessible Views |
+| :--- | :--- | :--- | :--- | :--- |
+| **Super Administrator (ADMIN)** | Senior Lead Engineer | `harshit@hrmpilot.com` | `Admin@123` | Full Admin Suite (`/admin`), Attendance, Payroll, Directory, Settings |
+| **HR Manager (MANAGER)** | HR Manager | `ananya@hrmpilot.com` | `Manager@123` | Manager Team Approval Desk (`/manager`), Subordinate Approvals |
+| **Employee (EMPLOYEE)** | Senior Sales Executive | `rajesh@hrmpilot.com` | `Employee@123` | Employee Portal (`/employee`), Live Punch Clock, Personal Leaves |
+| **Employee (EMPLOYEE)** | Frontend Developer | `priya@hrmpilot.com` | `Employee@123` | Employee Portal (`/employee`), Live Punch Clock, Personal Leaves |
+| **Employee (EMPLOYEE)** | Marketing Specialist | `vikram@hrmpilot.com` | `Employee@123` | Employee Portal (`/employee`), Live Punch Clock, Personal Leaves |
+
+---
+
+## 3. Completed Modules & Feature Directory
 
 1. **Leave Tracker & Quarterly Summary (`/admin`)**:
    - Quarterly leave summary (Casual, Planned, Sick).
@@ -55,7 +67,7 @@
 
 ---
 
-## 3. Database Architecture & Supabase Config
+## 4. Supabase Database Architecture
 
 - **Supabase Cloud PostgreSQL Project**: `hrm-pilot-db` (`fzkwrphhjebngiinevrr`)
 - **Prisma Schema**: `prisma/schema.prisma` configured for PostgreSQL with `DATABASE_URL` (Pooler) & `DIRECT_URL` (Direct).
@@ -65,27 +77,7 @@
 
 ---
 
-## 4. Vercel CI/CD Auto-Deployment
+## 5. Vercel CI/CD Auto-Deployment
 
 - **GitHub Repository**: `harsh12356-44/hrm-pilot-web-app`
 - **Vercel Hook**: Connected directly to `main` branch. Any commit pushed to `main` automatically triggers Vercel to compile, test, and update the live web app at [https://hrm-pilot-web-app.vercel.app](https://hrm-pilot-web-app.vercel.app).
-
----
-
-## 5. Helpful Commands
-
-```powershell
-# Run local development server
-npm run dev
-
-# Open Visual Database Management GUI
-npx prisma studio
-
-# Push Prisma schema changes directly to Supabase PostgreSQL
-npx prisma db push
-
-# Push code updates to live Vercel deployment
-git add .
-git commit -m "Your update message"
-git push origin main
-```
