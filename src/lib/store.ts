@@ -35,6 +35,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     employeeId: 'HB001',
     name: 'Harshit Bhootra',
     email: 'harshit@hrmpilot.com',
+    password: 'Admin@123',
     phone: '+91 98765 43210',
     department: 'Engineering',
     designation: 'Senior Lead Engineer',
@@ -53,6 +54,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     employeeId: 'AS002',
     name: 'Ananya Sharma',
     email: 'ananya@hrmpilot.com',
+    password: 'Manager@123',
     phone: '+91 98765 43211',
     department: 'Human Resources',
     designation: 'HR Manager',
@@ -71,6 +73,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     employeeId: 'RK003',
     name: 'Rajesh Kumar',
     email: 'rajesh@hrmpilot.com',
+    password: 'Employee@123',
     phone: '+91 98765 43212',
     department: 'Sales',
     designation: 'Senior Sales Executive',
@@ -89,6 +92,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     employeeId: 'PP004',
     name: 'Priya Patel',
     email: 'priya@hrmpilot.com',
+    password: 'Employee@123',
     phone: '+91 98765 43213',
     department: 'Engineering',
     designation: 'Frontend Developer',
@@ -107,6 +111,7 @@ const DEFAULT_EMPLOYEES: Employee[] = [
     employeeId: 'VS005',
     name: 'Vikram Singh',
     email: 'vikram@hrmpilot.com',
+    password: 'Employee@123',
     phone: '+91 98765 43214',
     department: 'Marketing',
     designation: 'Marketing Specialist',
@@ -288,6 +293,7 @@ export function getDbData(): InitialState {
       auditLogs: DEFAULT_AUDIT_LOGS,
       attendanceImports: [],
       notifications: DEFAULT_NOTIFICATIONS,
+      departments: [],
     };
   }
 }
