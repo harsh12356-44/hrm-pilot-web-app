@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Bell, Check, X, LogOut } from 'lucide-react';
+import { Bell, Check, X, LogOut, Shield, UserCheck } from 'lucide-react';
 import { NotificationItem } from '@/lib/types';
 
 interface NavbarProps {
@@ -11,7 +11,7 @@ interface NavbarProps {
   onRoleChange?: (role: string) => void;
 }
 
-export default function Navbar({ currentRole = 'ADMIN', onRoleChange }: NavbarProps) {
+export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   const router = useRouter();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
@@ -53,7 +53,7 @@ export default function Navbar({ currentRole = 'ADMIN', onRoleChange }: NavbarPr
   return (
     <header className="bg-slate-900/80 backdrop-blur-md border-b border-slate-800 text-white sticky top-0 z-40 px-6 py-3.5 flex items-center justify-between shadow-lg">
       <div className="flex items-center space-x-3">
-        <Link href="/admin" className="flex items-center space-x-3">
+        <Link href={currentRole === 'ADMIN' ? '/admin' : currentRole === 'MANAGER' ? '/manager' : '/employee'} className="flex items-center space-x-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center font-bold text-xl shadow-md text-white">
             H
           </div>
@@ -69,22 +69,16 @@ export default function Navbar({ currentRole = 'ADMIN', onRoleChange }: NavbarPr
       </div>
 
       <div className="flex items-center space-x-4">
-        {/* Role Switcher */}
-        <div className="flex items-center bg-slate-800/90 rounded-lg p-1 border border-slate-700/60 text-xs">
-          {['ADMIN', 'EMPLOYEE', 'MANAGER'].map(r => (
-            <Link
-              key={r}
-              href={r === 'ADMIN' ? '/admin' : r === 'EMPLOYEE' ? '/employee' : '/manager'}
-              className={`px-3 py-1.5 rounded-md font-medium transition-all ${
-                currentRole === r
-                  ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-400 hover:text-white'
-              }`}
-              onClick={() => onRoleChange && onRoleChange(r)}
-            >
-              {r}
-            </Link>
-          ))}
+        {/* Authenticated Role Badge */}
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/60 text-xs text-slate-200">
+          {currentRole === 'ADMIN' ? (
+            <Shield className="w-3.5 h-3.5 text-blue-400" />
+          ) : (
+            <UserCheck className="w-3.5 h-3.5 text-purple-400" />
+          )}
+          <span className="font-bold text-[11px] uppercase tracking-wider text-slate-300">
+            Role: <span className="text-white font-extrabold">{currentRole}</span>
+          </span>
         </div>
 
         {/* Notifications Bell */}
