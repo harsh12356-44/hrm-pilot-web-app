@@ -139,14 +139,6 @@ export default function EmployeesTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Determine effective role: if designation includes 'manager' or role is MANAGER/ADMIN, persist as MANAGER
-      const computedRole =
-        role === 'ADMIN'
-          ? 'ADMIN'
-          : designation.toLowerCase().includes('manager') || role === 'MANAGER'
-          ? 'MANAGER'
-          : 'EMPLOYEE';
-
       await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -158,7 +150,7 @@ export default function EmployeesTab() {
           phone,
           department: dept,
           designation,
-          role: computedRole,
+          role: role || 'EMPLOYEE',
           dateOfJoining,
           primaryManager: primaryManager === '-- None --' ? '' : primaryManager,
           secondaryManager: secondaryManager === '-- None --' ? '' : secondaryManager,

@@ -54,9 +54,9 @@ export default function ManagersAdminPage() {
     loadManagersData();
   }, []);
 
-  // Filter managers: designated MANAGER role, ADMIN role, or department heads
+  // Filter managers: ONLY employees whose role is explicitly designated as MANAGER or ADMIN
   const managers = employees.filter(
-    (e) => e.role === 'MANAGER' || e.role === 'ADMIN' || departments.some((d) => d.managerName === e.name)
+    (e) => e.role === 'MANAGER' || e.role === 'ADMIN'
   );
 
   // Handle Assign Subordinate to Manager
