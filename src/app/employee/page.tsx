@@ -20,10 +20,9 @@ import {
   User,
   ShieldCheck,
 } from 'lucide-react';
-import AttendanceGridTab from '@/components/AttendanceGridTab';
-import WorkingHoursTab from '@/components/WorkingHoursTab';
+import AttendanceLogTab from '@/components/AttendanceLogTab';
 import HolidaysTab from '@/components/HolidaysTab';
-import LeaveRequestsTab from '@/components/LeaveRequestsTab';
+import LeaveTrackerTab from '@/components/LeaveTrackerTab';
 
 function EmployeePortalContent() {
   const searchParams = useSearchParams();
@@ -420,16 +419,13 @@ function EmployeePortalContent() {
           )}
 
           {/* TAB 3: ATTENDANCE */}
-          {activeTab === 'attendance' && <AttendanceGridTab />}
+          {activeTab === 'attendance' && <AttendanceLogTab />}
 
           {/* TAB 4: LEAVE HISTORY & RECS */}
-          {activeTab === 'leave-history' && <LeaveRequestsTab />}
-
-          {/* TAB 5: TEAM APPROVALS */}
-          {activeTab === 'team-approvals' && <LeaveRequestsTab />}
+          {(activeTab === 'leave-history' || activeTab === 'team-approvals') && <LeaveTrackerTab />}
 
           {/* TAB 6: WORKING HOURS */}
-          {activeTab === 'working-hours' && <WorkingHoursTab />}
+          {activeTab === 'working-hours' && <AttendanceLogTab />}
 
           {/* TAB 7: HOLIDAYS LIST */}
           {activeTab === 'holidays' && <HolidaysTab />}
