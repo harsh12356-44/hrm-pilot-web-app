@@ -127,26 +127,26 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
   const sections = effectiveRole === 'ADMIN' ? adminSections : employeeSections;
 
   return (
-    <aside className="w-64 bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between shrink-0 transition-all duration-200">
-      <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
+    <aside className="w-68 bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between shrink-0 transition-all duration-200">
+      <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
         {/* Brand Header for Portal View */}
         {effectiveRole !== 'ADMIN' && (
-          <div className="px-3 py-2 border-b border-slate-800/80 mb-2">
-            <p className="text-sm font-extrabold text-white tracking-tight font-heading">PeopleFlow HRM</p>
-            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Employee Portal</p>
+          <div className="px-3.5 py-2.5 border-b border-slate-800/80 mb-2">
+            <p className="text-base font-black text-white tracking-tight font-heading">PeopleFlow HRM</p>
+            <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Employee Portal</p>
           </div>
         )}
 
         {sections.map((sec, idx) => (
-          <div key={idx} className="space-y-1.5">
+          <div key={idx} className="space-y-2">
             {sec.title && (
-              <div className="px-3 pt-2">
-                <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+              <div className="px-3.5 pt-2">
+                <p className="text-xs font-black tracking-wider text-slate-400 uppercase">
                   {sec.title}
                 </p>
               </div>
             )}
-            <nav className="space-y-1">
+            <nav className="space-y-1.5">
               {sec.items.map((item) => {
                 const Icon = item.icon;
                 const isActive = activeTab === item.id;
@@ -154,14 +154,14 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
                   <Link
                     key={item.id}
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                    className={`flex items-center space-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-extrabold text-sm'
+                        : 'text-slate-300 hover:text-white hover:bg-slate-800/80 font-medium'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                    <span className="truncate">{item.label}</span>
+                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                    <span className="truncate text-sm">{item.label}</span>
                   </Link>
                 );
               })}
@@ -172,9 +172,9 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
 
       {/* Footer Employee ID Info Box (Matching Screenshot 1) */}
       <div className="pt-3 border-t border-slate-800/80">
-        <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-0.5">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Employee ID</p>
-          <p className="text-xs font-mono font-bold text-white">123456</p>
+        <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-1">
+          <p className="text-xs font-black text-slate-400 uppercase tracking-wider">Employee ID</p>
+          <p className="text-sm font-mono font-bold text-white">123456</p>
         </div>
       </div>
     </aside>
