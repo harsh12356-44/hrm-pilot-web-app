@@ -59,7 +59,7 @@ export default function ManagersAdminPage() {
     (e) => e.role === 'MANAGER' || e.role === 'ADMIN'
   );
 
-  // Handle Assign Subordinate to Manager
+  // Handle Assign Subordinate to Manager (Supports Dual Managers: Primary & Secondary)
   const handleAssignSubordinate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!assignModalMgr || !selectedSubId) return;
@@ -68,12 +68,23 @@ export default function ManagersAdminPage() {
       const targetEmp = employees.find((emp) => emp.id === selectedSubId);
       if (!targetEmp) return;
 
+      let updatePayload: Partial<Employee> = {};
+
+      if (!targetEmp.primaryManager || targetEmp.primaryManager === '-- None --') {
+        updatePayload.primaryManager = assignModalMgr.name;
+      } else if (!targetEmp.secondaryManager || targetEmp.secondaryManager === '-- None --') {
+        updatePayload.secondaryManager = assignModalMgr.name;
+      } else {
+        // If both managers are filled, replace secondary manager
+        updatePayload.secondaryManager = assignModalMgr.name;
+      }
+
       await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: targetEmp.id,
-          primaryManager: assignModalMgr.name,
+          ...updatePayload,
         }),
       });
 
@@ -90,12 +101,20 @@ export default function ManagersAdminPage() {
   // Handle Remove Subordinate from Manager
   const handleRemoveSubordinate = async (sub: Employee, mgrName: string) => {
     try {
+      let updatePayload: Partial<Employee> = {};
+      if (sub.primaryManager === mgrName) {
+        updatePayload.primaryManager = '';
+      }
+      if (sub.secondaryManager === mgrName) {
+        updatePayload.secondaryManager = '';
+      }
+
       await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: sub.id,
-          primaryManager: '-- None --',
+          ...updatePayload,
         }),
       });
 
@@ -146,10 +165,10 @@ export default function ManagersAdminPage() {
             <div>
               <h1 className="text-2xl font-extrabold text-white font-heading flex items-center space-x-3">
                 <UserCheck2 className="w-6 h-6 text-purple-400" />
-                <span>Managers & Subordinates Management Desk</span>
+                <span>Managers & Dual-Reporting Subordinates Desk</span>
               </h1>
               <p className="text-xs text-slate-400 mt-1">
-                Assign team subordinates, remove team members, and manage reporting manager hierarchies matching WordPress plugin functionality.
+                Assign team subordinates under primary or secondary managers. Single employees can report to up to two managers simultaneously.
               </p>
             </div>
 
@@ -184,9 +203,9 @@ export default function ManagersAdminPage() {
               managers.map((mgr) => {
                 const managedDepts = departments.filter((d) => d.managerName === mgr.name);
 
-                // Subordinates assigned directly to this manager OR belonging to manager's department
+                // Subordinates assigned directly to this manager as Primary (Manager 1) OR Secondary (Manager 2)
                 const directSubordinates = employees.filter(
-                  (e) => e.id !== mgr.id && (e.primaryManager === mgr.name || (e.department === mgr.department && !e.primaryManager))
+                  (e) => e.id !== mgr.id && (e.primaryManager === mgr.name || e.secondaryManager === mgr.name)
                 );
 
                 return (
@@ -262,21 +281,29 @@ export default function ManagersAdminPage() {
 
                         {directSubordinates.length > 0 ? (
                           <div className="flex flex-wrap gap-1.5 pt-1">
-                            {directSubordinates.map((sub) => (
-                              <div
-                                key={sub.id}
-                                className="px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700/80 text-[11px] text-slate-200 flex items-center space-x-1.5 group"
-                              >
-                                <span className="font-semibold">{sub.name}</span>
-                                <button
-                                  onClick={() => handleRemoveSubordinate(sub, mgr.name)}
-                                  title={`Remove ${sub.name} from ${mgr.name}`}
-                                  className="text-slate-500 hover:text-red-400 transition"
+                            {directSubordinates.map((sub) => {
+                              const isPrimary = sub.primaryManager === mgr.name;
+                              return (
+                                <div
+                                  key={sub.id}
+                                  className="px-2.5 py-1 rounded-xl bg-slate-800 border border-slate-700/80 text-[11px] text-slate-200 flex items-center space-x-1.5 group"
                                 >
-                                  <X className="w-3 h-3" />
-                                </button>
-                              </div>
-                            ))}
+                                  <span className="font-semibold">{sub.name}</span>
+                                  <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold uppercase ${
+                                    isPrimary ? 'bg-blue-500/20 text-blue-300' : 'bg-purple-500/20 text-purple-300'
+                                  }`}>
+                                    {isPrimary ? 'Mgr 1' : 'Mgr 2'}
+                                  </span>
+                                  <button
+                                    onClick={() => handleRemoveSubordinate(sub, mgr.name)}
+                                    title={`Remove ${sub.name} from ${mgr.name}`}
+                                    className="text-slate-500 hover:text-red-400 transition"
+                                  >
+                                    <X className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              );
+                            })}
                           </div>
                         ) : (
                           <p className="text-[11px] text-slate-500 italic py-1">No direct subordinates assigned yet.</p>

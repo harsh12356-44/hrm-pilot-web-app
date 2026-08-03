@@ -47,7 +47,15 @@
       "status": "ACTIVE",
       "casualAllowance": 6,
       "plannedAllowance": 6,
-      "sickAllowance": 6
+      "sickAllowance": 6,
+      "phone": "",
+      "designation": "Manager",
+      "dateOfJoining": "2024-01-15",
+      "primaryManager": "Harshit Bhootra",
+      "secondaryManager": "",
+      "employeeType": "Full Time",
+      "monthlySalary": 75000,
+      "weeklyOff": "Sunday"
     },
     {
       "id": "emp-5",
