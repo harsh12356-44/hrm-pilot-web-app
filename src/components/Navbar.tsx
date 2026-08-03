@@ -51,21 +51,21 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
     router.push('/login');
   };
 
-  const handlePortalSwitch = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE', targetUrl: string) => {
+  const setRoleCookie = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE') => {
     document.cookie = `hrm_user_role=${role}; path=/`;
-    router.push(targetUrl);
   };
 
   const handleAccountSwitch = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const val = e.target.value as 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
+    setRoleCookie(val);
     const targetUrl = val === 'ADMIN' ? '/admin' : val === 'MANAGER' ? '/manager' : '/employee';
-    handlePortalSwitch(val, targetUrl);
+    router.push(targetUrl);
   };
 
   return (
     <header className="bg-[#0f172a] border-b border-slate-800 text-white sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-xl">
       <div className="flex items-center space-x-6">
-        <Link href="/admin" className="flex items-center space-x-3">
+        <Link href="/admin" onClick={() => setRoleCookie('ADMIN')} className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-lg shadow-md text-white">
             H
           </div>
@@ -79,10 +79,11 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           </div>
         </Link>
 
-        {/* Dynamic Portal Switcher Pills (Admin, Manager, Employee) */}
+        {/* Dynamic Portal Switcher Links (Admin, Manager, Employee) */}
         <div className="hidden lg:flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 space-x-1">
-          <button
-            onClick={() => handlePortalSwitch('ADMIN', '/admin')}
+          <Link
+            href="/admin"
+            onClick={() => setRoleCookie('ADMIN')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname.startsWith('/admin')
                 ? 'bg-blue-600 text-white shadow-sm'
@@ -91,10 +92,11 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
             <span>HR Admin Suite</span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => handlePortalSwitch('MANAGER', '/manager')}
+          <Link
+            href="/manager"
+            onClick={() => setRoleCookie('MANAGER')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname === '/manager'
                 ? 'bg-purple-600 text-white shadow-sm'
@@ -103,10 +105,11 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           >
             <UserCheck2 className="w-3.5 h-3.5" />
             <span>Manager Desk</span>
-          </button>
+          </Link>
 
-          <button
-            onClick={() => handlePortalSwitch('EMPLOYEE', '/employee')}
+          <Link
+            href="/employee"
+            onClick={() => setRoleCookie('EMPLOYEE')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname === '/employee'
                 ? 'bg-emerald-600 text-white shadow-sm'
@@ -115,7 +118,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           >
             <User className="w-3.5 h-3.5" />
             <span>Employee Portal</span>
-          </button>
+          </Link>
         </div>
       </div>
 
