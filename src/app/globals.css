@@ -26,12 +26,8 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Light Theme Styling Comprehensive Overrides */
-html.light body {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
-}
-
+/* Complete Light Theme Styling Overrides */
+html.light body,
 html.light main {
   background-color: #f8fafc !important;
   color: #0f172a !important;
@@ -51,15 +47,19 @@ html.light aside {
   border-color: #e2e8f0 !important;
 }
 
-/* Cards, Wrappers & Panels */
+/* Cards, Modules, Containers, & Panels */
 html.light .bg-slate-900,
 html.light .bg-slate-950,
 html.light .bg-slate-950\/60,
 html.light .bg-slate-950\/40,
-html.light .bg-[#0f172a] {
+html.light .bg-[#0f172a],
+html.light [class*="bg-slate-900"],
+html.light [class*="bg-slate-950"],
+html.light [class*="bg-[#0f172a]"] {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
 }
 
 html.light .bg-slate-800,
@@ -67,13 +67,14 @@ html.light .bg-slate-800\/90,
 html.light .bg-slate-800\/40,
 html.light .bg-slate-900\/50,
 html.light .bg-slate-900\/80,
-html.light .bg-slate-900\/90 {
+html.light .bg-slate-900\/90,
+html.light [class*="bg-slate-800"] {
   background-color: #f1f5f9 !important;
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
 }
 
-/* Hero Banners gradient overrides for Light Mode */
+/* Hero Banners Light Theme */
 html.light .bg-gradient-to-r.from-blue-900\/80,
 html.light .bg-gradient-to-r.from-purple-900\/80,
 html.light .bg-gradient-to-r.from-emerald-900\/80,
@@ -83,7 +84,7 @@ html.light .bg-gradient-to-r.from-blue-600.to-indigo-600 {
   color: #1e3a8a !important;
 }
 
-/* Text Overrides */
+/* Text Colors */
 html.light .text-white {
   color: #0f172a !important;
 }
@@ -104,7 +105,9 @@ html.light .border-slate-800,
 html.light .border-slate-700,
 html.light .border-slate-700\/60,
 html.light .divide-slate-800,
-html.light .divide-slate-800\/60 {
+html.light .divide-slate-800\/60,
+html.light [class*="border-slate-800"],
+html.light [class*="border-slate-700"] {
   border-color: #e2e8f0 !important;
 }
 
