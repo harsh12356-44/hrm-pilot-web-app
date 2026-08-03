@@ -21,6 +21,10 @@ import {
   ShieldAlert,
   UserCheck,
   User,
+  Plane,
+  FileText,
+  ClipboardCheck,
+  Bell,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -57,7 +61,7 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
     ? 'MANAGER'
     : activeRole;
 
-  // Role-specific Sidebar Sections
+  // 1. Admin Suite Sections
   const adminSections = [
     {
       title: 'CORE MANAGEMENT',
@@ -98,61 +102,46 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
     },
   ];
 
-  const managerSections = [
-    {
-      title: 'MANAGER WORKSPACE',
-      items: [
-        { id: 'manager-desk', label: 'Manager Approval Desk', icon: UserCheck2, href: '/manager' },
-        { id: 'employees', label: 'Team Employees', icon: Users, href: '/admin/employees' },
-        { id: 'attendance', label: 'Team Attendance Grid', icon: Calendar, href: '/admin/attendance' },
-        { id: 'leave-records', label: 'Team Leave Requests', icon: FileCheck, href: '/admin/leave-records' },
-        { id: 'working-hours', label: 'Working Hours Summary', icon: Clock, href: '/admin/working-hours' },
-        { id: 'holidays', label: 'Holidays Roster', icon: CalendarDays, href: '/admin/holidays' },
-      ],
-    },
-  ];
-
+  // 2. Exact Employee Portal Menu Options (Matching User Screenshot 1)
   const employeeSections = [
     {
-      title: 'EMPLOYEE PORTAL',
+      title: '',
       items: [
-        { id: 'employee-portal', label: 'Punch Clock & Portal', icon: User, href: '/employee' },
-        { id: 'attendance', label: 'My Attendance Log', icon: Calendar, href: '/admin/attendance' },
-        { id: 'leave-records', label: 'My Leave Applications', icon: FileCheck, href: '/admin/leave-records' },
-        { id: 'holidays', label: 'Public Holidays', icon: CalendarDays, href: '/admin/holidays' },
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/employee' },
+        { id: 'attendance', label: 'Attendance', icon: Clock, href: '/admin/attendance' },
+        { id: 'apply-leave', label: 'Apply Leave', icon: Plane, href: '/admin/leave-records' },
+        { id: 'leave-history', label: 'Leave History', icon: FileText, href: '/admin/leave-records' },
+        { id: 'team-approvals', label: 'Team Approvals', icon: ClipboardCheck, href: '/manager' },
+        { id: 'working-hours', label: 'Working Hours', icon: Clock, href: '/admin/working-hours' },
+        { id: 'holidays', label: 'Holidays List', icon: CalendarDays, href: '/admin/holidays' },
+        { id: 'notifications', label: 'Notifications', icon: Bell, href: '/admin/audit-logs' },
+        { id: 'profile', label: 'My Profile', icon: User, href: '/admin/settings' },
       ],
     },
   ];
 
-  const sections =
-    effectiveRole === 'EMPLOYEE'
-      ? employeeSections
-      : effectiveRole === 'MANAGER'
-      ? managerSections
-      : adminSections;
+  const sections = effectiveRole === 'ADMIN' ? adminSections : employeeSections;
 
   return (
     <aside className="w-64 bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between shrink-0 transition-all duration-200">
-      <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
-        {/* Role Badge Indicator in Sidebar */}
-        <div className="px-3 py-1.5 rounded-xl bg-slate-800/80 border border-slate-700/60 mb-2">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Sidebar Menu View:</p>
-          <p className="text-xs font-extrabold text-blue-400">
-            {effectiveRole === 'ADMIN'
-              ? 'Super Admin Mode'
-              : effectiveRole === 'MANAGER'
-              ? 'Manager Mode'
-              : 'Employee Mode'}
-          </p>
-        </div>
+      <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
+        {/* Brand Header for Portal View */}
+        {effectiveRole !== 'ADMIN' && (
+          <div className="px-3 py-2 border-b border-slate-800/80 mb-2">
+            <p className="text-sm font-extrabold text-white tracking-tight font-heading">PeopleFlow HRM</p>
+            <p className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">Employee Portal</p>
+          </div>
+        )}
 
         {sections.map((sec, idx) => (
           <div key={idx} className="space-y-1.5">
-            <div className="px-3 pt-2">
-              <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
-                {sec.title}
-              </p>
-            </div>
+            {sec.title && (
+              <div className="px-3 pt-2">
+                <p className="text-[10px] font-bold tracking-wider text-slate-400 uppercase">
+                  {sec.title}
+                </p>
+              </div>
+            )}
             <nav className="space-y-1">
               {sec.items.map((item) => {
                 const Icon = item.icon;
@@ -161,10 +150,10 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
                   <Link
                     key={item.id}
                     href={item.href}
-                    className={`flex items-center space-x-3 px-3 py-2 rounded-lg text-xs font-medium transition-all ${
+                    className={`flex items-center space-x-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-blue-600 text-white font-semibold shadow-sm shadow-blue-600/30'
-                        : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800/70'
+                        ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30 font-bold'
+                        : 'text-slate-400 hover:text-white hover:bg-slate-800/70'
                     }`}
                   >
                     <Icon className={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
@@ -177,11 +166,11 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
         ))}
       </div>
 
-      {/* Footer info badge */}
+      {/* Footer Employee ID Info Box (Matching Screenshot 1) */}
       <div className="pt-3 border-t border-slate-800/80">
-        <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-1">
-          <p className="text-xs font-bold text-slate-200">HRM Pilot Web App</p>
-          <p className="text-[10px] text-emerald-400 font-medium">● Role Menu Filter Active</p>
+        <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-0.5">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Employee ID</p>
+          <p className="text-xs font-mono font-bold text-white">123456</p>
         </div>
       </div>
     </aside>
