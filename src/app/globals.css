@@ -28,7 +28,8 @@ body {
 
 /* Complete Light Theme Styling Overrides */
 html.light body,
-html.light main {
+html.light main,
+html.light div.min-h-screen {
   background-color: #f8fafc !important;
   color: #0f172a !important;
 }
@@ -48,33 +49,34 @@ html.light aside {
 }
 
 /* Cards, Modules, Containers, & Panels */
-html.light .bg-slate-900,
-html.light .bg-slate-950,
-html.light .bg-slate-950\/60,
-html.light .bg-slate-950\/40,
-html.light .bg-[#0f172a],
-html.light [class*="bg-slate-900"],
-html.light [class*="bg-slate-950"],
-html.light [class*="bg-[#0f172a]"] {
+html.light div.bg-slate-900,
+html.light div.bg-slate-950,
+html.light div.bg-slate-950\/60,
+html.light div.bg-slate-950\/40,
+html.light div.bg-[#0f172a],
+html.light div[class*="bg-slate-900"],
+html.light div[class*="bg-slate-950"],
+html.light div[class*="bg-[#0f172a]"] {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02) !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
 }
 
-html.light .bg-slate-800,
-html.light .bg-slate-800\/90,
-html.light .bg-slate-800\/40,
-html.light .bg-slate-900\/50,
-html.light .bg-slate-900\/80,
-html.light .bg-slate-900\/90,
-html.light [class*="bg-slate-800"] {
+html.light div.bg-slate-800,
+html.light div.bg-slate-800\/90,
+html.light div.bg-slate-800\/40,
+html.light div.bg-slate-900\/50,
+html.light div.bg-slate-900\/80,
+html.light div.bg-slate-900\/90,
+html.light div[class*="bg-slate-800"] {
   background-color: #f1f5f9 !important;
   border-color: #cbd5e1 !important;
   color: #0f172a !important;
 }
 
 /* Hero Banners Light Theme */
+html.light .bg-gradient-to-r.from-blue-700,
 html.light .bg-gradient-to-r.from-blue-900\/80,
 html.light .bg-gradient-to-r.from-purple-900\/80,
 html.light .bg-gradient-to-r.from-emerald-900\/80,
@@ -85,7 +87,12 @@ html.light .bg-gradient-to-r.from-blue-600.to-indigo-600 {
 }
 
 /* Text Colors */
-html.light .text-white {
+html.light p.text-white,
+html.light h1.text-white,
+html.light h2.text-white,
+html.light h3.text-white,
+html.light span.text-white,
+html.light div.text-white {
   color: #0f172a !important;
 }
 
