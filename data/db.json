@@ -98,7 +98,20 @@
       "createdAt": "2026-08-01T05:42:21.415Z"
     }
   ],
-  "attendanceLogs": [],
+  "attendanceLogs": [
+    {
+      "id": "att-1785762288235-0.17269447180856368",
+      "employeeId": "emp-1",
+      "date": "2026-08-03",
+      "checkIn": "09:00",
+      "checkOut": "17:30",
+      "workedMinutes": 510,
+      "requiredMinutes": 480,
+      "shortMinutes": 0,
+      "extraMinutes": 30,
+      "attendanceCode": "P"
+    }
+  ],
   "settings": {
     "companyName": "HRM Pilot",
     "companyLogoUrl": "",
@@ -151,7 +164,41 @@
       "timestamp": "2026-08-01T07:25:01.315Z"
     }
   ],
-  "attendanceImports": [],
+  "attendanceImports": [
+    {
+      "id": "imp-1785762466448",
+      "filename": "att login logout july.xls",
+      "uploadedBy": "Harshit Bhootra",
+      "uploadDate": "2026-08-03T13:07:46.448Z",
+      "totalEmployees": 5,
+      "totalRows": 10,
+      "importedRows": 10,
+      "missingPunches": 0,
+      "status": "Completed"
+    },
+    {
+      "id": "imp-1785762457063",
+      "filename": "att login logout july.xls",
+      "uploadedBy": "Harshit Bhootra",
+      "uploadDate": "2026-08-03T13:07:37.063Z",
+      "totalEmployees": 5,
+      "totalRows": 10,
+      "importedRows": 10,
+      "missingPunches": 0,
+      "status": "Completed"
+    },
+    {
+      "id": "imp-1785762288235",
+      "filename": "att login logout july.xls",
+      "uploadedBy": "Harshit Bhootra",
+      "uploadDate": "2026-08-03T13:04:48.235Z",
+      "totalEmployees": 5,
+      "totalRows": 5,
+      "importedRows": 5,
+      "missingPunches": 0,
+      "status": "Completed"
+    }
+  ],
   "notifications": [
     {
       "id": "notif-1",
