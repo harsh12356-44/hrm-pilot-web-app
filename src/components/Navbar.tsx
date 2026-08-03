@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Bell, Check, X, LogOut, Shield, UserCheck, LayoutDashboard, UserCheck2, User, ChevronDown } from 'lucide-react';
+import { Bell, Check, X, LogOut, Shield, UserCheck, LayoutDashboard, UserCheck2, User } from 'lucide-react';
 import { NotificationItem } from '@/lib/types';
 
 interface NavbarProps {
@@ -51,18 +51,15 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
     router.push('/login');
   };
 
+  const handlePortalSwitch = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE', targetUrl: string) => {
+    document.cookie = `hrm_user_role=${role}; path=/`;
+    router.push(targetUrl);
+  };
+
   const handleAccountSwitch = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (val === 'ADMIN') {
-      document.cookie = 'hrm_user_role=ADMIN; path=/';
-      router.push('/admin');
-    } else if (val === 'MANAGER') {
-      document.cookie = 'hrm_user_role=MANAGER; path=/';
-      router.push('/manager');
-    } else if (val === 'EMPLOYEE') {
-      document.cookie = 'hrm_user_role=EMPLOYEE; path=/';
-      router.push('/employee');
-    }
+    const val = e.target.value as 'ADMIN' | 'MANAGER' | 'EMPLOYEE';
+    const targetUrl = val === 'ADMIN' ? '/admin' : val === 'MANAGER' ? '/manager' : '/employee';
+    handlePortalSwitch(val, targetUrl);
   };
 
   return (
@@ -84,8 +81,8 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
         {/* Dynamic Portal Switcher Pills (Admin, Manager, Employee) */}
         <div className="hidden lg:flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 space-x-1">
-          <Link
-            href="/admin"
+          <button
+            onClick={() => handlePortalSwitch('ADMIN', '/admin')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname.startsWith('/admin')
                 ? 'bg-blue-600 text-white shadow-sm'
@@ -94,10 +91,10 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
             <span>HR Admin Suite</span>
-          </Link>
+          </button>
 
-          <Link
-            href="/manager"
+          <button
+            onClick={() => handlePortalSwitch('MANAGER', '/manager')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname === '/manager'
                 ? 'bg-purple-600 text-white shadow-sm'
@@ -106,10 +103,10 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           >
             <UserCheck2 className="w-3.5 h-3.5" />
             <span>Manager Desk</span>
-          </Link>
+          </button>
 
-          <Link
-            href="/employee"
+          <button
+            onClick={() => handlePortalSwitch('EMPLOYEE', '/employee')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname === '/employee'
                 ? 'bg-emerald-600 text-white shadow-sm'
@@ -118,7 +115,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           >
             <User className="w-3.5 h-3.5" />
             <span>Employee Portal</span>
-          </Link>
+          </button>
         </div>
       </div>
 
