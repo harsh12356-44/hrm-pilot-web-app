@@ -61,7 +61,7 @@ export default function EmployeePortalPage() {
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
       <Navbar currentRole="EMPLOYEE" />
       <div className="flex flex-1">
-        <Sidebar />
+        <Sidebar currentTab="employee-portal" />
         <main className="flex-1 p-6 md:p-8 max-w-6xl mx-auto space-y-6">
           {/* Welcome Banner */}
           <div className="bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-800/50 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">

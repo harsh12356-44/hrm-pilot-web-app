@@ -10,7 +10,7 @@ export default function ManagerPortalPage() {
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
       <Navbar currentRole="MANAGER" />
       <div className="flex flex-1">
-        <Sidebar />
+        <Sidebar currentTab="manager-desk" />
         <main className="flex-1 p-6 md:p-8 max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">
             <div>
