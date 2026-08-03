@@ -16,7 +16,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   const pathname = usePathname();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   const fetchNotifications = async () => {
     try {
@@ -30,7 +30,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
   useEffect(() => {
     fetchNotifications();
-    const savedTheme = (localStorage.getItem('hrm_theme') as 'dark' | 'light') || 'dark';
+    const savedTheme = (localStorage.getItem('hrm_theme') as 'light' | 'dark') || 'light';
     setTheme(savedTheme);
     if (savedTheme === 'light') {
       document.documentElement.classList.add('light');
@@ -40,7 +40,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   }, []);
 
   const toggleTheme = () => {
-    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    const nextTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(nextTheme);
     localStorage.setItem('hrm_theme', nextTheme);
     if (nextTheme === 'light') {
@@ -82,31 +82,31 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   };
 
   return (
-    <header className="bg-[#0f172a] border-b border-slate-800 text-white sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-xl transition-colors duration-300">
+    <header className="bg-white border-b border-slate-200 text-slate-900 sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-sm transition-colors duration-300">
       <div className="flex items-center space-x-6">
         <Link href="/admin" onClick={() => setRoleCookie('ADMIN')} className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-lg shadow-md text-white">
             H
           </div>
           <div>
-            <span className="font-black text-base tracking-tight text-white font-heading">
+            <span className="font-black text-base tracking-tight text-slate-900 font-heading">
               HRM Pilot
             </span>
-            <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/30 font-bold uppercase tracking-wider">
+            <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-wider">
               WP 1:1 SaaS
             </span>
           </div>
         </Link>
 
         {/* Dynamic Portal Switcher Links (Admin, Manager, Employee) */}
-        <div className="hidden lg:flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800 space-x-1">
+        <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1">
           <Link
             href="/admin"
             onClick={() => setRoleCookie('ADMIN')}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname.startsWith('/admin')
                 ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
             }`}
           >
             <LayoutDashboard className="w-3.5 h-3.5" />
@@ -119,7 +119,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname === '/manager'
                 ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
             }`}
           >
             <UserCheck2 className="w-3.5 h-3.5" />
@@ -132,7 +132,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
               pathname === '/employee'
                 ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
             }`}
           >
             <User className="w-3.5 h-3.5" />
@@ -143,46 +143,46 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
       <div className="flex items-center space-x-3 sm:space-x-4">
         {/* WP Admin Account Switcher Dropdown */}
-        <div className="hidden md:flex items-center space-x-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Switch View:</span>
+        <div className="hidden md:flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Switch View:</span>
           <select
             onChange={handleAccountSwitch}
             value={pathname.startsWith('/admin') ? 'ADMIN' : pathname === '/manager' ? 'MANAGER' : 'EMPLOYEE'}
-            className="bg-transparent text-xs font-bold text-blue-400 focus:outline-none cursor-pointer"
+            className="bg-transparent text-xs font-bold text-blue-600 focus:outline-none cursor-pointer"
           >
-            <option value="ADMIN" className="bg-slate-900 text-white">Super Admin (Harshit Bhootra)</option>
-            <option value="MANAGER" className="bg-slate-900 text-white">HR Manager (Ananya Sharma)</option>
-            <option value="EMPLOYEE" className="bg-slate-900 text-white">Employee (Rajesh Kumar)</option>
+            <option value="ADMIN">Super Admin (Harshit Bhootra)</option>
+            <option value="MANAGER">HR Manager (Ananya Sharma)</option>
+            <option value="EMPLOYEE">Employee (Rajesh Kumar)</option>
           </select>
         </div>
 
         {/* Authenticated Role Badge */}
-        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-800/90 border border-slate-700/60 text-xs text-slate-200">
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
           {currentRole === 'ADMIN' ? (
-            <Shield className="w-3.5 h-3.5 text-blue-400" />
+            <Shield className="w-3.5 h-3.5 text-blue-600" />
           ) : (
-            <UserCheck className="w-3.5 h-3.5 text-purple-400" />
+            <UserCheck className="w-3.5 h-3.5 text-purple-600" />
           )}
-          <span className="font-bold text-[11px] uppercase tracking-wider text-slate-300">
-            Role: <span className="text-white font-extrabold">{currentRole}</span>
+          <span className="font-bold text-[11px] uppercase tracking-wider text-slate-600">
+            Role: <span className="text-slate-900 font-extrabold">{currentRole}</span>
           </span>
         </div>
 
         {/* Theme Switcher Toggle (Light / Dark Mode) */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm"
-          title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-indigo-600 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm border border-slate-200"
+          title={theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
         >
-          {theme === 'dark' ? (
+          {theme === 'light' ? (
             <>
-              <Sun className="w-4 h-4 text-amber-400" />
-              <span className="hidden xl:inline text-amber-300">Light</span>
+              <Moon className="w-4 h-4 text-indigo-600" />
+              <span className="hidden xl:inline text-indigo-600">Dark Mode</span>
             </>
           ) : (
             <>
-              <Moon className="w-4 h-4 text-indigo-400" />
-              <span className="hidden xl:inline text-indigo-400">Dark</span>
+              <Sun className="w-4 h-4 text-amber-500" />
+              <span className="hidden xl:inline text-amber-500">Light Mode</span>
             </>
           )}
         </button>
@@ -191,11 +191,11 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
         <div className="relative">
           <button
             onClick={() => setShowNotifPopover(!showNotifPopover)}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition relative"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 transition relative border border-slate-200"
           >
             <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-slate-900">
+              <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-blue-600 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
                 {unreadCount}
               </span>
             )}
@@ -203,10 +203,10 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
           {/* Popover Tray */}
           {showNotifPopover && (
-            <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 p-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                <h4 className="text-xs font-bold text-white">Notifications Center</h4>
-                <button onClick={() => setShowNotifPopover(false)} className="text-slate-400 hover:text-white">
+            <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-2xl overflow-hidden z-50 p-4 space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <h4 className="text-xs font-bold text-slate-900">Notifications Center</h4>
+                <button onClick={() => setShowNotifPopover(false)} className="text-slate-400 hover:text-slate-600">
                   <X className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -220,23 +220,23 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
                       key={n.id}
                       className={`p-2.5 rounded-xl border text-xs space-y-1 transition ${
                         n.isRead
-                          ? 'bg-slate-950/40 border-slate-800/60 text-slate-400'
-                          : 'bg-blue-500/10 border-blue-500/30 text-white'
+                          ? 'bg-slate-50 border-slate-200 text-slate-500'
+                          : 'bg-blue-50 border-blue-200 text-slate-900'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-bold text-[11px] text-blue-300">{n.title}</span>
+                        <span className="font-bold text-[11px] text-blue-600">{n.title}</span>
                         {!n.isRead && (
                           <button
                             onClick={() => handleMarkRead(n.id)}
-                            className="p-1 hover:bg-blue-600/30 rounded text-blue-400"
+                            className="p-1 hover:bg-blue-100 rounded text-blue-600"
                             title="Mark as read"
                           >
                             <Check className="w-3 h-3" />
                           </button>
                         )}
                       </div>
-                      <p className="text-[10px] leading-relaxed text-slate-300">{n.message}</p>
+                      <p className="text-[10px] leading-relaxed text-slate-600">{n.message}</p>
                     </div>
                   ))
                 )}
@@ -245,21 +245,21 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           )}
         </div>
 
-        <div className="flex items-center space-x-3 pl-3 border-l border-slate-800">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white shadow">
+        <div className="flex items-center space-x-3 pl-3 border-l border-slate-200">
+          <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow">
             {currentRole === 'ADMIN' ? 'HB' : currentRole === 'MANAGER' ? 'AS' : 'RK'}
           </div>
           <div className="hidden md:block text-left">
-            <p className="text-xs font-semibold text-white">
+            <p className="text-xs font-semibold text-slate-900">
               {currentRole === 'ADMIN' ? 'Harshit Bhootra' : currentRole === 'MANAGER' ? 'Ananya Sharma' : 'Rajesh Kumar'}
             </p>
-            <p className="text-[10px] text-slate-400">
+            <p className="text-[10px] text-slate-500">
               {currentRole === 'ADMIN' ? 'Super Administrator' : currentRole === 'MANAGER' ? 'HR Manager' : 'Sales Executive'}
             </p>
           </div>
           <button
             onClick={handleLogout}
-            className="p-2 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 transition text-xs flex items-center space-x-1"
+            className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 transition text-xs flex items-center space-x-1"
             title="Logout of session"
           >
             <LogOut className="w-3.5 h-3.5" />

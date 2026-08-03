@@ -13,64 +13,80 @@
   --purple-color: #8b5cf6;
   --sidebar-navy: #0f172a;
   --sidebar-accent: #1e293b;
-  --border-color: #334155;
-  --card-bg: #1e293b;
-  --text-main: #f8fafc;
-  --text-muted: #94a3b8;
+  --border-color: #e5e7eb;
+  --card-bg: #ffffff;
+  --text-main: #1f2937;
+  --text-muted: #6b7280;
 }
 
 body {
-  background-color: #0f172a;
-  color: #f8fafc;
+  background-color: #f8fafc;
+  color: #0f172a;
   font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 100% Full Light Theme Styling Overrides */
+/* 100% WordPress Plugin Look-Alike Light Theme (Default) */
 html.light body,
 html.light main,
 html.light div.min-h-screen {
-  background-color: #f8fafc !important;
-  color: #0f172a !important;
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
 }
 
-/* Header & Navbars */
+/* Header & Topbar (WordPress Plugin White Topbar) */
 html.light header {
   background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
 }
 
-/* Sidebars */
+/* Sidebar (WordPress Plugin Dark Navy Sidebar #0f172a) */
 html.light aside {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
+  background-color: #0f172a !important;
+  border-color: #1e293b !important;
+  color: #94a3b8 !important;
 }
 
-/* 100% White Cards, Modules, Containers, & Panels in Light Mode */
-html.light div.rounded-2xl,
-html.light div.rounded-xl,
-html.light .bg-slate-900,
-html.light .bg-slate-950,
-html.light .bg-slate-950\/60,
-html.light .bg-slate-950\/40,
-html.light .bg-[#0f172a],
-html.light main div {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
+html.light aside p,
+html.light aside span,
+html.light aside h2 {
+  color: #f8fafc !important;
 }
 
-html.light .bg-slate-800,
-html.light .bg-slate-800\/90,
-html.light .bg-slate-800\/40,
-html.light .bg-slate-900\/50,
-html.light .bg-slate-900\/80,
-html.light .bg-slate-900\/90 {
-  background-color: #f1f5f9 !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
+html.light aside a {
+  color: #94a3b8 !important;
+}
+
+html.light aside a:hover,
+html.light aside a.bg-blue-600 {
+  color: #ffffff !important;
+}
+
+/* Main Content Area Cards, Modules, Containers, & Panels (WordPress Plugin Pure White Cards #ffffff) */
+html.light main div.rounded-2xl,
+html.light main div.rounded-xl,
+html.light main .bg-slate-900,
+html.light main .bg-slate-950,
+html.light main .bg-slate-950\/60,
+html.light main .bg-slate-950\/40,
+html.light main .bg-[#0f172a] {
+  background-color: #ffffff !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
+}
+
+html.light main .bg-slate-800,
+html.light main .bg-slate-800\/90,
+html.light main .bg-slate-800\/40,
+html.light main .bg-slate-900\/50,
+html.light main .bg-slate-900\/80,
+html.light main .bg-slate-900\/90 {
+  background-color: #f9fafb !important;
+  border-color: #e5e7eb !important;
+  color: #1f2937 !important;
 }
 
 /* Hero Banners Light Theme */
@@ -79,28 +95,40 @@ html.light .bg-gradient-to-r.from-blue-900\/80,
 html.light .bg-gradient-to-r.from-purple-900\/80,
 html.light .bg-gradient-to-r.from-emerald-900\/80,
 html.light .bg-gradient-to-r.from-blue-600.to-indigo-600 {
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
-  border-color: #bfdbfe !important;
-  color: #1e3a8a !important;
+  background: linear-gradient(135deg, #3858e9 0%, #183ad6 100%) !important;
+  border-color: #3858e9 !important;
+  color: #ffffff !important;
 }
 
-/* Text Colors */
-html.light .text-white,
-html.light p,
-html.light h1,
-html.light h2,
-html.light h3,
-html.light span,
-html.light div {
-  color: #0f172a !important;
+html.light .bg-gradient-to-r.from-blue-700 *,
+html.light .bg-gradient-to-r.from-blue-900\/80 *,
+html.light .bg-gradient-to-r.from-purple-900\/80 *,
+html.light .bg-gradient-to-r.from-emerald-900\/80 * {
+  color: #ffffff !important;
 }
 
-html.light .text-slate-400,
-html.light .text-slate-500 {
-  color: #64748b !important;
+/* Main Canvas Text Colors */
+html.light main p.text-white,
+html.light main h1.text-white,
+html.light main h2.text-white,
+html.light main h3.text-white,
+html.light main span.text-white,
+html.light main div.text-white {
+  color: #1f2937 !important;
 }
 
-/* Preserve Accent Colors for Badges and Action Buttons */
+html.light main .text-slate-100,
+html.light main .text-slate-200,
+html.light main .text-slate-300 {
+  color: #374151 !important;
+}
+
+html.light main .text-slate-400,
+html.light main .text-slate-500 {
+  color: #6b7280 !important;
+}
+
+/* Preserve Vibrant Accent Colors for Badges and Action Buttons */
 html.light .bg-blue-600,
 html.light .bg-blue-500,
 html.light .bg-emerald-600,
@@ -113,12 +141,12 @@ html.light .bg-red-600 {
 }
 
 /* Borders & Dividers */
-html.light .border-slate-800,
-html.light .border-slate-700,
-html.light .border-slate-700\/60,
-html.light .divide-slate-800,
-html.light .divide-slate-800\/60 {
-  border-color: #e2e8f0 !important;
+html.light main .border-slate-800,
+html.light main .border-slate-700,
+html.light main .border-slate-700\/60,
+html.light main .divide-slate-800,
+html.light main .divide-slate-800\/60 {
+  border-color: #e5e7eb !important;
 }
 
 /* Inputs, Selects & Textareas */
@@ -126,23 +154,23 @@ html.light input,
 html.light select,
 html.light textarea {
   background-color: #ffffff !important;
-  border-color: #cbd5e1 !important;
-  color: #0f172a !important;
+  border-color: #d1d5db !important;
+  color: #1f2937 !important;
 }
 
 html.light input::placeholder,
 html.light textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #9ca3af !important;
 }
 
 /* Table Hover & Headers */
 html.light tr:hover {
-  background-color: #f8fafc !important;
+  background-color: #f9fafb !important;
 }
 
 html.light thead tr {
-  background-color: #f1f5f9 !important;
-  color: #475569 !important;
+  background-color: #f3f4f6 !important;
+  color: #4b5563 !important;
 }
 
 h1, h2, h3, h4, .font-heading {
@@ -155,18 +183,12 @@ h1, h2, h3, h4, .font-heading {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
-}
-html.light ::-webkit-scrollbar-track {
-  background: #f8fafc;
+  background: #f3f4f6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #334155;
+  background: #cbd5e1;
   border-radius: 9999px;
 }
-html.light ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-}
 ::-webkit-scrollbar-thumb:hover {
-  background: #475569;
+  background: #94a3b8;
 }
