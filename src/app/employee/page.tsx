@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import { Clock, Calendar, CheckCircle2, LogIn, LogOut, FileText } from 'lucide-react';
+import { Clock, Calendar, CheckCircle2, LogIn, LogOut, FileText, X, Send } from 'lucide-react';
 
 export default function EmployeePortalPage() {
   const [punchedIn, setPunchedIn] = useState(false);
@@ -11,6 +11,13 @@ export default function EmployeePortalPage() {
   const [duration, setDuration] = useState('00:00:00');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  
+  // Leave Application Modal state
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [leaveType, setLeaveType] = useState('Casual Leave');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [reason, setReason] = useState('');
 
   // Timer interval when punched in
   useEffect(() => {
@@ -57,6 +64,33 @@ export default function EmployeePortalPage() {
     }
   };
 
+  const handleApplyLeave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      await fetch('/api/leaves', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeName: 'Harshit Bhootra',
+          leaveType,
+          startDate,
+          endDate,
+          reason,
+        }),
+      });
+      setMessage('Leave application submitted successfully for HR approval!');
+      setShowLeaveModal(false);
+      setStartDate('');
+      setEndDate('');
+      setReason('');
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
       <Navbar currentRole="EMPLOYEE" />
@@ -67,7 +101,7 @@ export default function EmployeePortalPage() {
           <div className="bg-gradient-to-r from-blue-900/60 to-indigo-900/60 border border-blue-800/50 rounded-2xl p-6 shadow-xl flex flex-col md:flex-row items-center justify-between gap-4">
             <div>
               <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider">Employee Portal</span>
-              <h2 className="text-2xl font-extrabold text-white mt-1">Welcome back, Harshit Bhootra!</h2>
+              <h2 className="text-2xl font-extrabold text-white mt-1 font-heading">Welcome back, Harshit Bhootra!</h2>
               <p className="text-xs text-slate-300">Engineering • Employee ID: HB001</p>
             </div>
             <div className="bg-slate-900/80 px-4 py-2 rounded-xl border border-slate-800 text-center">
@@ -88,15 +122,17 @@ export default function EmployeePortalPage() {
             {/* Punch Clock Card */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-6">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-white flex items-center space-x-2 font-heading">
                   <Clock className="w-4 h-4 text-blue-400" />
                   <span>Punch Clock</span>
                 </h3>
-                <span className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
-                  punchedIn
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                    : 'bg-slate-800 text-slate-400 border border-slate-700'
-                }`}>
+                <span
+                  className={`text-[10px] px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                    punchedIn
+                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                      : 'bg-slate-800 text-slate-400 border border-slate-700'
+                  }`}
+                >
                   {punchedIn ? 'ON DUTY' : 'OFF DUTY'}
                 </span>
               </div>
@@ -132,7 +168,7 @@ export default function EmployeePortalPage() {
             {/* My Leave Quota Card */}
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                <h3 className="text-sm font-bold text-white flex items-center space-x-2 font-heading">
                   <Calendar className="w-4 h-4 text-purple-400" />
                   <span>My Leave Summary (Q3)</span>
                 </h3>
@@ -141,24 +177,109 @@ export default function EmployeePortalPage() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 text-center">
                   <span className="text-[10px] text-slate-400 font-medium">Casual Left</span>
-                  <p className="text-xl font-bold text-amber-400 mt-1">6</p>
+                  <p className="text-xl font-bold text-amber-400 mt-1 font-heading">6</p>
                 </div>
                 <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 text-center">
                   <span className="text-[10px] text-slate-400 font-medium">Planned Left</span>
-                  <p className="text-xl font-bold text-purple-400 mt-1">6</p>
+                  <p className="text-xl font-bold text-purple-400 mt-1 font-heading">6</p>
                 </div>
                 <div className="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 text-center">
                   <span className="text-[10px] text-slate-400 font-medium">Total Left</span>
-                  <p className="text-xl font-bold text-emerald-400 mt-1">12</p>
+                  <p className="text-xl font-bold text-emerald-400 mt-1 font-heading">12</p>
                 </div>
               </div>
 
-              <button className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-2">
+              <button
+                onClick={() => setShowLeaveModal(true)}
+                className="w-full py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center justify-center space-x-2"
+              >
                 <FileText className="w-3.5 h-3.5" />
                 <span>Apply for Leave Request</span>
               </button>
             </div>
           </div>
+
+          {/* Leave Application Modal */}
+          {showLeaveModal && (
+            <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <h3 className="text-sm font-bold text-white font-heading">Apply for Leave</h3>
+                  <button onClick={() => setShowLeaveModal(false)} className="text-slate-400 hover:text-white">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <form onSubmit={handleApplyLeave} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Leave Type</label>
+                    <select
+                      value={leaveType}
+                      onChange={(e) => setLeaveType(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                    >
+                      <option value="Casual Leave">Casual Leave</option>
+                      <option value="Planned Leave">Planned Leave</option>
+                      <option value="Sick Leave">Sick Leave</option>
+                    </select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-semibold">Start Date</label>
+                      <input
+                        type="date"
+                        required
+                        value={startDate}
+                        onChange={(e) => setStartDate(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-semibold">End Date</label>
+                      <input
+                        type="date"
+                        required
+                        value={endDate}
+                        onChange={(e) => setEndDate(e.target.value)}
+                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-400 mb-1 font-semibold">Reason for Application</label>
+                    <textarea
+                      required
+                      rows={3}
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
+                      placeholder="Specify your leave reason..."
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-white"
+                    ></textarea>
+                  </div>
+
+                  <div className="flex justify-end space-x-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowLeaveModal(false)}
+                      className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-semibold"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={loading}
+                      className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold flex items-center space-x-1.5"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                      <span>Submit Request</span>
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
