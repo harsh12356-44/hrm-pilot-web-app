@@ -179,22 +179,6 @@
       "managerName": "Rajesh Kumar",
       "description": "Core Sales Department operations and personnel management.",
       "employeeCount": 1
-    },
-    {
-      "id": "dept-marketing",
-      "code": "MAR",
-      "name": "Marketing",
-      "managerName": "Harshit Bhootra",
-      "description": "Core Marketing Department operations and personnel management.",
-      "employeeCount": 1
-    },
-    {
-      "id": "dept-engineering",
-      "code": "ENG",
-      "name": "Engineering",
-      "managerName": "Harshit Bhootra",
-      "description": "Core Engineering Department operations and personnel management.",
-      "employeeCount": 2
     }
   ]
 }

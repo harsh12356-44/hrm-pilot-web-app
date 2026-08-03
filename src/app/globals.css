@@ -19,12 +19,25 @@
   --text-muted: #6b7280;
 }
 
+html {
+  font-size: 15px; /* Comfortable font size increase across the application */
+}
+
 body {
   background-color: #f3f4f6;
   color: #1f2937;
   font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
+
+/* Comfortable Font Scaling Utilities */
+.text-\[10px\] { font-size: 11.5px !important; }
+.text-\[11px\] { font-size: 12.5px !important; }
+.text-xs { font-size: 0.8125rem !important; } /* 13px */
+.text-sm { font-size: 0.9375rem !important; } /* 15px */
+.text-base { font-size: 1.0625rem !important; } /* 17px */
 
 /* 100% Exact WordPress Plugin Light Theme Styling (Default) */
 html.light body,
