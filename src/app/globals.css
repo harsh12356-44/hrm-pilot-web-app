@@ -20,13 +20,13 @@
 }
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f3f4f6;
+  color: #1f2937;
   font-family: var(--font-inter), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* 100% WordPress Plugin Look-Alike Light Theme (Default) */
+/* 100% Exact WordPress Plugin Light Theme Styling (Default) */
 html.light body,
 html.light main,
 html.light div.min-h-screen {
@@ -34,7 +34,7 @@ html.light div.min-h-screen {
   color: #1f2937 !important;
 }
 
-/* Header & Topbar (WordPress Plugin White Topbar) */
+/* Header & Topbar (WordPress Plugin Pure White Topbar) */
 html.light header {
   background-color: #ffffff !important;
   border-color: #e5e7eb !important;
@@ -64,26 +64,19 @@ html.light aside a.bg-blue-600 {
   color: #ffffff !important;
 }
 
-/* Main Content Area Cards, Modules, Containers, & Panels (WordPress Plugin Pure White Cards #ffffff) */
+/* 100% White Main Content Cards & Containers (WordPress Plugin #ffffff Cards) */
 html.light main div.rounded-2xl,
 html.light main div.rounded-xl,
-html.light main .bg-slate-900,
-html.light main .bg-slate-950,
-html.light main .bg-slate-950\/60,
-html.light main .bg-slate-950\/40,
-html.light main .bg-[#0f172a] {
+html.light main [class*="bg-slate-900"],
+html.light main [class*="bg-slate-950"],
+html.light main [class*="bg-[#0f172a]"] {
   background-color: #ffffff !important;
   border-color: #e5e7eb !important;
   color: #1f2937 !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03) !important;
 }
 
-html.light main .bg-slate-800,
-html.light main .bg-slate-800\/90,
-html.light main .bg-slate-800\/40,
-html.light main .bg-slate-900\/50,
-html.light main .bg-slate-900\/80,
-html.light main .bg-slate-900\/90 {
+html.light main [class*="bg-slate-800"] {
   background-color: #f9fafb !important;
   border-color: #e5e7eb !important;
   color: #1f2937 !important;
@@ -108,19 +101,13 @@ html.light .bg-gradient-to-r.from-emerald-900\/80 * {
 }
 
 /* Main Canvas Text Colors */
-html.light main p.text-white,
-html.light main h1.text-white,
-html.light main h2.text-white,
-html.light main h3.text-white,
-html.light main span.text-white,
-html.light main div.text-white {
+html.light main p,
+html.light main h1,
+html.light main h2,
+html.light main h3,
+html.light main span,
+html.light main div {
   color: #1f2937 !important;
-}
-
-html.light main .text-slate-100,
-html.light main .text-slate-200,
-html.light main .text-slate-300 {
-  color: #374151 !important;
 }
 
 html.light main .text-slate-400,
@@ -128,7 +115,7 @@ html.light main .text-slate-500 {
   color: #6b7280 !important;
 }
 
-/* Preserve Vibrant Accent Colors for Badges and Action Buttons */
+/* Preserve Action Buttons and Status Badges */
 html.light .bg-blue-600,
 html.light .bg-blue-500,
 html.light .bg-emerald-600,
@@ -145,7 +132,9 @@ html.light main .border-slate-800,
 html.light main .border-slate-700,
 html.light main .border-slate-700\/60,
 html.light main .divide-slate-800,
-html.light main .divide-slate-800\/60 {
+html.light main .divide-slate-800\/60,
+html.light main [class*="border-slate-800"],
+html.light main [class*="border-slate-700"] {
   border-color: #e5e7eb !important;
 }
 
