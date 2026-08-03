@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard,
   Users,
@@ -28,12 +28,16 @@ import {
 } from 'lucide-react';
 
 interface SidebarProps {
-  currentTab: string;
+  currentTab?: string;
   role?: string;
 }
 
 export default function Sidebar({ currentTab, role }: SidebarProps) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeTabParam = searchParams ? searchParams.get('tab') : null;
+  const activeTab = activeTabParam || currentTab || 'dashboard';
+
   const [activeRole, setActiveRole] = useState<string>('ADMIN');
 
   const getCookieRole = () => {
@@ -54,7 +58,7 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
     return () => window.removeEventListener('roleChange', updateRole);
   }, [role, pathname]);
 
-  // Determine effective role based on current path if cookie/prop is ambiguous
+  // Determine effective role based on current path
   const effectiveRole = pathname.startsWith('/employee')
     ? 'EMPLOYEE'
     : pathname.startsWith('/manager')
@@ -102,20 +106,20 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
     },
   ];
 
-  // 2. Exact Employee Portal Menu Options (Matching User Screenshot 1)
+  // 2. Employee Portal Menu Options (Matching User Screenshot 1)
   const employeeSections = [
     {
       title: '',
       items: [
-        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/employee' },
-        { id: 'attendance', label: 'Attendance', icon: Clock, href: '/admin/attendance' },
-        { id: 'apply-leave', label: 'Apply Leave', icon: Plane, href: '/admin/leave-records' },
-        { id: 'leave-history', label: 'Leave History', icon: FileText, href: '/admin/leave-records' },
-        { id: 'team-approvals', label: 'Team Approvals', icon: ClipboardCheck, href: '/manager' },
-        { id: 'working-hours', label: 'Working Hours', icon: Clock, href: '/admin/working-hours' },
-        { id: 'holidays', label: 'Holidays List', icon: CalendarDays, href: '/admin/holidays' },
-        { id: 'notifications', label: 'Notifications', icon: Bell, href: '/admin/audit-logs' },
-        { id: 'profile', label: 'My Profile', icon: User, href: '/admin/settings' },
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, href: '/employee?tab=dashboard' },
+        { id: 'attendance', label: 'Attendance', icon: Clock, href: '/employee?tab=attendance' },
+        { id: 'apply-leave', label: 'Apply Leave', icon: Plane, href: '/employee?tab=apply-leave' },
+        { id: 'leave-history', label: 'Leave History', icon: FileText, href: '/employee?tab=leave-history' },
+        { id: 'team-approvals', label: 'Team Approvals', icon: ClipboardCheck, href: '/employee?tab=team-approvals' },
+        { id: 'working-hours', label: 'Working Hours', icon: Clock, href: '/employee?tab=working-hours' },
+        { id: 'holidays', label: 'Holidays List', icon: CalendarDays, href: '/employee?tab=holidays' },
+        { id: 'notifications', label: 'Notifications', icon: Bell, href: '/employee?tab=notifications' },
+        { id: 'profile', label: 'My Profile', icon: User, href: '/employee?tab=profile' },
       ],
     },
   ];
@@ -145,7 +149,7 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
             <nav className="space-y-1">
               {sec.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = currentTab === item.id;
+                const isActive = activeTab === item.id;
                 return (
                   <Link
                     key={item.id}
