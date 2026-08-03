@@ -22,7 +22,8 @@
       "status": "ACTIVE",
       "casualAllowance": 6,
       "plannedAllowance": 6,
-      "sickAllowance": 6
+      "sickAllowance": 6,
+      "primaryManager": "Harshit Bhootra"
     },
     {
       "id": "emp-3",
@@ -30,7 +31,7 @@
       "name": "Rajesh Kumar",
       "email": "rajesh@hrmpilot.com",
       "department": "Sales",
-      "role": "EMPLOYEE",
+      "role": "MANAGER",
       "status": "ACTIVE",
       "casualAllowance": 6,
       "plannedAllowance": 6,

@@ -39,6 +39,7 @@ export default function EmployeesTab() {
   const [phone, setPhone] = useState('');
   const [dept, setDept] = useState('IT');
   const [designation, setDesignation] = useState('Manager');
+  const [role, setRole] = useState<'ADMIN' | 'MANAGER' | 'EMPLOYEE'>('EMPLOYEE');
   const [dateOfJoining, setDateOfJoining] = useState('2024-01-15');
   const [primaryManager, setPrimaryManager] = useState('-- None --');
   const [secondaryManager, setSecondaryManager] = useState('-- None --');
@@ -69,6 +70,7 @@ export default function EmployeesTab() {
     setPhone('');
     setDept('IT');
     setDesignation('Software Engineer');
+    setRole('EMPLOYEE');
     setDateOfJoining(new Date().toISOString().split('T')[0]);
     setPrimaryManager('-- None --');
     setSecondaryManager('-- None --');
@@ -87,6 +89,7 @@ export default function EmployeesTab() {
     setPhone(emp.phone || '');
     setDept(emp.department || 'IT');
     setDesignation(emp.designation || 'Manager');
+    setRole((emp.role as any) || 'EMPLOYEE');
     setDateOfJoining(emp.dateOfJoining || '2024-01-15');
     setPrimaryManager(emp.primaryManager || '-- None --');
     setSecondaryManager(emp.secondaryManager || '-- None --');
@@ -136,6 +139,14 @@ export default function EmployeesTab() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      // Determine effective role: if designation includes 'manager' or role is MANAGER/ADMIN, persist as MANAGER
+      const computedRole =
+        role === 'ADMIN'
+          ? 'ADMIN'
+          : designation.toLowerCase().includes('manager') || role === 'MANAGER'
+          ? 'MANAGER'
+          : 'EMPLOYEE';
+
       await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -147,9 +158,10 @@ export default function EmployeesTab() {
           phone,
           department: dept,
           designation,
+          role: computedRole,
           dateOfJoining,
-          primaryManager,
-          secondaryManager,
+          primaryManager: primaryManager === '-- None --' ? '' : primaryManager,
+          secondaryManager: secondaryManager === '-- None --' ? '' : secondaryManager,
           status: employmentStatus.toUpperCase() === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
           employeeType,
           monthlySalary: salary,
@@ -157,7 +169,7 @@ export default function EmployeesTab() {
         }),
       });
 
-      setMessage(selectedEmp ? `Profile updated for ${name}!` : `Created new employee profile for ${name}!`);
+      setMessage(selectedEmp ? `Profile updated for ${name}! Managers tab updated.` : `Created new employee profile for ${name}! Managers tab updated.`);
       setTimeout(() => setMessage(''), 4000);
       setIsModalOpen(false);
       fetchEmployees();
@@ -172,6 +184,9 @@ export default function EmployeesTab() {
       (department === 'ALL' || e.department === department) &&
       (statusFilter === 'ALL' || e.status === statusFilter)
   );
+
+  // Dynamic Manager List for Primary & Secondary Manager dropdowns
+  const managerList = employees.filter(e => e.role === 'MANAGER' || e.role === 'ADMIN' || e.designation?.toLowerCase().includes('manager'));
 
   return (
     <div className="space-y-6 text-slate-100 pb-12">
@@ -325,6 +340,16 @@ export default function EmployeesTab() {
 
                 <div className="flex items-center justify-between text-slate-400">
                   <span className="flex items-center space-x-1.5">
+                    <Shield className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>Manager 1</span>
+                  </span>
+                  <span className="text-slate-200 font-semibold text-[11px] truncate max-w-[130px]">
+                    {emp.primaryManager || '-- None --'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between text-slate-400">
+                  <span className="flex items-center space-x-1.5">
                     <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Monthly Base</span>
                   </span>
@@ -352,7 +377,9 @@ export default function EmployeesTab() {
         <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-4xl w-full space-y-6 shadow-2xl my-8">
             <div className="flex items-center justify-between border-b border-slate-800 pb-4">
-              <h2 className="text-xl font-extrabold text-white font-heading">Edit Employee Profile</h2>
+              <h2 className="text-xl font-extrabold text-white font-heading">
+                {selectedEmp ? 'Edit Employee Profile' : 'Add New Employee Profile'}
+              </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
                 <X className="w-5 h-5" />
               </button>
@@ -460,8 +487,11 @@ export default function EmployeesTab() {
                       className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
                     >
                       <option value="-- None --">-- None --</option>
-                      <option value="Ananya Sharma">Ananya Sharma (HR Manager)</option>
-                      <option value="Harshit Bhootra">Harshit Bhootra (Super Admin)</option>
+                      {managerList.map(mgr => (
+                        <option key={mgr.id} value={mgr.name}>
+                          {mgr.name} ({mgr.department} • {mgr.designation || mgr.role})
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -473,8 +503,11 @@ export default function EmployeesTab() {
                       className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
                     >
                       <option value="-- None --">-- None --</option>
-                      <option value="Ananya Sharma">Ananya Sharma (HR Manager)</option>
-                      <option value="Harshit Bhootra">Harshit Bhootra (Super Admin)</option>
+                      {managerList.map(mgr => (
+                        <option key={mgr.id} value={mgr.name}>
+                          {mgr.name} ({mgr.department} • {mgr.designation || mgr.role})
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -530,7 +563,7 @@ export default function EmployeesTab() {
                 </div>
               </div>
 
-              {/* Form Buttons at bottom left (matching screenshot) */}
+              {/* Form Buttons at bottom left */}
               <div className="flex items-center space-x-3 pt-4 border-t border-slate-800">
                 <button
                   type="submit"
