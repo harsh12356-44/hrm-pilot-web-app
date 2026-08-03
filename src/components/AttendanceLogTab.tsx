@@ -5,7 +5,11 @@ import { Upload, Clock, AlertCircle, Edit2, Search, Filter, CheckCircle2 } from 
 import { AttendanceLog } from '@/lib/types';
 import * as XLSX from 'xlsx';
 
-export default function AttendanceLogTab() {
+interface AttendanceLogTabProps {
+  hideImport?: boolean;
+}
+
+export default function AttendanceLogTab({ hideImport = false }: AttendanceLogTabProps) {
   const [date, setDate] = useState('2026-07-30');
   const [department, setDepartment] = useState('ALL');
   const [logs, setLogs] = useState<any[]>([]);
@@ -94,20 +98,26 @@ export default function AttendanceLogTab() {
       {/* Header & Importer */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-white flex items-center space-x-2">
+          <h2 className="text-xl font-extrabold text-white flex items-center space-x-2 font-heading">
             <Clock className="w-5 h-5 text-amber-400" />
-            <span>Attendance Log & Biometric Punch Importer</span>
+            <span>{hideImport ? 'My Attendance Log' : 'Attendance Log & Biometric Punch Importer'}</span>
           </h2>
-          <p className="text-xs text-slate-400">View daily punch records, attendance codes, and import device log files.</p>
+          <p className="text-xs text-slate-400">
+            {hideImport
+              ? 'View your daily punch records, attendance codes, and shift duration.'
+              : 'View daily punch records, attendance codes, and import device log files.'}
+          </p>
         </div>
 
-        <div className="flex items-center space-x-3 w-full md:w-auto">
-          <input type="file" id="biometric-import" accept=".csv, .xlsx, .xls" onChange={handleFileUpload} className="hidden" />
-          <label htmlFor="biometric-import" className="cursor-pointer px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center space-x-2">
-            <Upload className="w-4 h-4" />
-            <span>Import Biometric File</span>
-          </label>
-        </div>
+        {!hideImport && (
+          <div className="flex items-center space-x-3 w-full md:w-auto">
+            <input type="file" id="biometric-import" accept=".csv, .xlsx, .xls" onChange={handleFileUpload} className="hidden" />
+            <label htmlFor="biometric-import" className="cursor-pointer px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-semibold shadow-md transition flex items-center space-x-2">
+              <Upload className="w-4 h-4" />
+              <span>Import Biometric File</span>
+            </label>
+          </div>
+        )}
       </div>
 
       {importMessage && (
@@ -129,20 +139,22 @@ export default function AttendanceLogTab() {
             />
           </div>
 
-          <div>
-            <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Department</label>
-            <select
-              value={department}
-              onChange={e => setDepartment(e.target.value)}
-              className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
-            >
-              <option value="ALL">All Departments</option>
-              <option value="Engineering">Engineering</option>
-              <option value="Human Resources">Human Resources</option>
-              <option value="Sales">Sales</option>
-              <option value="Marketing">Marketing</option>
-            </select>
-          </div>
+          {!hideImport && (
+            <div>
+              <label className="block text-[10px] font-semibold uppercase text-slate-400 mb-1">Department</label>
+              <select
+                value={department}
+                onChange={e => setDepartment(e.target.value)}
+                className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500"
+              >
+                <option value="ALL">All Departments</option>
+                <option value="Engineering">Engineering</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Sales">Sales</option>
+                <option value="Marketing">Marketing</option>
+              </select>
+            </div>
+          )}
         </div>
 
         <div className="text-xs text-slate-400">
@@ -163,7 +175,7 @@ export default function AttendanceLogTab() {
                 <th className="py-3.5 px-4 text-center">WORKED MINS</th>
                 <th className="py-3.5 px-4 text-center">SHORT MINS</th>
                 <th className="py-3.5 px-4 text-center">STATUS / REASON</th>
-                <th className="py-3.5 px-4 text-right">ACTION</th>
+                {!hideImport && <th className="py-3.5 px-4 text-right">ACTION</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
@@ -190,19 +202,21 @@ export default function AttendanceLogTab() {
                   <td className="py-3.5 px-4 text-center text-[11px] text-slate-400">
                     {log.isManual ? `Manual Edit (${log.correctionReason || 'Corrected'})` : 'Device Punch'}
                   </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      onClick={() => {
-                        setEditLog(log);
-                        setEditCode(log.attendanceCode);
-                        setEditIn(log.checkIn || '09:00:00');
-                        setEditOut(log.checkOut || '18:00:00');
-                      }}
-                      className="p-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                  </td>
+                  {!hideImport && (
+                    <td className="py-3.5 px-4 text-right">
+                      <button
+                        onClick={() => {
+                          setEditLog(log);
+                          setEditCode(log.attendanceCode);
+                          setEditIn(log.checkIn || '09:00:00');
+                          setEditOut(log.checkOut || '18:00:00');
+                        }}
+                        className="p-1.5 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition"
+                      >
+                        <Edit2 className="w-3.5 h-3.5" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -211,7 +225,7 @@ export default function AttendanceLogTab() {
       </div>
 
       {/* Edit Punch Modal */}
-      {editLog && (
+      {!hideImport && editLog && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
             <h3 className="text-base font-bold text-white">Manual Punch Correction</h3>

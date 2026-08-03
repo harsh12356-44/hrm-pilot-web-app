@@ -419,13 +419,13 @@ function EmployeePortalContent() {
           )}
 
           {/* TAB 3: ATTENDANCE */}
-          {activeTab === 'attendance' && <AttendanceLogTab />}
+          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} />}
 
           {/* TAB 4: LEAVE HISTORY & RECS */}
           {(activeTab === 'leave-history' || activeTab === 'team-approvals') && <LeaveTrackerTab />}
 
           {/* TAB 6: WORKING HOURS */}
-          {activeTab === 'working-hours' && <AttendanceLogTab />}
+          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} />}
 
           {/* TAB 7: HOLIDAYS LIST */}
           {activeTab === 'holidays' && <HolidaysTab />}
