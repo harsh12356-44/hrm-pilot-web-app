@@ -52,7 +52,7 @@
       "designation": "Manager",
       "dateOfJoining": "2024-01-15",
       "primaryManager": "Harshit Bhootra",
-      "secondaryManager": "",
+      "secondaryManager": "Rajesh Kumar",
       "employeeType": "Full Time",
       "monthlySalary": 75000,
       "weeklyOff": "Sunday"
@@ -163,5 +163,38 @@
       "createdAt": "2026-08-01T07:25:01.315Z"
     }
   ],
-  "departments": []
+  "departments": [
+    {
+      "id": "dept-engineering",
+      "code": "ENG",
+      "name": "Engineering",
+      "managerName": "Harshit Bhootra",
+      "description": "Core Engineering Department operations and personnel management.",
+      "employeeCount": 2
+    },
+    {
+      "id": "dept-human resources",
+      "code": "HUM",
+      "name": "Human Resources",
+      "managerName": "Ananya Sharma",
+      "description": "Core Human Resources Department operations and personnel management.",
+      "employeeCount": 1
+    },
+    {
+      "id": "dept-sales",
+      "code": "SAL",
+      "name": "Sales",
+      "managerName": "Rajesh Kumar",
+      "description": "Core Sales Department operations and personnel management.",
+      "employeeCount": 1
+    },
+    {
+      "id": "dept-marketing",
+      "code": "MAR",
+      "name": "Marketing",
+      "managerName": "Harshit Bhootra",
+      "description": "Core Marketing Department operations and personnel management.",
+      "employeeCount": 1
+    }
+  ]
 }

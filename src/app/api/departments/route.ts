@@ -20,7 +20,7 @@ export async function GET() {
     deptsMap.set(dept, (deptsMap.get(dept) || 0) + 1);
   });
 
-  const customDepts: DepartmentItem[] = db.departments || [];
+  let customDepts: DepartmentItem[] = db.departments || [];
 
   // Seed default departments if missing
   const defaultNames = ['Engineering', 'Human Resources', 'Sales', 'Marketing'];
@@ -36,6 +36,9 @@ export async function GET() {
       });
     }
   });
+
+  db.departments = customDepts;
+  saveDbData(db);
 
   // Update counts
   const finalDepts = customDepts.map(d => ({
@@ -76,5 +79,63 @@ export async function POST(request: Request) {
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Error creating department' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const { id, name, code, managerName, description } = await request.json();
+
+    const db = getDbData();
+    if (!db.departments) db.departments = [];
+
+    const index = db.departments.findIndex(d => d.id === id);
+
+    if (index !== -1) {
+      const oldVal = JSON.stringify(db.departments[index]);
+      db.departments[index] = {
+        ...db.departments[index],
+        name: name || db.departments[index].name,
+        code: code || db.departments[index].code,
+        managerName: managerName || db.departments[index].managerName,
+        description: description || db.departments[index].description,
+      };
+
+      logAudit('Update Department Structure', 'Department', id, oldVal, JSON.stringify(db.departments[index]));
+      saveDbData(db);
+      return NextResponse.json({ success: true, department: db.departments[index], departments: db.departments });
+    }
+
+    return NextResponse.json({ error: 'Department not found' }, { status: 404 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Error updating department' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'Department ID required' }, { status: 400 });
+    }
+
+    const db = getDbData();
+    if (!db.departments) db.departments = [];
+
+    const index = db.departments.findIndex(d => d.id === id);
+
+    if (index !== -1) {
+      const deletedDept = db.departments[index];
+      db.departments.splice(index, 1);
+      logAudit('Delete Department', 'Department', id, JSON.stringify(deletedDept), undefined);
+      saveDbData(db);
+      return NextResponse.json({ success: true, message: `Department ${deletedDept.name} deleted`, departments: db.departments });
+    }
+
+    return NextResponse.json({ error: 'Department not found' }, { status: 404 });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Error deleting department' }, { status: 500 });
   }
 }
