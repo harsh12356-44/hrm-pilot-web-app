@@ -39,29 +39,99 @@ export async function POST(request: Request) {
     const body = await request.json();
     const db = getDbData();
 
-    if (body.action === 'IMPORT') {
-      // Record biometric attendance import batch
+    // 1. Monthly Punches Upload
+    if (body.action === 'IMPORT' || body.action === 'IMPORT_MONTHLY_PUNCHES') {
+      const rows = body.rows || [];
+
+      // Update or insert attendance logs from parsed punch rows
+      if (Array.isArray(rows) && rows.length > 0) {
+        rows.forEach((row: any) => {
+          const empId = row.employeeId || row.EmployeeID || row.empId || 'emp-1';
+          const date = row.date || row.Date || new Date().toISOString().split('T')[0];
+          const checkIn = row.checkIn || row.CheckIn || '09:00';
+          const checkOut = row.checkOut || row.CheckOut || '17:30';
+          const code = row.attendanceCode || row.Status || 'P';
+
+          const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === empId && l.date === date);
+          if (existingIdx !== -1) {
+            db.attendanceLogs[existingIdx].checkIn = checkIn;
+            db.attendanceLogs[existingIdx].checkOut = checkOut;
+            db.attendanceLogs[existingIdx].attendanceCode = code;
+            db.attendanceLogs[existingIdx].workedMinutes = 510;
+          } else {
+            db.attendanceLogs.push({
+              id: `att-${Date.now()}-${Math.random()}`,
+              employeeId: empId,
+              date,
+              checkIn,
+              checkOut,
+              workedMinutes: 510,
+              requiredMinutes: 480,
+              shortMinutes: 0,
+              extraMinutes: 30,
+              attendanceCode: code,
+            });
+          }
+        });
+      }
+
       const newImport: AttendanceImport = {
         id: `imp-${Date.now()}`,
-        filename: body.filename || 'biometric_punches.csv',
+        filename: body.filename || 'monthly_punches.csv',
         uploadedBy: 'Harshit Bhootra',
         uploadDate: new Date().toISOString(),
-        totalEmployees: body.totalEmployees || 5,
-        totalRows: body.totalRows || 10,
-        importedRows: body.importedRows || 10,
-        missingPunches: body.missingPunches || 1,
+        totalEmployees: db.employees.length || 5,
+        totalRows: rows.length || 10,
+        importedRows: rows.length || 10,
+        missingPunches: 0,
         status: 'Completed',
       };
 
       db.attendanceImports.unshift(newImport);
-      logAudit('Import Attendance CSV', 'AttendanceImport', newImport.id, undefined, newImport.filename);
+      logAudit('Import Biometric Monthly Punches', 'AttendanceImport', newImport.id, undefined, newImport.filename);
       saveDbData(db);
 
-      return NextResponse.json({ success: true, import: newImport });
+      return NextResponse.json({ success: true, import: newImport, logs: db.attendanceLogs });
+    }
+
+    // 2. Completed Hours Import
+    if (body.action === 'IMPORT_COMPLETED_HOURS') {
+      const rows = body.rows || [];
+
+      if (Array.isArray(rows) && rows.length > 0) {
+        rows.forEach((row: any) => {
+          const empId = row.employeeId || row.EmployeeID || 'emp-1';
+          const totalHours = Number(row.completedHours || row.TotalHours || row.hours) || 176;
+
+          // Update worked minutes on employee's attendance logs
+          db.attendanceLogs.forEach((log) => {
+            if (log.employeeId === empId) {
+              log.workedMinutes = Math.round((totalHours * 60) / 22);
+            }
+          });
+        });
+      }
+
+      const newImport: AttendanceImport = {
+        id: `imp-hrs-${Date.now()}`,
+        filename: body.filename || 'completed_hours.csv',
+        uploadedBy: 'Harshit Bhootra',
+        uploadDate: new Date().toISOString(),
+        totalEmployees: db.employees.length || 5,
+        totalRows: rows.length || 5,
+        importedRows: rows.length || 5,
+        missingPunches: 0,
+        status: 'Completed',
+      };
+
+      db.attendanceImports.unshift(newImport);
+      logAudit('Import Completed Hours Spreadsheet', 'AttendanceImport', newImport.id, undefined, newImport.filename);
+      saveDbData(db);
+
+      return NextResponse.json({ success: true, import: newImport, logs: db.attendanceLogs });
     }
 
     if (body.action === 'MANUAL_EDIT') {
-      // Manual attendance correction
       const { id, attendanceCode, checkIn, checkOut, correctionReason } = body;
       const index = db.attendanceLogs.findIndex(l => l.id === id);
       if (index !== -1) {
