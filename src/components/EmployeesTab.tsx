@@ -16,6 +16,8 @@ import {
   CheckCircle2,
   XCircle,
   AlertTriangle,
+  X,
+  Calendar,
 } from 'lucide-react';
 import { Employee } from '@/lib/types';
 
@@ -30,18 +32,20 @@ export default function EmployeesTab() {
   const [empToDelete, setEmpToDelete] = useState<Employee | null>(null);
   const [message, setMessage] = useState('');
 
-  // Form State
+  // 13-Field Form State Matching User Screenshot 1:1
+  const [employeeId, setEmployeeId] = useState('123456');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
-  const [dept, setDept] = useState('Engineering');
-  const [designation, setDesignation] = useState('Senior Engineer');
-  const [role, setRole] = useState<'ADMIN' | 'MANAGER' | 'EMPLOYEE'>('EMPLOYEE');
-  const [status, setStatus] = useState<'ACTIVE' | 'INACTIVE'>('ACTIVE');
+  const [dept, setDept] = useState('IT');
+  const [designation, setDesignation] = useState('Manager');
+  const [dateOfJoining, setDateOfJoining] = useState('2024-01-15');
+  const [primaryManager, setPrimaryManager] = useState('-- None --');
+  const [secondaryManager, setSecondaryManager] = useState('-- None --');
+  const [employmentStatus, setEmploymentStatus] = useState('Active');
+  const [employeeType, setEmployeeType] = useState('Full Time');
   const [salary, setSalary] = useState(75000);
-  const [dailyMins, setDailyMins] = useState(480);
-  const [casualAllowance, setCasualAllowance] = useState(6);
-  const [plannedAllowance, setPlannedAllowance] = useState(6);
+  const [weeklyOff, setWeeklyOff] = useState('Sunday');
 
   const fetchEmployees = async () => {
     try {
@@ -59,40 +63,44 @@ export default function EmployeesTab() {
 
   const handleOpenAddModal = () => {
     setSelectedEmp(null);
+    setEmployeeId(`EMP${Math.floor(100000 + Math.random() * 900000)}`);
     setName('');
     setEmail('');
     setPhone('');
-    setDept('Engineering');
+    setDept('IT');
     setDesignation('Software Engineer');
-    setRole('EMPLOYEE');
-    setStatus('ACTIVE');
+    setDateOfJoining(new Date().toISOString().split('T')[0]);
+    setPrimaryManager('-- None --');
+    setSecondaryManager('-- None --');
+    setEmploymentStatus('Active');
+    setEmployeeType('Full Time');
     setSalary(75000);
-    setDailyMins(480);
-    setCasualAllowance(6);
-    setPlannedAllowance(6);
+    setWeeklyOff('Sunday');
     setIsModalOpen(true);
   };
 
   const handleOpenEditModal = (emp: Employee) => {
     setSelectedEmp(emp);
+    setEmployeeId(emp.employeeId || '123456');
     setName(emp.name);
     setEmail(emp.email);
     setPhone(emp.phone || '');
-    setDept(emp.department);
-    setDesignation(emp.designation || 'Staff');
-    setRole((emp.role as any) || 'EMPLOYEE');
-    setStatus((emp.status as any) || 'ACTIVE');
+    setDept(emp.department || 'IT');
+    setDesignation(emp.designation || 'Manager');
+    setDateOfJoining(emp.dateOfJoining || '2024-01-15');
+    setPrimaryManager(emp.primaryManager || '-- None --');
+    setSecondaryManager(emp.secondaryManager || '-- None --');
+    setEmploymentStatus(emp.status === 'INACTIVE' ? 'Inactive' : 'Active');
+    setEmployeeType(emp.employeeType || 'Full Time');
     setSalary(emp.monthlySalary || 75000);
-    setDailyMins(emp.dailyWorkingRequirementMinutes || 480);
-    setCasualAllowance(emp.casualAllowance || 6);
-    setPlannedAllowance(emp.plannedAllowance || 6);
+    setWeeklyOff(emp.weeklyOff || 'Sunday');
     setIsModalOpen(true);
   };
 
   const handleToggleStatus = async (emp: Employee) => {
     try {
       const newStatus = emp.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-      const res = await fetch('/api/employees', {
+      await fetch('/api/employees', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -101,7 +109,6 @@ export default function EmployeesTab() {
           status: newStatus,
         }),
       });
-      const data = await res.json();
       setMessage(`Employee ${emp.name} is now ${newStatus}!`);
       setTimeout(() => setMessage(''), 4000);
       fetchEmployees();
@@ -116,7 +123,7 @@ export default function EmployeesTab() {
       await fetch(`/api/employees?id=${empToDelete.id}`, {
         method: 'DELETE',
       });
-      setMessage(`Employee ${empToDelete.name} permanently deleted. Portal access revoked.`);
+      setMessage(`Employee ${empToDelete.name} permanently deleted.`);
       setTimeout(() => setMessage(''), 4000);
       setIsDeleteModalOpen(false);
       setEmpToDelete(null);
@@ -134,21 +141,23 @@ export default function EmployeesTab() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id: selectedEmp ? selectedEmp.id : undefined,
+          employeeId,
           name,
           email,
           phone,
           department: dept,
           designation,
-          role,
-          status,
+          dateOfJoining,
+          primaryManager,
+          secondaryManager,
+          status: employmentStatus.toUpperCase() === 'ACTIVE' ? 'ACTIVE' : 'INACTIVE',
+          employeeType,
           monthlySalary: salary,
-          dailyWorkingRequirementMinutes: dailyMins,
-          casualAllowance,
-          plannedAllowance,
+          weeklyOff,
         }),
       });
 
-      setMessage(selectedEmp ? `Updated details for ${name}!` : `Created new employee profile for ${name}!`);
+      setMessage(selectedEmp ? `Profile updated for ${name}!` : `Created new employee profile for ${name}!`);
       setTimeout(() => setMessage(''), 4000);
       setIsModalOpen(false);
       fetchEmployees();
@@ -171,9 +180,9 @@ export default function EmployeesTab() {
         <div>
           <h2 className="text-xl font-extrabold text-white flex items-center space-x-2 font-heading">
             <Users className="w-5 h-5 text-blue-400" />
-            <span>Employee Directory & Roster Manager</span>
+            <span>Employee Directory & Profiles</span>
           </h2>
-          <p className="text-xs text-slate-400">Edit employee details, toggle active/inactive status, or permanently revoke portal access.</p>
+          <p className="text-xs text-slate-400">Manage employee accounts, reporting managers, designations, and weekly off policies.</p>
         </div>
 
         <button
@@ -212,6 +221,7 @@ export default function EmployeesTab() {
             className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">All Departments</option>
+            <option value="IT">IT</option>
             <option value="Engineering">Engineering</option>
             <option value="Human Resources">Human Resources</option>
             <option value="Sales">Sales</option>
@@ -265,9 +275,10 @@ export default function EmployeesTab() {
                   <button
                     onClick={() => handleOpenEditModal(emp)}
                     title="Edit Employee Details"
-                    className="p-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition"
+                    className="p-1.5 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 rounded-lg transition flex items-center space-x-1 px-2 text-[11px] font-semibold"
                   >
                     <Edit className="w-3.5 h-3.5" />
+                    <span>Edit</span>
                   </button>
 
                   <button
@@ -301,7 +312,7 @@ export default function EmployeesTab() {
                     <Building className="w-3.5 h-3.5 text-blue-400" />
                     <span>Department</span>
                   </span>
-                  <span className="text-slate-200 font-semibold">{emp.department}</span>
+                  <span className="text-slate-200 font-semibold">{emp.department || 'IT'}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-400">
@@ -310,14 +321,6 @@ export default function EmployeesTab() {
                     <span>Email</span>
                   </span>
                   <span className="text-slate-200 font-mono text-[11px] truncate max-w-[140px]">{emp.email}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-slate-400">
-                  <span className="flex items-center space-x-1.5">
-                    <Shield className="w-3.5 h-3.5 text-indigo-400" />
-                    <span>Role</span>
-                  </span>
-                  <span className="text-slate-200 font-semibold text-[11px]">{emp.role}</span>
                 </div>
 
                 <div className="flex items-center justify-between text-slate-400">
@@ -337,143 +340,210 @@ export default function EmployeesTab() {
                 }`}>
                   {emp.status}
                 </span>
-                <span className="text-slate-500 font-mono font-bold">ID: {emp.employeeId || emp.id}</span>
+                <span className="text-slate-500 font-mono font-bold">ID: {emp.employeeId || '123456'}</span>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* Add / Edit Employee Modal */}
+      {/* 1:1 Edit Employee Profile Modal Matching User Screenshot */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-xl w-full space-y-4 shadow-2xl">
-            <h3 className="text-base font-extrabold text-white font-heading">
-              {selectedEmp ? `Edit Profile: ${selectedEmp.name}` : 'Add New Employee Profile'}
-            </h3>
+        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 max-w-4xl w-full space-y-6 shadow-2xl my-8">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <h2 className="text-xl font-extrabold text-white font-heading">Edit Employee Profile</h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-white">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
-              <div>
-                <label className="block font-semibold text-slate-300 mb-1">Full Name</label>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={e => setName(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  required
-                />
+            <form onSubmit={handleSubmit} className="space-y-6 text-xs">
+              {/* 2-Column Grid Layout matching User Screenshot 1:1 */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
+                {/* LEFT COLUMN */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">
+                      Employee ID <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={employeeId}
+                      className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl px-4 py-2.5 text-slate-300 font-mono font-bold focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">
+                      Full Name <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                      placeholder="e.g. Harshit Bhootra"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">
+                      Email Address <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                      placeholder="info@harshitbhootra.com"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Phone Number</label>
+                    <input
+                      type="text"
+                      value={phone}
+                      onChange={e => setPhone(e.target.value)}
+                      placeholder="Phone number"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Department</label>
+                    <input
+                      type="text"
+                      value={dept}
+                      onChange={e => setDept(e.target.value)}
+                      placeholder="e.g. IT"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Designation</label>
+                    <input
+                      type="text"
+                      value={designation}
+                      onChange={e => setDesignation(e.target.value)}
+                      placeholder="e.g. Manager"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* RIGHT COLUMN */}
+                <div className="space-y-4">
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">
+                      Date of Joining <span className="text-red-400">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={dateOfJoining}
+                      onChange={e => setDateOfJoining(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Primary Reporting Manager (Manager 1)</label>
+                    <select
+                      value={primaryManager}
+                      onChange={e => setPrimaryManager(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="-- None --">-- None --</option>
+                      <option value="Ananya Sharma">Ananya Sharma (HR Manager)</option>
+                      <option value="Harshit Bhootra">Harshit Bhootra (Super Admin)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Secondary Reporting Manager (Manager 2)</label>
+                    <select
+                      value={secondaryManager}
+                      onChange={e => setSecondaryManager(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="-- None --">-- None --</option>
+                      <option value="Ananya Sharma">Ananya Sharma (HR Manager)</option>
+                      <option value="Harshit Bhootra">Harshit Bhootra (Super Admin)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Employment Status</label>
+                    <select
+                      value={employmentStatus}
+                      onChange={e => setEmploymentStatus(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Employee Type</label>
+                    <select
+                      value={employeeType}
+                      onChange={e => setEmployeeType(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="Full Time">Full Time</option>
+                      <option value="Part Time">Part Time</option>
+                      <option value="Contract">Contract</option>
+                      <option value="Intern">Intern</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Monthly Salary</label>
+                    <input
+                      type="number"
+                      value={salary}
+                      onChange={e => setSalary(Number(e.target.value))}
+                      placeholder="0.00"
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-300 mb-1.5">Weekly Off Day</label>
+                    <select
+                      value={weeklyOff}
+                      onChange={e => setWeeklyOff(e.target.value)}
+                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                    >
+                      <option value="Sunday">Sunday</option>
+                      <option value="Saturday">Saturday</option>
+                      <option value="Friday">Friday</option>
+                    </select>
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={e => setEmail(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Department</label>
-                  <select
-                    value={dept}
-                    onChange={e => setDept(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  >
-                    <option value="Engineering">Engineering</option>
-                    <option value="Human Resources">Human Resources</option>
-                    <option value="Sales">Sales</option>
-                    <option value="Marketing">Marketing</option>
-                    <option value="Finance">Finance</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Designation</label>
-                  <input
-                    type="text"
-                    value={designation}
-                    onChange={e => setDesignation(e.target.value)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">System Access Role</label>
-                  <select
-                    value={role}
-                    onChange={e => setRole(e.target.value as any)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  >
-                    <option value="EMPLOYEE">EMPLOYEE</option>
-                    <option value="MANAGER">MANAGER</option>
-                    <option value="ADMIN">ADMIN</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Account Status</label>
-                  <select
-                    value={status}
-                    onChange={e => setStatus(e.target.value as any)}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  >
-                    <option value="ACTIVE">ACTIVE (Allowed Access)</option>
-                    <option value="INACTIVE">INACTIVE (Revoked Access)</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Monthly Salary (INR)</label>
-                  <input
-                    type="number"
-                    value={salary}
-                    onChange={e => setSalary(Number(e.target.value))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block font-semibold text-slate-300 mb-1">Daily Target (Mins)</label>
-                  <input
-                    type="number"
-                    value={dailyMins}
-                    onChange={e => setDailyMins(Number(e.target.value))}
-                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2 text-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end space-x-2 pt-3 border-t border-slate-800">
+              {/* Form Buttons at bottom left (matching screenshot) */}
+              <div className="flex items-center space-x-3 pt-4 border-t border-slate-800">
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-lg shadow-blue-600/30 transition"
+                >
+                  Save Profile
+                </button>
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 bg-slate-800 text-slate-300 hover:text-white rounded-xl text-xs font-semibold"
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl text-xs font-semibold border border-slate-700 transition"
                 >
                   Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-md shadow-blue-600/30"
-                >
-                  Save Employee Profile
                 </button>
               </div>
             </form>
@@ -493,7 +563,7 @@ export default function EmployeesTab() {
             <p className="text-xs text-slate-300 leading-relaxed">
               Are you sure you want to permanently delete <strong className="text-white">{empToDelete.name}</strong> ({empToDelete.email})?
               <br /><br />
-              <span className="text-red-400 font-semibold">Warning:</span> Once deleted, this employee will no longer be able to log into the portal, and their roster record will be permanently removed.
+              <span className="text-red-400 font-semibold">Warning:</span> Once deleted, this employee will no longer be able to log into the portal.
             </p>
 
             <div className="flex justify-end space-x-2 pt-3 border-t border-slate-800">
