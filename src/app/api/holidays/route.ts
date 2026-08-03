@@ -19,17 +19,54 @@ export async function POST(request: Request) {
 
       if (Array.isArray(rows) && rows.length > 0) {
         rows.forEach((row: any) => {
-          const name = row['Holiday Name'] || row['Name'] || row.name || row.HolidayName;
-          const date = row['Holiday Date'] || row['Date'] || row.date || row.HolidayDate;
-          const isOptional = Boolean(row.isOptional || row.Optional || row['Is Optional']);
+          if (!row) return;
+
+          let name =
+            row['Holiday Name'] ||
+            row['Name'] ||
+            row.name ||
+            row.HolidayName ||
+            row.Title ||
+            row['title'];
+
+          let date =
+            row['Holiday Date'] ||
+            row['Date'] ||
+            row.date ||
+            row.HolidayDate ||
+            row.dateStr;
+
+          // Fallback to array / object values if keys differ
+          if (!name || !date) {
+            const vals = Object.values(row).filter((v) => v !== null && v !== undefined && String(v).trim() !== '');
+            if (vals.length >= 2) {
+              name = name || String(vals[0]);
+              date = date || String(vals[1]);
+            }
+          }
+
+          const isOptional = Boolean(row.isOptional || row.Optional || row['Is Optional'] || row.optional);
 
           if (name && date) {
+            // Standardize date format YYYY-MM-DD
+            let formattedDate = String(date).trim();
+            if (formattedDate.includes('/')) {
+              const parts = formattedDate.split('/');
+              if (parts.length === 3) {
+                // DD/MM/YYYY to YYYY-MM-DD
+                if (parts[2].length === 4) {
+                  formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                }
+              }
+            }
+
             const newHoliday: Holiday = {
-              id: `h-${Date.now()}-${Math.random()}`,
+              id: `h-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
               name: String(name).trim(),
-              date: String(date).trim(),
+              date: formattedDate,
               isOptional,
             };
+
             db.holidays.push(newHoliday);
             importedHolidays.push(newHoliday);
           }
@@ -41,7 +78,8 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         success: true,
-        message: `Successfully imported ${importedHolidays.length} holidays!`,
+        message: `Successfully imported ${importedHolidays.length} holidays into calendar!`,
+        importedCount: importedHolidays.length,
         holidays: db.holidays,
       });
     }

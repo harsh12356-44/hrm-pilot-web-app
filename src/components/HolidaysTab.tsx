@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { CalendarDays, Plus, Calendar, Upload, Trash2, CheckCircle2, FileSpreadsheet, X } from 'lucide-react';
+import { CalendarDays, Plus, Calendar, Upload, Trash2, CheckCircle2, FileSpreadsheet, X, AlertCircle } from 'lucide-react';
 import { Holiday } from '@/lib/types';
 import * as XLSX from 'xlsx';
 
@@ -9,6 +9,7 @@ export default function HolidaysTab() {
   const [holidays, setHolidays] = useState<Holiday[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Single Holiday Form
   const [name, setName] = useState('');
@@ -39,55 +40,112 @@ export default function HolidaysTab() {
     if (!selectedFile) return;
 
     setFile(selectedFile);
+    setMessage('');
+    setErrorMessage('');
+
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
+        const buffer = evt.target?.result;
+        const wb = XLSX.read(buffer, { type: 'array' });
         const wsName = wb.SheetNames[0];
         const ws = wb.Sheets[wsName];
         const data = XLSX.utils.sheet_to_json(ws);
-        setParsedRows(data);
-        setMessage(`Parsed ${data.length} holiday records from ${selectedFile.name}`);
+
+        if (Array.isArray(data) && data.length > 0) {
+          setParsedRows(data);
+          setMessage(`Successfully loaded ${data.length} holiday records from ${selectedFile.name}`);
+        } else {
+          // Plain CSV text parsing fallback
+          parseTextFallback(selectedFile);
+        }
       } catch (err) {
-        setMessage('Selected holiday file ready for import.');
+        parseTextFallback(selectedFile);
       }
     };
-    reader.readAsBinaryString(selectedFile);
+    reader.readAsArrayBuffer(selectedFile);
+  };
+
+  const parseTextFallback = (selectedFile: File) => {
+    const textReader = new FileReader();
+    textReader.onload = (evt) => {
+      try {
+        const text = String(evt.target?.result || '');
+        const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+
+        if (lines.length === 0) {
+          setErrorMessage('Selected file appears to be empty.');
+          return;
+        }
+
+        const rows: any[] = [];
+        // Skip header if first row has words like Name or Date
+        const startIndex = lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('date') ? 1 : 0;
+
+        for (let i = startIndex; i < lines.length; i++) {
+          const cols = lines[i].split(',').map((c) => c.replace(/^["']|["']$/g, '').trim());
+          if (cols.length >= 2 && cols[0] && cols[1]) {
+            rows.push({
+              'Holiday Name': cols[0],
+              'Holiday Date': cols[1],
+              Optional: cols[2] ? cols[2].toLowerCase() === 'true' || cols[2] === '1' : false,
+            });
+          }
+        }
+
+        if (rows.length > 0) {
+          setParsedRows(rows);
+          setMessage(`Parsed ${rows.length} holiday records from ${selectedFile.name}`);
+        } else {
+          setErrorMessage('Could not find valid Holiday Name and Date columns in file.');
+        }
+      } catch (err) {
+        setErrorMessage('Failed to read spreadsheet file. Please check CSV format.');
+      }
+    };
+    textReader.readAsText(selectedFile);
   };
 
   const handleImportHolidaysSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file && parsedRows.length === 0) {
-      setMessage('Please choose a holiday list spreadsheet (.csv, .xls, .xlsx).');
+      setErrorMessage('Please click "Choose File" to select a holiday list spreadsheet (.csv, .xls, .xlsx).');
       return;
     }
 
     setImporting(true);
+    setErrorMessage('');
     try {
+      const rowsToSubmit = parsedRows.length > 0 ? parsedRows : [
+        { 'Holiday Name': 'Independence Day', 'Holiday Date': '2026-08-15', Optional: false },
+        { 'Holiday Name': 'Gandhi Jayanti', 'Holiday Date': '2026-10-02', Optional: false },
+        { 'Holiday Name': 'Diwali Festival', 'Holiday Date': '2026-11-08', Optional: false },
+      ];
+
       const res = await fetch('/api/holidays', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action: 'BULK_IMPORT',
-          rows: parsedRows.length > 0 ? parsedRows : [
-            { 'Holiday Name': 'Independence Day', 'Holiday Date': '2024-08-15', Optional: false },
-            { 'Holiday Name': 'Gandhi Jayanti', 'Holiday Date': '2024-10-02', Optional: false },
-            { 'Holiday Name': 'Diwali', 'Holiday Date': '2024-11-01', Optional: false },
-          ],
+          rows: rowsToSubmit,
         }),
       });
 
       const data = await res.json();
       setImporting(false);
-      setMessage(`Successfully imported holiday list into calendar!`);
-      setTimeout(() => setMessage(''), 4000);
-      setFile(null);
-      setParsedRows([]);
-      fetchHolidays();
+
+      if (data.success) {
+        setMessage(`Successfully imported ${data.importedCount || rowsToSubmit.length} holidays into the calendar!`);
+        setTimeout(() => setMessage(''), 5000);
+        setFile(null);
+        setParsedRows([]);
+        fetchHolidays();
+      } else {
+        setErrorMessage(data.error || 'Failed to import holiday list.');
+      }
     } catch (err) {
       setImporting(false);
-      setMessage('Error importing holiday list file.');
+      setErrorMessage('Error uploading holiday list file.');
     }
   };
 
@@ -126,7 +184,7 @@ export default function HolidaysTab() {
 
   return (
     <div className="space-y-6 text-slate-100 pb-12">
-      {/* Header */}
+      {/* Header Banner */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
           <h2 className="text-xl font-extrabold text-white flex items-center space-x-2 font-heading">
@@ -147,8 +205,15 @@ export default function HolidaysTab() {
 
       {message && (
         <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-semibold text-emerald-400 flex items-center space-x-2">
-          <CheckCircle2 className="w-4 h-4" />
+          <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>{message}</span>
+        </div>
+      )}
+
+      {errorMessage && (
+        <div className="p-3.5 bg-red-500/10 border border-red-500/30 rounded-xl text-xs font-semibold text-red-400 flex items-center space-x-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -192,6 +257,22 @@ export default function HolidaysTab() {
             {importing ? 'Importing Holiday List...' : 'Import Holidays'}
           </button>
         </form>
+
+        {parsedRows.length > 0 && (
+          <div className="pt-3 border-t border-slate-800 space-y-2">
+            <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+              Parsed Preview ({parsedRows.length} Holidays):
+            </p>
+            <div className="max-h-36 overflow-y-auto border border-slate-800 rounded-xl p-2 bg-slate-950 space-y-1">
+              {parsedRows.slice(0, 5).map((r, idx) => (
+                <div key={idx} className="flex items-center justify-between text-[11px] text-slate-300 font-mono">
+                  <span>{r['Holiday Name'] || r['Name'] || r.name || Object.values(r)[0]}</span>
+                  <span className="text-blue-400 font-bold">{r['Holiday Date'] || r['Date'] || r.date || Object.values(r)[1]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Current Company Holidays Grid */}
