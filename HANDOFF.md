@@ -10,7 +10,7 @@
 ---
 
 ## 2. 1:1 WordPress Plugin Feature Parity Matrix
-All 13 WordPress plugin admin tabs, employee/manager shortcode portals, biometric punch importers, and leave policies have been fully cloned into Next.js 15:
+All 13 WordPress plugin admin tabs, employee/manager shortcode portals, biometric punch importers, and leave policies have been cloned into Next.js 15:
 
 1. **Dashboard Overview (`/admin`)**: KPI Stat Cards, Shortcut Operations, Attendance Trend Visualizer.
 2. **Employees Roster (`/admin/employees`)**: Profile Manager, Salary & Shift Attributes, CSV Import.
@@ -28,14 +28,16 @@ All 13 WordPress plugin admin tabs, employee/manager shortcode portals, biometri
 14. **Payroll & Salary Deduction Preview (`/admin/payroll`)**: Monthly Salary Calculations, Short Hours Deductions, Excel Exporter.
 15. **System Audit Logs (`/admin/audit-logs`)**: Event Logging, System Operations Roster.
 16. **Manager Desk (`/manager`)**: Direct Manager Approvals, Team Reporting.
-17. **Employee Portal (`/employee`)**: Live Biometric Punch Clock, Leave Quota Summary, Leave Application Modal.
+17. **1:1 Employee Portal (`/employee`)**: Dynamic 9-item sidebar navigation matching WordPress plugin (Dashboard, Attendance, Apply Leave, Leave History, Team Approvals, Working Hours, Holidays List, Notifications, My Profile). Includes 1:1 Apply for Leave form, Leave Balance progress bars (2 of 2 left Q3), Approval Flow timeline, and Employee ID badge.
 
 ---
 
-## 3. Key Architectural Decisions & Bug Fixes
+## 3. Key Architectural Decisions & Security Rules
+- **Role-Based Feature Hiding**: Employee view (`/employee`) hides HR administrative actions (e.g., `Import Biometric File` button and manual punch correction controls are restricted to HR Admin).
+- **Dynamic Role-Based Sidebar Navigation**: Sidebar dynamically switches items based on active role (`ADMIN`, `MANAGER`, `EMPLOYEE`) and emits instant `roleChange` window events without page reload.
 - **Webpack Dev Cache Fix**: Disabled Webpack disk pack caching in development mode in `next.config.ts` to prevent `.next` cache corruption errors permanently.
 - **Hydration Warning Fix**: Added `suppressHydrationWarning` to both `<html>` and `<body>` in `src/app/layout.tsx` to handle browser extension DOM attribute injections cleanly.
-- **Full Light/Dark Theme Switcher**: Added a topbar toggle button in `Navbar.tsx` that switches the entire web application (navbar, sidebar, cards, tables, inputs) between Dark Navy and 100% Crisp White Light Theme with persistent `localStorage` support.
+- **Full Light/Dark Theme Switcher**: Topbar toggle button in `Navbar.tsx` switches the entire application between Dark Navy and 100% Crisp White Light Theme with persistent `localStorage` support.
 
 ---
 
@@ -44,4 +46,4 @@ All 13 WordPress plugin admin tabs, employee/manager shortcode portals, biometri
 cd d:/Ravina/Antigravity/hrm-pilot-web-app
 npm run dev
 ```
-Open `http://localhost:3000/admin` in your browser.
+Open `http://localhost:3000/employee` or `http://localhost:3000/admin` in your browser.
