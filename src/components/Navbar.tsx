@@ -72,6 +72,9 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
   const setRoleCookie = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE') => {
     document.cookie = `hrm_user_role=${role}; path=/`;
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new Event('roleChange'));
+    }
   };
 
   const handleAccountSwitch = (e: React.ChangeEvent<HTMLSelectElement>) => {
