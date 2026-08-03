@@ -16,9 +16,10 @@ export default function PayrollTab() {
     try {
       const res = await fetch(`/api/payroll?month=${month}&year=${year}`);
       const data = await res.json();
-      setPreviews(data.previews || []);
+      setPreviews(Array.isArray(data.previews) ? data.previews : []);
     } catch (err) {
       console.error(err);
+      setPreviews([]);
     } finally {
       setLoading(false);
     }
@@ -46,17 +47,17 @@ export default function PayrollTab() {
   };
 
   const handleExportPayrollCSV = () => {
-    const exportData = previews.map(p => ({
-      'Employee Name': p.employeeName,
-      'Department': p.department,
-      'Monthly Salary (INR)': p.monthlySalary,
-      'Required Hours': p.requiredHours,
-      'Credited Hours': p.creditedHours,
-      'Short Hours': p.shortHours,
-      'Hourly Rate (INR)': p.hourlyRate,
-      'Estimated Deduction (INR)': p.estimatedDeduction,
-      'Missing Punches': p.missingPunches,
-      'Status': p.status,
+    const exportData = previews.map((p) => ({
+      'Employee Name': p.employeeName || '',
+      'Department': p.department || '',
+      'Monthly Salary (INR)': p.monthlySalary || 0,
+      'Required Hours': p.requiredHours || 0,
+      'Credited Hours': p.creditedHours || 0,
+      'Short Hours': p.shortHours || 0,
+      'Hourly Rate (INR)': p.hourlyRate || 0,
+      'Estimated Deduction (INR)': p.estimatedDeduction || 0,
+      'Missing Punches': p.missingPunches || 0,
+      'Status': p.status || '',
       'HR Comment': p.hrComment || '',
     }));
 
@@ -66,8 +67,8 @@ export default function PayrollTab() {
     XLSX.writeFile(wb, `HRM_Pilot_Payroll_Preview_${month}_${year}.xlsx`);
   };
 
-  const totalMonthlySalary = previews.reduce((sum, p) => sum + p.monthlySalary, 0);
-  const totalDeduction = previews.reduce((sum, p) => sum + p.estimatedDeduction, 0);
+  const totalMonthlySalary = previews.reduce((sum, p) => sum + (p.monthlySalary || 0), 0);
+  const totalDeduction = previews.reduce((sum, p) => sum + (p.estimatedDeduction || 0), 0);
   const netPayable = totalMonthlySalary - totalDeduction;
 
   return (
@@ -75,7 +76,7 @@ export default function PayrollTab() {
       {/* Header */}
       <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-extrabold text-white flex items-center space-x-2">
+          <h2 className="text-xl font-extrabold text-white flex items-center space-x-2 font-heading">
             <DollarSign className="w-5 h-5 text-emerald-400" />
             <span>Payroll & Salary Deduction Preview</span>
           </h2>
@@ -95,15 +96,15 @@ export default function PayrollTab() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
           <p className="text-xs text-slate-400 font-semibold">Total Gross Monthly Payroll</p>
-          <p className="text-2xl font-black text-white mt-1">₹{totalMonthlySalary.toLocaleString()}</p>
+          <p className="text-2xl font-black text-white mt-1 font-heading">₹{(totalMonthlySalary || 0).toLocaleString()}</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
           <p className="text-xs text-slate-400 font-semibold">Total Short Hours Deductions</p>
-          <p className="text-2xl font-black text-red-400 mt-1">₹{totalDeduction.toLocaleString()}</p>
+          <p className="text-2xl font-black text-red-400 mt-1 font-heading">₹{(totalDeduction || 0).toLocaleString()}</p>
         </div>
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 shadow-lg">
           <p className="text-xs text-slate-400 font-semibold">Net Estimated Payable</p>
-          <p className="text-2xl font-black text-emerald-400 mt-1">₹{netPayable.toLocaleString()}</p>
+          <p className="text-2xl font-black text-emerald-400 mt-1 font-heading">₹{(netPayable || 0).toLocaleString()}</p>
         </div>
       </div>
 
@@ -112,7 +113,7 @@ export default function PayrollTab() {
         <span className="text-xs text-slate-400 font-semibold">Select Pay Period:</span>
         <select
           value={month}
-          onChange={e => setMonth(Number(e.target.value))}
+          onChange={(e) => setMonth(Number(e.target.value))}
           className="bg-slate-800 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white"
         >
           {Array.from({ length: 12 }, (_, i) => (
@@ -141,52 +142,64 @@ export default function PayrollTab() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60">
-              {previews.map(p => (
-                <tr key={p.id} className="hover:bg-slate-800/40 transition">
-                  <td className="py-3.5 px-4">
-                    <p className="font-semibold text-white">{p.employeeName}</p>
-                    <p className="text-[10px] text-slate-400">{p.department}</p>
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-200">
-                    ₹{p.monthlySalary.toLocaleString()}
-                  </td>
-                  <td className="py-3.5 px-4 text-center font-mono text-slate-300">
-                    {p.requiredHours}h / <span className="text-emerald-400">{p.creditedHours}h</span>
-                  </td>
-                  <td className="py-3.5 px-4 text-center font-mono font-bold text-amber-400">
-                    {p.shortHours}h
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono text-slate-400">
-                    ₹{p.hourlyRate}/h
-                  </td>
-                  <td className="py-3.5 px-4 text-right font-mono font-bold text-red-400">
-                    ₹{p.estimatedDeduction.toLocaleString()}
-                  </td>
-                  <td className="py-3.5 px-4 text-center">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      p.status === 'Finalized'
-                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                        : p.status === 'Needs Attendance Review'
-                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                        : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
-                    }`}>
-                      {p.status}
-                    </span>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    {p.status !== 'Finalized' ? (
-                      <button
-                        onClick={() => handleFinalize(p.id, p.hrComment || '')}
-                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold transition"
-                      >
-                        Finalize
-                      </button>
-                    ) : (
-                      <span className="text-[11px] text-slate-500 font-mono">Approved</span>
-                    )}
-                  </td>
+              {loading ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-slate-500">Loading payroll previews...</td>
                 </tr>
-              ))}
+              ) : previews.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-8 text-center text-slate-500">No payroll records found for this period.</td>
+                </tr>
+              ) : (
+                previews.map((p) => (
+                  <tr key={p.id} className="hover:bg-slate-800/40 transition">
+                    <td className="py-3.5 px-4">
+                      <p className="font-semibold text-white">{p.employeeName}</p>
+                      <p className="text-[10px] text-slate-400">{p.department}</p>
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono font-semibold text-slate-200">
+                      ₹{(p.monthlySalary || 0).toLocaleString()}
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-mono text-slate-300">
+                      {p.requiredHours}h / <span className="text-emerald-400">{p.creditedHours}h</span>
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-mono font-bold text-amber-400">
+                      {p.shortHours}h
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono text-slate-400">
+                      ₹{p.hourlyRate}/h
+                    </td>
+                    <td className="py-3.5 px-4 text-right font-mono font-bold text-red-400">
+                      ₹{(p.estimatedDeduction || 0).toLocaleString()}
+                    </td>
+                    <td className="py-3.5 px-4 text-center">
+                      <span
+                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                          p.status === 'Finalized'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : p.status === 'Needs Attendance Review'
+                            ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                            : 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+                        }`}
+                      >
+                        {p.status}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4 text-right">
+                      {p.status !== 'Finalized' ? (
+                        <button
+                          onClick={() => handleFinalize(p.id, p.hrComment || '')}
+                          className="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-[11px] font-semibold transition"
+                        >
+                          Finalize
+                        </button>
+                      ) : (
+                        <span className="text-[11px] text-slate-500 font-mono">Approved</span>
+                      )}
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
