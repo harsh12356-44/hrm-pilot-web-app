@@ -22,22 +22,23 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { employeeId, leaveType, dayType, startDate, endDate, note, handoverNote, emergencyContact } = body;
+    const employeeId = body.employeeId || 'emp-1';
+    const { leaveType, dayType, startDate, endDate, note, handoverNote, emergencyContact, reason } = body;
 
-    if (!employeeId || !leaveType || !startDate) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    if (!startDate) {
+      return NextResponse.json({ error: 'Missing required start date' }, { status: 400 });
     }
 
     const db = getDbData();
-    const emp = db.employees.find(e => e.id === employeeId);
+    const emp = db.employees.find(e => e.id === employeeId || e.name === body.employeeName) || db.employees[0];
 
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : start;
 
-    // 1. Overlap detection check
+    // Overlap detection check
     const existingOverlap = db.leaveRecords.find(
       l =>
-        l.employeeId === employeeId &&
+        l.employeeId === emp.id &&
         l.status !== 'REJECTED' &&
         l.status !== 'CANCELLED' &&
         !(new Date(l.startDate) > end || new Date(l.endDate) < start)
@@ -66,31 +67,30 @@ export async function POST(request: Request) {
 
     const newRecord: LeaveRecord = {
       id: `l-${Date.now()}`,
-      employeeId,
-      leaveType,
+      employeeId: emp.id,
+      leaveType: leaveType || 'Casual Leave',
       dayType: dayType || 'full',
       startDate,
       endDate: endDate || startDate,
       daysCount,
       quarter,
       year: start.getFullYear(),
-      status: 'APPROVED',
-      note: note || '',
+      status: 'PENDING',
+      note: note || reason || 'Leave application',
       handoverNote: handoverNote || '',
       emergencyContact: emergencyContact || '',
       createdAt: new Date().toISOString(),
     };
 
-    db.leaveRecords.push(newRecord);
+    db.leaveRecords.unshift(newRecord);
     logAudit('Submit Leave Request', 'LeaveRecord', newRecord.id, undefined, JSON.stringify(newRecord));
 
-    // Dispatch system notification
     if (emp) {
       addNotification(
         emp.id,
         'leave_submitted',
-        'Leave Period Recorded',
-        `Your request for ${leaveType} (${startDate} to ${endDate || startDate}) has been recorded.`
+        'Leave Application Submitted',
+        `Your request for ${leaveType} (${startDate} to ${endDate || startDate}) has been submitted for approval.`
       );
     }
 
@@ -100,10 +100,45 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: 'Leave period recorded successfully',
+      message: 'Leave request submitted successfully',
       record: newRecord,
       summaries,
+      records: db.leaveRecords,
     });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    const { id, status, approverRole } = body;
+
+    const db = getDbData();
+    const index = db.leaveRecords.findIndex(l => l.id === id);
+
+    if (index !== -1) {
+      const oldVal = JSON.stringify(db.leaveRecords[index]);
+      db.leaveRecords[index].status = status;
+
+      logAudit(`Leave Request ${status}`, 'LeaveRecord', id, oldVal, JSON.stringify(db.leaveRecords[index]));
+
+      const emp = db.employees.find(e => e.id === db.leaveRecords[index].employeeId);
+      if (emp) {
+        addNotification(
+          emp.id,
+          'leave_status_updated',
+          `Leave Request ${status}`,
+          `Your leave request #${id} has been ${status.toLowerCase()} by ${approverRole || 'HR'}.`
+        );
+      }
+
+      saveDbData(db);
+      return NextResponse.json({ success: true, record: db.leaveRecords[index], records: db.leaveRecords });
+    }
+
+    return NextResponse.json({ error: 'Leave record not found' }, { status: 404 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }
