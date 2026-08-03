@@ -12,9 +12,9 @@
 ## 2. 1:1 WordPress Plugin Feature Parity Matrix
 All 13 WordPress plugin admin tabs, employee/manager shortcode portals, biometric punch importers, and leave policies have been cloned into Next.js 15:
 
-1. **Dashboard Overview (`/admin`)**: KPI Stat Cards, Shortcut Operations, Attendance Trend Visualizer.
-2. **Employees Roster (`/admin/employees`)**: Profile Manager, Salary & Shift Attributes, CSV Import.
-3. **Managers & Department Heads (`/admin/managers`)**: Manager Roster, Subordinate Allocations, Direct Approvals.
+1. **Dashboard Overview (`/admin`)**: KPI Stat Cards, Shortcut Operations, Interconnected Attendance Trend Visualizer (15-day pillar chart autofetched from DB), Recent & Pending Leave Requests, Employees Current Month Overview.
+2. **Employees Roster (`/admin/employees`)**: Profile Manager, 1:1 2-Column Edit Employee Profile Modal (13 fields: Employee ID, Date of Joining, Primary/Secondary Managers, Employment Status, Employee Type, Weekly Off Day, Base Salary), 1-Click Status Deactivate Toggle, Permanent Delete Action, and Automatic Portal Access Revocation for deactivated/deleted members.
+3. **Managers & Department Heads (`/admin/managers`)**: Manager Roster, Assign Subordinates Modal, Remove Subordinates Action, View Direct Subordinates Chips, and Designate New Manager Modal. Fully interconnected with Employee Directory additions/edits.
 4. **Departments Desk (`/admin/departments`)**: Code Allocations, Head Assignment, Member Counts.
 5. **Attendance Grid (`/admin/attendance`)**: Monthly Matrix, Status Codes (`P`, `HD`, `A`, `WO`), Manual Punch Corrections.
 6. **Biometric Attendance Import (`/admin/attendance/import`)**: Punch CSV/XLSX Uploader, Real-time Validation Engine.
@@ -32,11 +32,12 @@ All 13 WordPress plugin admin tabs, employee/manager shortcode portals, biometri
 
 ---
 
-## 3. Key Architectural Decisions & Security Rules
-- **Role-Based Feature Hiding**: Employee view (`/employee`) hides HR administrative actions (e.g., `Import Biometric File` button and manual punch correction controls are restricted to HR Admin).
+## 3. Key Architectural Decisions & Interconnection Rules
+- **Full Central Data Interconnectivity**: Database modifications (punching in/out, importing biometric CSV files, submitting leave requests, approving/rejecting applications, adding/editing employees) instantly update `data/db.json` and automatically reflect across Admin Dashboard, Managers Desk, and Employee Portal without full page reloads.
+- **Dynamic Managers Synchronization**: Adding or editing an employee with role `MANAGER` or assigning a `primaryManager` automatically synchronizes the Managers Desk roster and subordinate lists in real time.
+- **Role-Based Security & Deactivation Protection**: Employee view (`/employee`) hides HR administrative actions. Deactivated (`INACTIVE`) or deleted employees are automatically denied access to the Employee Portal with a prominent alert banner.
 - **Dynamic Role-Based Sidebar Navigation**: Sidebar dynamically switches items based on active role (`ADMIN`, `MANAGER`, `EMPLOYEE`) and emits instant `roleChange` window events without page reload.
 - **Webpack Dev Cache Fix**: Disabled Webpack disk pack caching in development mode in `next.config.ts` to prevent `.next` cache corruption errors permanently.
-- **Hydration Warning Fix**: Added `suppressHydrationWarning` to both `<html>` and `<body>` in `src/app/layout.tsx` to handle browser extension DOM attribute injections cleanly.
 - **Full Light/Dark Theme Switcher**: Topbar toggle button in `Navbar.tsx` switches the entire application between Dark Navy and 100% Crisp White Light Theme with persistent `localStorage` support.
 
 ---
