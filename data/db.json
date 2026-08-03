@@ -153,6 +153,90 @@
       "name": "New Year's Day",
       "date": "2027-01-01",
       "isOptional": true
+    },
+    {
+      "id": "h-1785763170718-8570",
+      "name": "Independence Day",
+      "date": "2026-08-15",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763170718-6078",
+      "name": "Mahatma Gandhi Jayanti",
+      "date": "2026-10-02",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763170718-6680",
+      "name": "Diwali Festival",
+      "date": "2026-11-08",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763170718-8650",
+      "name": "Christmas Day",
+      "date": "2026-12-25",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763170718-403",
+      "name": "New Year's Day",
+      "date": "2027-01-01",
+      "isOptional": true
+    },
+    {
+      "id": "h-1785763554154-7104",
+      "name": "Date",
+      "date": "Day",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-7223",
+      "name": "01 January 2026",
+      "date": "Thursday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-3254",
+      "name": "46048.00011574074",
+      "date": "Monday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-391",
+      "name": "46085.00011574074",
+      "date": "Wednesday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-3596",
+      "name": "46249.00011574074",
+      "date": "Saturday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-4016",
+      "name": "46262.00011574074",
+      "date": "Wednesday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-564",
+      "name": "46334.00011574074",
+      "date": "Sunday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-2049",
+      "name": "46335.00011574074",
+      "date": "Monday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785763554154-8782",
+      "name": "46381.00011574074",
+      "date": "Friday",
+      "isOptional": false
     }
   ],
   "auditLogs": [
