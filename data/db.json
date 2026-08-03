@@ -141,6 +141,60 @@
       "name": "Diwali Festival",
       "date": "2026-11-08",
       "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-6026",
+      "name": "Date",
+      "date": "Day",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-4741",
+      "name": "46023",
+      "date": "Thursday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-5346",
+      "name": "46048",
+      "date": "Monday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-6308",
+      "name": "46085",
+      "date": "Wednesday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-1388",
+      "name": "46249",
+      "date": "Saturday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-5378",
+      "name": "46262",
+      "date": "Wednesday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-4951",
+      "name": "46334",
+      "date": "Sunday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-8459",
+      "name": "46335",
+      "date": "Monday",
+      "isOptional": false
+    },
+    {
+      "id": "h-1785762953680-5598",
+      "name": "46381",
+      "date": "Friday",
+      "isOptional": false
     }
   ],
   "auditLogs": [

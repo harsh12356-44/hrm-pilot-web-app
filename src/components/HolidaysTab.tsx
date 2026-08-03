@@ -56,7 +56,6 @@ export default function HolidaysTab() {
           setParsedRows(data);
           setMessage(`Successfully loaded ${data.length} holiday records from ${selectedFile.name}`);
         } else {
-          // Plain CSV text parsing fallback
           parseTextFallback(selectedFile);
         }
       } catch (err) {
@@ -79,7 +78,6 @@ export default function HolidaysTab() {
         }
 
         const rows: any[] = [];
-        // Skip header if first row has words like Name or Date
         const startIndex = lines[0].toLowerCase().includes('name') || lines[0].toLowerCase().includes('date') ? 1 : 0;
 
         for (let i = startIndex; i < lines.length; i++) {
@@ -108,18 +106,17 @@ export default function HolidaysTab() {
 
   const handleImportHolidaysSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file && parsedRows.length === 0) {
-      setErrorMessage('Please click "Choose File" to select a holiday list spreadsheet (.csv, .xls, .xlsx).');
-      return;
-    }
-
     setImporting(true);
     setErrorMessage('');
+
     try {
+      // Default sample company holiday schedule if no file selected
       const rowsToSubmit = parsedRows.length > 0 ? parsedRows : [
         { 'Holiday Name': 'Independence Day', 'Holiday Date': '2026-08-15', Optional: false },
-        { 'Holiday Name': 'Gandhi Jayanti', 'Holiday Date': '2026-10-02', Optional: false },
+        { 'Holiday Name': 'Mahatma Gandhi Jayanti', 'Holiday Date': '2026-10-02', Optional: false },
         { 'Holiday Name': 'Diwali Festival', 'Holiday Date': '2026-11-08', Optional: false },
+        { 'Holiday Name': 'Christmas Day', 'Holiday Date': '2026-12-25', Optional: false },
+        { 'Holiday Name': 'New Year\'s Day', 'Holiday Date': '2027-01-01', Optional: true },
       ];
 
       const res = await fetch('/api/holidays', {
