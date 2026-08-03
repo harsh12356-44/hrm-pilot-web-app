@@ -33,6 +33,28 @@ function EmployeePortalContent() {
   const [duration, setDuration] = useState('00:00:00');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [employeeStatus, setEmployeeStatus] = useState<'ACTIVE' | 'INACTIVE' | 'NOT_FOUND'>('ACTIVE');
+
+  // Check if current employee is active in DB
+  useEffect(() => {
+    async function checkEmployeeStatus() {
+      try {
+        const res = await fetch('/api/employees');
+        const data = await res.json();
+        const emp = data.find((e: any) => e.id === 'emp-1' || e.employeeId === 'HB001' || e.name === 'Harshit Bhootra');
+        if (!emp) {
+          setEmployeeStatus('NOT_FOUND');
+        } else if (emp.status === 'INACTIVE') {
+          setEmployeeStatus('INACTIVE');
+        } else {
+          setEmployeeStatus('ACTIVE');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    checkEmployeeStatus();
+  }, []);
 
   // Apply Leave Form state (1:1 Screenshot 1)
   const [leaveType, setLeaveType] = useState('Casual Leave');
@@ -158,6 +180,18 @@ function EmployeePortalContent() {
             <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs font-semibold text-emerald-400 flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4" />
               <span>{message}</span>
+            </div>
+          )}
+
+          {employeeStatus !== 'ACTIVE' && (
+            <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-xs font-semibold text-red-400 flex items-center space-x-3 shadow-xl">
+              <div className="w-3 h-3 rounded-full bg-red-500 shrink-0 animate-ping"></div>
+              <div>
+                <p className="font-extrabold text-sm text-red-300 font-heading">Portal Access Revoked</p>
+                <p className="text-slate-300 mt-0.5">
+                  Your employee account has been {employeeStatus === 'INACTIVE' ? 'deactivated' : 'permanently removed'} by HR Admin. Access to Punch Clock, Leave Applications, and Portal features is denied.
+                </p>
+              </div>
             </div>
           )}
 
