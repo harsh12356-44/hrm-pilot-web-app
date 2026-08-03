@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
-import { Bell, Check, X, LogOut, Shield, UserCheck, LayoutDashboard, UserCheck2, User } from 'lucide-react';
+import { Bell, Check, X, LogOut, Shield, UserCheck, LayoutDashboard, UserCheck2, User, Sun, Moon } from 'lucide-react';
 import { NotificationItem } from '@/lib/types';
 
 interface NavbarProps {
@@ -16,6 +16,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   const pathname = usePathname();
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
 
   const fetchNotifications = async () => {
     try {
@@ -29,7 +30,25 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
   useEffect(() => {
     fetchNotifications();
+    const savedTheme = (localStorage.getItem('hrm_theme') as 'dark' | 'light') || 'dark';
+    setTheme(savedTheme);
+    if (savedTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
   }, []);
+
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('hrm_theme', nextTheme);
+    if (nextTheme === 'light') {
+      document.documentElement.classList.add('light');
+    } else {
+      document.documentElement.classList.remove('light');
+    }
+  };
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
@@ -63,7 +82,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   };
 
   return (
-    <header className="bg-[#0f172a] border-b border-slate-800 text-white sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-xl">
+    <header className="bg-[#0f172a] border-b border-slate-800 text-white sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-xl transition-colors duration-300">
       <div className="flex items-center space-x-6">
         <Link href="/admin" onClick={() => setRoleCookie('ADMIN')} className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-lg shadow-md text-white">
@@ -122,8 +141,8 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
         </div>
       </div>
 
-      <div className="flex items-center space-x-4">
-        {/* WP Admin Account Switcher Dropdown (Matching class-hrm-admin.php line 178) */}
+      <div className="flex items-center space-x-3 sm:space-x-4">
+        {/* WP Admin Account Switcher Dropdown */}
         <div className="hidden md:flex items-center space-x-2 bg-slate-900/80 px-3 py-1.5 rounded-xl border border-slate-800">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Switch View:</span>
           <select
@@ -148,6 +167,25 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
             Role: <span className="text-white font-extrabold">{currentRole}</span>
           </span>
         </div>
+
+        {/* Theme Switcher Toggle (Light / Dark Mode) */}
+        <button
+          onClick={toggleTheme}
+          className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-400 hover:text-amber-300 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm"
+          title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+        >
+          {theme === 'dark' ? (
+            <>
+              <Sun className="w-4 h-4 text-amber-400" />
+              <span className="hidden xl:inline text-amber-300">Light</span>
+            </>
+          ) : (
+            <>
+              <Moon className="w-4 h-4 text-indigo-400" />
+              <span className="hidden xl:inline text-indigo-400">Dark</span>
+            </>
+          )}
+        </button>
 
         {/* Notifications Bell */}
         <div className="relative">
