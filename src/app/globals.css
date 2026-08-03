@@ -26,29 +26,36 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-/* Light Theme Styling Overrides */
+/* Light Theme Styling Comprehensive Overrides */
 html.light body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
 }
 
+html.light main {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* Header & Navbars */
 html.light header {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
 }
 
-html.light header span.font-heading {
-  color: #0f172a !important;
-}
-
+/* Sidebars */
 html.light aside {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
 }
 
+/* Cards, Wrappers & Panels */
 html.light .bg-slate-900,
+html.light .bg-slate-950,
 html.light .bg-slate-950\/60,
+html.light .bg-slate-950\/40,
 html.light .bg-[#0f172a] {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
@@ -56,6 +63,8 @@ html.light .bg-[#0f172a] {
 }
 
 html.light .bg-slate-800,
+html.light .bg-slate-800\/90,
+html.light .bg-slate-800\/40,
 html.light .bg-slate-900\/50,
 html.light .bg-slate-900\/80,
 html.light .bg-slate-900\/90 {
@@ -64,6 +73,17 @@ html.light .bg-slate-900\/90 {
   color: #0f172a !important;
 }
 
+/* Hero Banners gradient overrides for Light Mode */
+html.light .bg-gradient-to-r.from-blue-900\/80,
+html.light .bg-gradient-to-r.from-purple-900\/80,
+html.light .bg-gradient-to-r.from-emerald-900\/80,
+html.light .bg-gradient-to-r.from-blue-600.to-indigo-600 {
+  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%) !important;
+  border-color: #bfdbfe !important;
+  color: #1e3a8a !important;
+}
+
+/* Text Overrides */
 html.light .text-white {
   color: #0f172a !important;
 }
@@ -71,7 +91,7 @@ html.light .text-white {
 html.light .text-slate-100,
 html.light .text-slate-200,
 html.light .text-slate-300 {
-  color: #334155 !important;
+  color: #1e293b !important;
 }
 
 html.light .text-slate-400,
@@ -79,10 +99,37 @@ html.light .text-slate-500 {
   color: #64748b !important;
 }
 
+/* Borders & Dividers */
 html.light .border-slate-800,
+html.light .border-slate-700,
 html.light .border-slate-700\/60,
+html.light .divide-slate-800,
 html.light .divide-slate-800\/60 {
   border-color: #e2e8f0 !important;
+}
+
+/* Inputs, Selects & Textareas */
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+/* Table Hover & Headers */
+html.light tr:hover {
+  background-color: #f8fafc !important;
+}
+
+html.light thead tr {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
 }
 
 h1, h2, h3, h4, .font-heading {
