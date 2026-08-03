@@ -20,27 +20,48 @@ export async function GET() {
     deptsMap.set(dept, (deptsMap.get(dept) || 0) + 1);
   });
 
-  let customDepts: DepartmentItem[] = db.departments || [];
+  // Seed default departments ONCE if db.departments is completely uninitialized
+  if (!db.departments) {
+    db.departments = [
+      {
+        id: 'dept-engineering',
+        code: 'ENG',
+        name: 'Engineering',
+        managerName: 'Harshit Bhootra',
+        description: 'Core Engineering Department operations and personnel management.',
+        employeeCount: deptsMap.get('Engineering') || 0,
+      },
+      {
+        id: 'dept-human-resources',
+        code: 'HR',
+        name: 'Human Resources',
+        managerName: 'Ananya Sharma',
+        description: 'Core Human Resources Department operations and personnel management.',
+        employeeCount: deptsMap.get('Human Resources') || 0,
+      },
+      {
+        id: 'dept-sales',
+        code: 'SAL',
+        name: 'Sales',
+        managerName: 'Rajesh Kumar',
+        description: 'Core Sales Department operations and personnel management.',
+        employeeCount: deptsMap.get('Sales') || 0,
+      },
+      {
+        id: 'dept-marketing',
+        code: 'MKT',
+        name: 'Marketing',
+        managerName: 'Harshit Bhootra',
+        description: 'Core Marketing Department operations and personnel management.',
+        employeeCount: deptsMap.get('Marketing') || 0,
+      },
+    ];
+    saveDbData(db);
+  }
 
-  // Seed default departments if missing
-  const defaultNames = ['Engineering', 'Human Resources', 'Sales', 'Marketing'];
-  defaultNames.forEach(name => {
-    if (!customDepts.some(d => d.name.toLowerCase() === name.toLowerCase())) {
-      customDepts.push({
-        id: `dept-${name.toLowerCase()}`,
-        code: name.substring(0, 3).toUpperCase(),
-        name,
-        managerName: db.employees.find(e => e.department === name && e.role === 'MANAGER')?.name || 'Harshit Bhootra',
-        description: `Core ${name} Department operations and personnel management.`,
-        employeeCount: deptsMap.get(name) || 0,
-      });
-    }
-  });
+  const customDepts: DepartmentItem[] = db.departments;
 
-  db.departments = customDepts;
-  saveDbData(db);
-
-  // Update counts
+  // Update employee counts dynamically
   const finalDepts = customDepts.map(d => ({
     ...d,
     employeeCount: deptsMap.get(d.name) || d.employeeCount || 0,

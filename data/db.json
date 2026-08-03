@@ -165,14 +165,6 @@
   ],
   "departments": [
     {
-      "id": "dept-engineering",
-      "code": "ENG",
-      "name": "Engineering",
-      "managerName": "Harshit Bhootra",
-      "description": "Core Engineering Department operations and personnel management.",
-      "employeeCount": 2
-    },
-    {
       "id": "dept-human resources",
       "code": "HUM",
       "name": "Human Resources",
@@ -195,6 +187,14 @@
       "managerName": "Harshit Bhootra",
       "description": "Core Marketing Department operations and personnel management.",
       "employeeCount": 1
+    },
+    {
+      "id": "dept-engineering",
+      "code": "ENG",
+      "name": "Engineering",
+      "managerName": "Harshit Bhootra",
+      "description": "Core Engineering Department operations and personnel management.",
+      "employeeCount": 2
     }
   ]
 }
