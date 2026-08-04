@@ -113,6 +113,8 @@ export default function AttendanceLogTab({ hideImport = false }: AttendanceLogTa
         body: JSON.stringify({
           action: 'MANUAL_EDIT',
           id: editLog.id,
+          employeeId: editLog.employeeId,
+          date: editLog.date,
           attendanceCode: editCode,
           checkIn: editIn,
           checkOut: editOut,

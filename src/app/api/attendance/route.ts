@@ -129,21 +129,72 @@ export async function POST(request: Request) {
     }
 
     if (body.action === 'MANUAL_EDIT') {
-      const { id, attendanceCode, checkIn, checkOut, correctionReason } = body;
-      const index = db.attendanceLogs.findIndex(l => l.id === id);
+      const { id, employeeId, date, attendanceCode, checkIn, checkOut, correctionReason } = body;
+      
+      let index = db.attendanceLogs.findIndex(l => l.id === id);
+      if (index === -1 && employeeId && date) {
+        index = db.attendanceLogs.findIndex(l => l.employeeId === employeeId && l.date === date);
+      }
+
+      let workedMinutes = 0;
+      if (attendanceCode === 'P' || attendanceCode === 'MP') {
+        workedMinutes = 480;
+        try {
+          if (checkIn && checkOut && checkIn.includes(':') && checkOut.includes(':')) {
+            const [inH, inM] = checkIn.split(':').map(Number);
+            const [outH, outM] = checkOut.split(':').map(Number);
+            if (!isNaN(inH) && !isNaN(outH)) {
+              workedMinutes = Math.max(0, (outH * 60 + outM) - (inH * 60 + inM));
+            }
+          }
+        } catch (e) {}
+      } else if (attendanceCode === 'HD') {
+        workedMinutes = 240;
+      }
+
+      const shortMinutes = Math.max(0, 480 - workedMinutes);
+      const extraMinutes = Math.max(0, workedMinutes - 480);
+
       if (index !== -1) {
         const oldVal = JSON.stringify(db.attendanceLogs[index]);
         db.attendanceLogs[index].attendanceCode = attendanceCode;
         db.attendanceLogs[index].checkIn = checkIn;
         db.attendanceLogs[index].checkOut = checkOut;
+        db.attendanceLogs[index].workedMinutes = workedMinutes;
+        db.attendanceLogs[index].shortMinutes = shortMinutes;
+        db.attendanceLogs[index].extraMinutes = extraMinutes;
         db.attendanceLogs[index].isManual = true;
         db.attendanceLogs[index].correctionReason = correctionReason;
 
-        logAudit('Manual Attendance Correction', 'AttendanceLog', id, oldVal, JSON.stringify(db.attendanceLogs[index]));
+        logAudit('Manual Attendance Correction', 'AttendanceLog', db.attendanceLogs[index].id, oldVal, JSON.stringify(db.attendanceLogs[index]));
         saveDbData(db);
 
         return NextResponse.json({ success: true, log: db.attendanceLogs[index] });
+      } else if (employeeId && date) {
+        const newLog: AttendanceLog = {
+          id: id || `att-${employeeId}-${date}`,
+          employeeId,
+          date,
+          attendanceCode,
+          checkIn,
+          checkOut,
+          workedMinutes,
+          requiredMinutes: 480,
+          shortMinutes,
+          extraMinutes,
+          sundayWorkedMinutes: 0,
+          isManual: true,
+          correctionReason,
+        };
+
+        db.attendanceLogs.push(newLog);
+        logAudit('Manual Attendance Entry', 'AttendanceLog', newLog.id, undefined, JSON.stringify(newLog));
+        saveDbData(db);
+
+        return NextResponse.json({ success: true, log: newLog });
       }
+
+      return NextResponse.json({ error: 'Log entry or target employee date details not found' }, { status: 400 });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
