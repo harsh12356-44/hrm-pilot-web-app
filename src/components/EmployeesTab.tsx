@@ -339,6 +339,18 @@ export default function EmployeesTab() {
                     {emp.primaryManager || '-- None --'}
                   </span>
                 </div>
+
+                {emp.secondaryManager && emp.secondaryManager !== '-- None --' && (
+                  <div className="flex items-center justify-between text-slate-400">
+                    <span className="flex items-center space-x-1.5">
+                      <Shield className="w-3.5 h-3.5 text-purple-400" />
+                      <span>Manager 2</span>
+                    </span>
+                    <span className="text-slate-200 font-semibold text-[11px] truncate max-w-[130px]">
+                      {emp.secondaryManager}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-between text-[11px]">
