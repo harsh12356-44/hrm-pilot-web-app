@@ -39,9 +39,9 @@ export async function POST(request: Request) {
       monthlySalary: Number(body.monthlySalary) || 50000,
       dailyWorkingRequirementMinutes: Number(body.dailyWorkingRequirementMinutes) || 480,
       weeklyOff: body.weeklyOff || 'Sunday',
-      casualAllowance: Number(body.casualAllowance) || 6,
-      plannedAllowance: Number(body.plannedAllowance) || 6,
-      sickAllowance: Number(body.sickAllowance) || 6,
+      casualAllowance: Number(body.casualAllowance) || 2,
+      plannedAllowance: Number(body.plannedAllowance) || 4,
+      sickAllowance: Number(body.sickAllowance) || 4,
     };
 
     db.employees.push(newEmp);
