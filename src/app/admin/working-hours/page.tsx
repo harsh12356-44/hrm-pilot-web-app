@@ -31,21 +31,25 @@ export default function WorkingHoursPage() {
 
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [holidays, setHolidays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchWorkingHours = async () => {
     setLoading(true);
     try {
       const url = `/api/attendance?month=${selectedMonth}&year=${selectedYear}&department=${department}`;
-      const [attRes, empRes] = await Promise.all([
+      const [attRes, empRes, holRes] = await Promise.all([
         fetch(url),
         fetch(`/api/employees`),
+        fetch('/api/holidays'),
       ]);
 
       const attData = await attRes.json();
       const empData = await empRes.json();
+      const holData = await holRes.json();
 
       setLogs(Array.isArray(attData.logs) ? attData.logs : []);
+      setHolidays(Array.isArray(holData) ? holData : []);
       let empList = Array.isArray(empData.employees) ? empData.employees : Array.isArray(empData) ? empData : [];
       if (department !== 'ALL') {
         empList = empList.filter((e: any) => e.department === department);
@@ -285,15 +289,24 @@ export default function WorkingHoursPage() {
                             const isSunday = dateObj.getDay() === 0;
 
                             const isWeeklyOff = (log && (log.attendanceCode === 'WO-I' || log.attendanceCode === 'WO')) || (isSunday && (!log || log.attendanceCode === 'WO-I' || log.attendanceCode === 'WO'));
+                            const holiday = holidays.find(h => h.date === dateStr);
 
                             return (
                               <td
                                 key={dayNum}
                                 className={`py-3 px-1 text-center border-r border-slate-800/60 transition ${
-                                  isSunday ? 'bg-amber-500/5' : ''
+                                  holiday ? 'bg-rose-500/10' : isSunday ? 'bg-amber-500/5' : ''
                                 }`}
                               >
-                                {isWeeklyOff ? (
+                                {holiday ? (
+                                  /* HOLIDAY BADGE (e.g. Diwali, Holi, Republic Day) */
+                                  <span
+                                    className="inline-block px-1.5 py-1 rounded bg-rose-500/25 border border-rose-500/40 text-rose-300 font-extrabold text-[9px] uppercase shadow-sm leading-tight max-w-[65px] truncate"
+                                    title={holiday.name}
+                                  >
+                                    {holiday.name}
+                                  </span>
+                                ) : isWeeklyOff ? (
                                   /* WO Badge Matching Reference Image 1:1 */
                                   <span className="inline-block px-2 py-1 rounded bg-amber-500/20 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase shadow-sm">
                                     WO
