@@ -502,57 +502,61 @@ function ensureDataDir(): void {
   }
 }
 
+let memoryDb: InitialState | null = (globalThis as any)._inMemoryDbData || null;
+
 export function getDbData(): InitialState {
-  ensureDataDir();
-  if (!fs.existsSync(DB_FILE)) {
-    const initial: InitialState = {
-      employees: DEFAULT_EMPLOYEES,
-      leaveRecords: DEFAULT_LEAVES,
-      attendanceLogs: DEFAULT_ATTENDANCE,
-      settings: DEFAULT_SETTINGS,
-      payrollPreviews: [],
-      holidays: DEFAULT_HOLIDAYS,
-      auditLogs: DEFAULT_AUDIT_LOGS,
-      attendanceImports: [],
-      notifications: DEFAULT_NOTIFICATIONS,
-    };
-    fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2));
-    return initial;
+  if (memoryDb) {
+    return memoryDb;
   }
+
   try {
-    const raw = fs.readFileSync(DB_FILE, 'utf-8');
-    const data = JSON.parse(raw);
-    return {
-      employees: data.employees || DEFAULT_EMPLOYEES,
-      leaveRecords: data.leaveRecords || DEFAULT_LEAVES,
-      attendanceLogs: data.attendanceLogs || DEFAULT_ATTENDANCE,
-      settings: data.settings || DEFAULT_SETTINGS,
-      payrollPreviews: data.payrollPreviews || [],
-      holidays: data.holidays || DEFAULT_HOLIDAYS,
-      auditLogs: data.auditLogs || DEFAULT_AUDIT_LOGS,
-      attendanceImports: data.attendanceImports || [],
-      notifications: data.notifications || DEFAULT_NOTIFICATIONS,
-      departments: data.departments || [],
-    };
-  } catch {
-    return {
-      employees: DEFAULT_EMPLOYEES,
-      leaveRecords: DEFAULT_LEAVES,
-      attendanceLogs: DEFAULT_ATTENDANCE,
-      settings: DEFAULT_SETTINGS,
-      payrollPreviews: [],
-      holidays: DEFAULT_HOLIDAYS,
-      auditLogs: DEFAULT_AUDIT_LOGS,
-      attendanceImports: [],
-      notifications: DEFAULT_NOTIFICATIONS,
-      departments: [],
-    };
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      memoryDb = {
+        employees: data.employees || DEFAULT_EMPLOYEES,
+        leaveRecords: data.leaveRecords || DEFAULT_LEAVES,
+        attendanceLogs: data.attendanceLogs || DEFAULT_ATTENDANCE,
+        settings: data.settings || DEFAULT_SETTINGS,
+        payrollPreviews: data.payrollPreviews || [],
+        holidays: data.holidays || DEFAULT_HOLIDAYS,
+        auditLogs: data.auditLogs || DEFAULT_AUDIT_LOGS,
+        attendanceImports: data.attendanceImports || [],
+        notifications: data.notifications || DEFAULT_NOTIFICATIONS,
+        departments: data.departments || [],
+      };
+      (globalThis as any)._inMemoryDbData = memoryDb;
+      return memoryDb;
+    }
+  } catch (e) {
+    console.warn('Error reading db.json, falling back to in-memory store');
   }
+
+  memoryDb = {
+    employees: DEFAULT_EMPLOYEES,
+    leaveRecords: DEFAULT_LEAVES,
+    attendanceLogs: DEFAULT_ATTENDANCE,
+    settings: DEFAULT_SETTINGS,
+    payrollPreviews: [],
+    holidays: DEFAULT_HOLIDAYS,
+    auditLogs: DEFAULT_AUDIT_LOGS,
+    attendanceImports: [],
+    notifications: DEFAULT_NOTIFICATIONS,
+    departments: [],
+  };
+  (globalThis as any)._inMemoryDbData = memoryDb;
+  return memoryDb;
 }
 
 export function saveDbData(data: InitialState): void {
-  ensureDataDir();
-  fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  memoryDb = data;
+  (globalThis as any)._inMemoryDbData = data;
+  try {
+    ensureDataDir();
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.warn('FileSystem write skipped (read-only environment), updated in-memory store.');
+  }
 }
 
 export function addNotification(employeeId: string, type: string, title: string, message: string) {
