@@ -139,7 +139,21 @@ export default function AttendanceExportPage() {
       const monthName = MONTHS.find(m => m.value === selectedMonth)?.name || selectedMonth;
       const filename = `HRM_Pilot_Attendance_${monthName}_${selectedYear}.xlsx`;
 
-      XLSX.writeFile(wb, filename);
+      // Generate binary Excel array buffer with explicit openxmlformats MIME type
+      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([excelBuffer], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
+      });
+
+      // Trigger browser file download with explicit filename
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', filename);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
 
       setExportedCount(matrixRows.length);
       setDownloaded(true);
