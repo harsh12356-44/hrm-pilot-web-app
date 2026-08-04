@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import { BarChart3, TrendingUp, Users, Calendar, Clock, AlertTriangle, CheckCircle2, User, Search, Award, Activity } from 'lucide-react';
+import { BarChart3, Award, Activity } from 'lucide-react';
 import { AttendanceLog, Employee } from '@/lib/types';
 
 const MONTHS = [
@@ -27,7 +27,6 @@ export default function AttendanceAnalyticsPage() {
   const [selectedMonth, setSelectedMonth] = useState('7'); // July default
   const [selectedYear, setSelectedYear] = useState('2026');
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('emp-1'); // Default to Ravina Khimani
-  const [searchEmp, setSearchEmp] = useState('');
   const [hoveredDay, setHoveredDay] = useState<any>(null);
 
   const [logs, setLogs] = useState<AttendanceLog[]>([]);
@@ -73,10 +72,6 @@ export default function AttendanceAnalyticsPage() {
   const totalDaysInMonth = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
   const daysArray = Array.from({ length: totalDaysInMonth }, (_, i) => i + 1);
 
-  const candidateTotalWorkedMins = candidateLogs.reduce((sum, l) => sum + (l.workedMinutes || 0), 0);
-  const candidateTotalShortMins = candidateLogs.reduce((sum, l) => sum + (l.shortMinutes || 0), 0);
-  const candidateTotalExtraMins = candidateLogs.reduce((sum, l) => sum + (l.extraMinutes || 0), 0);
-
   const candidatePresentDays = candidateLogs.filter(l => l.attendanceCode === 'P').length;
   const candidateHalfDays = candidateLogs.filter(l => l.attendanceCode === 'HD').length;
   const candidateAbsentDays = candidateLogs.filter(l => l.attendanceCode === 'A').length;
@@ -92,7 +87,6 @@ export default function AttendanceAnalyticsPage() {
     logsByDate[l.date] = l;
   });
 
-  const filteredEmployees = employees.filter(e => e.name.toLowerCase().includes(searchEmp.toLowerCase()) || e.department.toLowerCase().includes(searchEmp.toLowerCase()));
   const monthName = MONTHS.find(m => m.value === selectedMonth)?.name;
 
   return (
@@ -106,10 +100,10 @@ export default function AttendanceAnalyticsPage() {
             <div>
               <h1 className="text-2xl font-extrabold text-white font-heading flex items-center space-x-3">
                 <BarChart3 className="w-6 h-6 text-purple-400" />
-                <span>Individual Candidate Attendance Analytics</span>
+                <span>Attendance Analytics</span>
               </h1>
               <p className="text-xs text-slate-400 mt-1">
-                Visual daily completed hours bar graph analytics, attendance scores, and individual candidate metrics.
+                Visual daily completed hours bar graph analytics and status breakdown for individual candidates.
               </p>
             </div>
 
@@ -186,69 +180,27 @@ export default function AttendanceAnalyticsPage() {
                 </div>
               </div>
 
-              {/* Individual Metrics Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Attendance Rate</span>
-                    <TrendingUp className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <p className="text-3xl font-extrabold text-emerald-400 font-heading">{candidateAttendanceRate}%</p>
-                  <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-emerald-500 to-teal-400" style={{ width: `${candidateAttendanceRate}%` }}></div>
-                  </div>
-                  <p className="text-[10px] text-slate-500">{candidatePresentDays} Present / {candidateTotalWorkingDays} Working Days</p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">Total Worked Hours</span>
-                    <Clock className="w-4 h-4 text-indigo-400" />
-                  </div>
-                  <p className="text-3xl font-extrabold text-indigo-400 font-heading">{(candidateTotalWorkedMins / 60).toFixed(1)} hrs</p>
-                  <p className="text-[10px] text-slate-500">Cumulative shift completed</p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-amber-400">Short Hours Deficit</span>
-                    <AlertTriangle className="w-4 h-4 text-amber-400" />
-                  </div>
-                  <p className="text-3xl font-extrabold text-amber-400 font-heading">{(candidateTotalShortMins / 60).toFixed(1)} hrs</p>
-                  <p className="text-[10px] text-slate-500">Under 480 mins shift requirement</p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Overtime Extra Hours</span>
-                    <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                  </div>
-                  <p className="text-3xl font-extrabold text-emerald-400 font-heading">{(candidateTotalExtraMins / 60).toFixed(1)} hrs</p>
-                  <p className="text-[10px] text-slate-500">Extra hours above 480 mins threshold</p>
-                </div>
-              </div>
-
               {/* Status Breakdown Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-2">
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center">
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center shadow-sm">
                   <span className="text-[10px] uppercase font-bold text-emerald-300">Present (P)</span>
-                  <p className="text-xl font-extrabold text-emerald-400 font-heading">{candidatePresentDays} Days</p>
+                  <p className="text-2xl font-extrabold text-emerald-400 font-heading">{candidatePresentDays} Days</p>
                 </div>
-                <div className="p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center">
+                <div className="p-3.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center shadow-sm">
                   <span className="text-[10px] uppercase font-bold text-yellow-300">Half Day (HD)</span>
-                  <p className="text-xl font-extrabold text-yellow-400 font-heading">{candidateHalfDays} Days</p>
+                  <p className="text-2xl font-extrabold text-yellow-400 font-heading">{candidateHalfDays} Days</p>
                 </div>
-                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-center">
+                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-center shadow-sm">
                   <span className="text-[10px] uppercase font-bold text-red-300">Absent (A)</span>
-                  <p className="text-xl font-extrabold text-red-400 font-heading">{candidateAbsentDays} Days</p>
+                  <p className="text-2xl font-extrabold text-red-400 font-heading">{candidateAbsentDays} Days</p>
                 </div>
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center">
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center shadow-sm">
                   <span className="text-[10px] uppercase font-bold text-amber-300">Weekly Off (WO)</span>
-                  <p className="text-xl font-extrabold text-amber-400 font-heading">{candidateWeeklyOffs} Days</p>
+                  <p className="text-2xl font-extrabold text-amber-400 font-heading">{candidateWeeklyOffs} Days</p>
                 </div>
-                <div className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center">
+                <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center shadow-sm">
                   <span className="text-[10px] uppercase font-bold text-purple-300">Approved Leave (PL)</span>
-                  <p className="text-xl font-extrabold text-purple-400 font-heading">{candidateLeaves} Days</p>
+                  <p className="text-2xl font-extrabold text-purple-400 font-heading">{candidateLeaves} Days</p>
                 </div>
               </div>
 
@@ -392,114 +344,6 @@ export default function AttendanceAnalyticsPage() {
               </div>
             </div>
           )}
-
-          {/* ALL CANDIDATES COMPARISON TABLE */}
-          <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900 shadow-xl space-y-4">
-            <div className="p-4 bg-slate-950/60 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-sm font-extrabold text-white uppercase tracking-wider font-heading">
-                  All Candidates Analytics Comparison ({filteredEmployees.length})
-                </h3>
-                <p className="text-[11px] text-slate-400 mt-0.5">Click "View Analytics" on any candidate to inspect their individual profile, completed hours bar graph, and attendance breakdown.</p>
-              </div>
-
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-2.5" />
-                <input
-                  type="text"
-                  placeholder="Filter by name or dept..."
-                  value={searchEmp}
-                  onChange={(e) => setSearchEmp(e.target.value)}
-                  className="pl-8 pr-4 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 w-56"
-                />
-              </div>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs text-slate-300 border-collapse">
-                <thead className="bg-slate-950 text-slate-400 font-black uppercase text-[10px] tracking-wider border-b border-slate-800">
-                  <tr>
-                    <th className="p-3.5">Candidate Name</th>
-                    <th className="p-3.5">Department</th>
-                    <th className="p-3.5 text-center">Attendance Rate</th>
-                    <th className="p-3.5 text-center">Worked Hours</th>
-                    <th className="p-3.5 text-center">Short Hours</th>
-                    <th className="p-3.5 text-center">Overtime</th>
-                    <th className="p-3.5 text-center">Present / Absent</th>
-                    <th className="p-3.5 text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/60">
-                  {loading ? (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-slate-500">Loading candidate analytics...</td>
-                    </tr>
-                  ) : filteredEmployees.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-slate-500">No candidates match search filter.</td>
-                    </tr>
-                  ) : (
-                    filteredEmployees.map(emp => {
-                      const empLogs = logs.filter(l => l.employeeId === emp.id);
-                      const workedMins = empLogs.reduce((sum, l) => sum + (l.workedMinutes || 0), 0);
-                      const shortMins = empLogs.reduce((sum, l) => sum + (l.shortMinutes || 0), 0);
-                      const extraMins = empLogs.reduce((sum, l) => sum + (l.extraMinutes || 0), 0);
-
-                      const pCount = empLogs.filter(l => l.attendanceCode === 'P').length;
-                      const aCount = empLogs.filter(l => l.attendanceCode === 'A').length;
-                      const hdCount = empLogs.filter(l => l.attendanceCode === 'HD').length;
-
-                      const totalActiveDays = Math.max(1, pCount + aCount + hdCount);
-                      const rate = Math.round(((pCount + hdCount * 0.5) / totalActiveDays) * 100) || 0;
-
-                      const isSelected = emp.id === selectedEmployeeId;
-
-                      return (
-                        <tr
-                          key={emp.id}
-                          className={`hover:bg-slate-850 transition ${isSelected ? 'bg-purple-950/20' : ''}`}
-                        >
-                          <td className="p-3.5 font-bold text-white flex items-center space-x-2">
-                            <div className="w-7 h-7 rounded-lg bg-purple-600/20 border border-purple-500/30 flex items-center justify-center text-purple-300 font-bold text-xs">
-                              {emp.name[0]}
-                            </div>
-                            <div>
-                              <p className="text-xs">{emp.name}</p>
-                              <p className="text-[10px] text-slate-400 font-mono">{emp.employeeId || emp.id}</p>
-                            </div>
-                          </td>
-                          <td className="p-3.5 text-slate-300">{emp.department}</td>
-                          <td className="p-3.5 text-center font-bold">
-                            <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-bold ${
-                              rate >= 85 ? 'bg-emerald-500/20 text-emerald-300' : rate >= 70 ? 'bg-yellow-500/20 text-yellow-300' : 'bg-red-500/20 text-red-300'
-                            }`}>
-                              {rate}%
-                            </span>
-                          </td>
-                          <td className="p-3.5 text-center font-mono font-bold text-indigo-400">{(workedMins / 60).toFixed(1)} hrs</td>
-                          <td className="p-3.5 text-center font-mono text-amber-400">{shortMins > 0 ? `${(shortMins / 60).toFixed(1)} hrs` : '-'}</td>
-                          <td className="p-3.5 text-center font-mono text-emerald-400">{extraMins > 0 ? `${(extraMins / 60).toFixed(1)} hrs` : '-'}</td>
-                          <td className="p-3.5 text-center font-mono text-xs">
-                            <span className="text-emerald-400 font-bold">{pCount}P</span> / <span className="text-red-400 font-bold">{aCount}A</span>
-                          </td>
-                          <td className="p-3.5 text-center">
-                            <button
-                              onClick={() => setSelectedEmployeeId(emp.id)}
-                              className={`px-3 py-1 rounded-lg text-xs font-bold transition shadow ${
-                                isSelected ? 'bg-purple-600 text-white' : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
-                              }`}
-                            >
-                              {isSelected ? 'Viewing' : 'View Analytics'}
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
         </main>
       </div>
     </div>
