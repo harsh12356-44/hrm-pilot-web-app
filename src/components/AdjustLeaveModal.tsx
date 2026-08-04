@@ -43,16 +43,23 @@ export default function AdjustLeaveModal({
       
       const emp = employees.find(e => e.name === selectedEmployee || e.id === selectedEmployee);
 
+      // Determine date in current quarter
+      let targetDate = '2026-08-15'; // default Q3
+      if (quarter === 'Q1') targetDate = '2026-02-15';
+      else if (quarter === 'Q2') targetDate = '2026-05-15';
+      else if (quarter === 'Q3') targetDate = '2026-08-15';
+      else if (quarter === 'Q4') targetDate = '2026-11-15';
+
       const res = await fetch('/api/leaves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           employeeId: emp?.id || selectedEmployee,
           leaveType,
-          startDate: new Date().toISOString().split('T')[0],
-          endDate: new Date().toISOString().split('T')[0],
+          startDate: targetDate,
+          endDate: targetDate,
           dayType: days === 0.5 ? 'first_half' : 'full',
-          daysCount: isAdd ? -days : days, // Negative days for credit bonus, positive for deduction
+          daysCount: isAdd ? -days : days,
           reason: `Manual HR Adjustment (${adjustType}): ${reason || 'Leave balance adjustment'}`,
           status: 'APPROVED',
         }),

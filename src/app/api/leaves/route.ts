@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       daysCount,
       quarter,
       year: start.getFullYear(),
-      status: 'PENDING',
+      status: body.status || 'APPROVED',
       note: note || reason || 'Leave application',
       handoverNote: handoverNote || '',
       emergencyContact: emergencyContact || '',
