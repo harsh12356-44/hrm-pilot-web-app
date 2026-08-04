@@ -14,6 +14,7 @@ import {
   Eye,
 } from 'lucide-react';
 import RecordLeaveModal from './RecordLeaveModal';
+import AdjustLeaveModal from './AdjustLeaveModal';
 import { LeaveSummary, Employee } from '@/lib/types';
 import * as XLSX from 'xlsx';
 
@@ -24,6 +25,7 @@ export default function LeaveTrackerTab() {
   const [summaries, setSummaries] = useState<LeaveSummary[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isAdjustModalOpen, setIsAdjustModalOpen] = useState(false);
   const [importStatus, setImportStatus] = useState('');
 
   const fetchLeaveData = useCallback(async () => {
@@ -142,7 +144,10 @@ export default function LeaveTrackerTab() {
           </p>
 
           <div className="pt-3 flex flex-wrap items-center gap-3">
-            <button className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 backdrop-blur-md transition flex items-center space-x-2">
+            <button
+              onClick={() => setIsAdjustModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white text-xs font-semibold border border-white/20 backdrop-blur-md transition flex items-center space-x-2"
+            >
               <span>⚡ Adjust Employee Leave</span>
             </button>
             <button
@@ -486,7 +491,11 @@ export default function LeaveTrackerTab() {
                           <button className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
                             <Eye className="w-3.5 h-3.5" />
                           </button>
-                          <button className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 transition">
+                          <button
+                            onClick={() => setIsAdjustModalOpen(true)}
+                            className="p-1.5 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 transition"
+                            title="Adjust Employee Leave Balance"
+                          >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
@@ -505,6 +514,15 @@ export default function LeaveTrackerTab() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         employees={employees}
+        onSuccess={fetchLeaveData}
+      />
+
+      {/* Adjust Leave Modal */}
+      <AdjustLeaveModal
+        isOpen={isAdjustModalOpen}
+        onClose={() => setIsAdjustModalOpen(false)}
+        employees={employees}
+        quarter={quarter}
         onSuccess={fetchLeaveData}
       />
     </div>

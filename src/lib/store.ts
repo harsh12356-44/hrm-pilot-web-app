@@ -628,8 +628,13 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
     const casualAllowance = 2;
     const plannedAllowance = 4;
     const totalAllowance = casualAllowance + plannedAllowance; // 6 Days
+
+    const extraCasual = Math.max(0, casualUsed - casualAllowance);
+    const extraPlanned = Math.max(0, plannedUsed - plannedAllowance);
+    const extraTotal = Math.max(0, totalUsed - totalAllowance);
+
+    const extraDeduct = Math.max(extraTotal, extraCasual + extraPlanned);
     const remaining = Math.max(0, totalAllowance - totalUsed);
-    const extraDeduct = Math.max(0, totalUsed - totalAllowance);
     const utilizationPercentage = Math.min(100, Math.round((totalUsed / totalAllowance) * 100));
 
     return {
