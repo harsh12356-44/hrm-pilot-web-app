@@ -180,30 +180,6 @@ export default function AttendanceAnalyticsPage() {
                 </div>
               </div>
 
-              {/* Status Breakdown Pills */}
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-                <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-center shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-emerald-300">Present (P)</span>
-                  <p className="text-2xl font-extrabold text-emerald-400 font-heading">{candidatePresentDays} Days</p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-center shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-yellow-300">Half Day (HD)</span>
-                  <p className="text-2xl font-extrabold text-yellow-400 font-heading">{candidateHalfDays} Days</p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-center shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-red-300">Absent (A)</span>
-                  <p className="text-2xl font-extrabold text-red-400 font-heading">{candidateAbsentDays} Days</p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-center shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-amber-300">Weekly Off (WO)</span>
-                  <p className="text-2xl font-extrabold text-amber-400 font-heading">{candidateWeeklyOffs} Days</p>
-                </div>
-                <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-center shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-purple-300">Approved Leave (PL)</span>
-                  <p className="text-2xl font-extrabold text-purple-400 font-heading">{candidateLeaves} Days</p>
-                </div>
-              </div>
-
               {/* DAILY COMPLETED HOURS BAR GRAPH ANALYTICS */}
               <div className="p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-6">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
