@@ -81,7 +81,6 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
       items: [
         { id: 'attendance', label: 'Attendance Grid', icon: Calendar, href: '/admin/attendance' },
         { id: 'attendance-import', label: 'Attendance Import', icon: Upload, href: '/admin/attendance/import' },
-        { id: 'attendance-export', label: 'Attendance Export', icon: Download, href: '/admin/attendance/export' },
         { id: 'working-hours', label: 'Working Hours', icon: Clock, href: '/admin/working-hours' },
         { id: 'attendance-analytics', label: 'Attendance Analytics', icon: BarChart3, href: '/admin/attendance-analytics' },
       ],
