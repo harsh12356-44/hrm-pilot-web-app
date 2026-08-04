@@ -6,7 +6,7 @@ import { Shield, Lock, Mail, ArrowRight, UserCheck, CheckCircle2 } from 'lucide-
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('harshit@hrmpilot.com');
+  const [email, setEmail] = useState('ravina@hrmpilot.com');
   const [password, setPassword] = useState('Admin@123');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -24,16 +24,16 @@ export default function LoginPage() {
 
     try {
       // Demo authentication routine
-      if (email === 'harshit@hrmpilot.com' && password === 'Admin@123') {
+      if ((email === 'ravina@hrmpilot.com' || email === 'harshit@hrmpilot.com') && password === 'Admin@123') {
         document.cookie = 'hrm_user_role=ADMIN; path=/; max-age=86400';
         router.push('/admin');
-      } else if (email === 'ananya@hrmpilot.com' && password === 'Manager@123') {
+      } else if (
+        (email === 'naman@hrmpilot.com' || email === 'jigyasa@hrmpilot.com' || email === 'meenal@hrmpilot.com' || email === 'divyanshu@hrmpilot.com' || email === 'ananya@hrmpilot.com') &&
+        password === 'Manager@123'
+      ) {
         document.cookie = 'hrm_user_role=MANAGER; path=/; max-age=86400';
         router.push('/manager');
-      } else if (
-        (email === 'rajesh@hrmpilot.com' || email === 'priya@hrmpilot.com' || email === 'vikram@hrmpilot.com') &&
-        password === 'Employee@123'
-      ) {
+      } else if (password === 'Employee@123') {
         document.cookie = 'hrm_user_role=EMPLOYEE; path=/; max-age=86400';
         router.push('/employee');
       } else {
@@ -127,53 +127,53 @@ export default function LoginPage() {
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
-                onClick={() => handleSelectRole('harshit@hrmpilot.com', 'Admin@123')}
+                onClick={() => handleSelectRole('ravina@hrmpilot.com', 'Admin@123')}
                 className={`p-2.5 rounded-xl border text-left space-y-1 transition ${
-                  email === 'harshit@hrmpilot.com'
+                  email === 'ravina@hrmpilot.com'
                     ? 'bg-blue-600/20 border-blue-500 text-white'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <Shield className="w-3.5 h-3.5 text-blue-400" />
-                  {email === 'harshit@hrmpilot.com' && <CheckCircle2 className="w-3 h-3 text-blue-400" />}
+                  {email === 'ravina@hrmpilot.com' && <CheckCircle2 className="w-3 h-3 text-blue-400" />}
                 </div>
-                <p className="font-extrabold text-[11px] text-white">Admin</p>
-                <p className="text-[9px] text-slate-400 truncate">Super Admin</p>
+                <p className="font-extrabold text-[11px] text-white">HR / COO</p>
+                <p className="text-[9px] text-slate-400 truncate">Ravina Khimani</p>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleSelectRole('ananya@hrmpilot.com', 'Manager@123')}
+                onClick={() => handleSelectRole('naman@hrmpilot.com', 'Manager@123')}
                 className={`p-2.5 rounded-xl border text-left space-y-1 transition ${
-                  email === 'ananya@hrmpilot.com'
+                  email === 'naman@hrmpilot.com'
                     ? 'bg-purple-600/20 border-purple-500 text-white'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <UserCheck className="w-3.5 h-3.5 text-purple-400" />
-                  {email === 'ananya@hrmpilot.com' && <CheckCircle2 className="w-3 h-3 text-purple-400" />}
+                  {email === 'naman@hrmpilot.com' && <CheckCircle2 className="w-3 h-3 text-purple-400" />}
                 </div>
-                <p className="font-extrabold text-[11px] text-white">Manager</p>
-                <p className="text-[9px] text-slate-400 truncate">HR Desk</p>
+                <p className="font-extrabold text-[11px] text-white">Dev Manager</p>
+                <p className="text-[9px] text-slate-400 truncate">Naman Bangia</p>
               </button>
 
               <button
                 type="button"
-                onClick={() => handleSelectRole('rajesh@hrmpilot.com', 'Employee@123')}
+                onClick={() => handleSelectRole('sonu@hrmpilot.com', 'Employee@123')}
                 className={`p-2.5 rounded-xl border text-left space-y-1 transition ${
-                  email === 'rajesh@hrmpilot.com'
+                  email === 'sonu@hrmpilot.com'
                     ? 'bg-emerald-600/20 border-emerald-500 text-white'
                     : 'bg-slate-950/60 border-slate-800 text-slate-400 hover:border-slate-700'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <UserCheck className="w-3.5 h-3.5 text-emerald-400" />
-                  {email === 'rajesh@hrmpilot.com' && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
+                  {email === 'sonu@hrmpilot.com' && <CheckCircle2 className="w-3 h-3 text-emerald-400" />}
                 </div>
-                <p className="font-extrabold text-[11px] text-white">Employee</p>
-                <p className="text-[9px] text-slate-400 truncate">Punch Portal</p>
+                <p className="font-extrabold text-[11px] text-white">Developer</p>
+                <p className="text-[9px] text-slate-400 truncate">Sonu Goswami</p>
               </button>
             </div>
           </div>

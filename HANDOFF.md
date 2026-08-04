@@ -53,6 +53,17 @@ Today, all outstanding user requests for feature tabs under HR Admin Suite, Mana
    - Scaled root HTML font size to `16px` (`1rem`) and body font size to `16px` for crisp readability.
    - Upgraded Sidebar menu options font size to `16px` (`text-sm font-semibold`), icon sizes to `20px`, and expanded sidebar width to `w-68`.
 
+9. 👥 **Full Company Roster & Team Reporting Hierarchy (17 Employees)**:
+   - Added all 17 company employees into central database (`data/db.json`) and store fallback defaults (`src/lib/store.ts`).
+   - Established HR & COO leadership under **Ravina Khimani** (`ADMIN`), managing all managers and employees.
+   - Configured managers and dual-reporting team structures:
+     - **Naman Bangia** (Senior Development Manager) managing team: Anup Sen, Lochita g1, Rajvardhan, Mudita, Bulbul, Sonu Goswami (dual reporting to HR Ravina Khimani).
+     - **Jigyasa Sen** (Senior Development Manager) managing team: Shweta dadhich (dual reporting to HR Ravina Khimani).
+     - **Divyanshu** (Senior Development Manager).
+     - **Meenal** (SEO Manager) managing team: Charubhati (dual reporting to HR Ravina Khimani).
+     - **Nandini Gupta** (Founders Office).
+     - **Shryanshu**, **Garv**, and **Charu Siddhawat** (Final Suspects).
+
 ---
 
 ## 3. 1:1 WordPress Plugin Feature Parity Matrix

@@ -32,7 +32,7 @@ interface SidebarProps {
   role?: string;
 }
 
-export default function Sidebar({ currentTab, role }: SidebarProps) {
+function SidebarContent({ currentTab, role }: SidebarProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const activeTabParam = searchParams ? searchParams.get('tab') : null;
@@ -178,5 +178,13 @@ export default function Sidebar({ currentTab, role }: SidebarProps) {
         </div>
       </div>
     </aside>
+  );
+}
+
+export default function Sidebar(props: SidebarProps) {
+  return (
+    <React.Suspense fallback={<aside className="w-68 bg-[#0f172a] border-r border-slate-800 shrink-0"></aside>}>
+      <SidebarContent {...props} />
+    </React.Suspense>
   );
 }

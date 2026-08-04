@@ -228,11 +228,11 @@ export default function EmployeesTab() {
             className="bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-blue-500"
           >
             <option value="ALL">All Departments</option>
-            <option value="IT">IT</option>
-            <option value="Engineering">Engineering</option>
+            <option value="Development">Development</option>
             <option value="Human Resources">Human Resources</option>
-            <option value="Sales">Sales</option>
-            <option value="Marketing">Marketing</option>
+            <option value="SEO">SEO</option>
+            <option value="Founders Office">Founders Office</option>
+            <option value="General">General</option>
           </select>
 
           <select

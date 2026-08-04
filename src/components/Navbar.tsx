@@ -153,9 +153,9 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
             value={pathname.startsWith('/admin') ? 'ADMIN' : pathname === '/manager' ? 'MANAGER' : 'EMPLOYEE'}
             className="bg-transparent text-xs font-bold text-blue-600 focus:outline-none cursor-pointer"
           >
-            <option value="ADMIN">Super Admin (Harshit Bhootra)</option>
-            <option value="MANAGER">HR Manager (Ananya Sharma)</option>
-            <option value="EMPLOYEE">Employee (Rajesh Kumar)</option>
+            <option value="ADMIN">Super Admin (Ravina Khimani)</option>
+            <option value="MANAGER">Development Mgr (Naman Bangia)</option>
+            <option value="EMPLOYEE">Web Developer (Sonu Goswami)</option>
           </select>
         </div>
 
@@ -250,14 +250,14 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
         <div className="flex items-center space-x-3 pl-3 border-l border-slate-200">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow">
-            {currentRole === 'ADMIN' ? 'HB' : currentRole === 'MANAGER' ? 'AS' : 'RK'}
+            {currentRole === 'ADMIN' ? 'RK' : currentRole === 'MANAGER' ? 'NB' : 'SG'}
           </div>
           <div className="hidden md:block text-left">
             <p className="text-xs font-semibold text-slate-900">
-              {currentRole === 'ADMIN' ? 'Harshit Bhootra' : currentRole === 'MANAGER' ? 'Ananya Sharma' : 'Rajesh Kumar'}
+              {currentRole === 'ADMIN' ? 'Ravina Khimani' : currentRole === 'MANAGER' ? 'Naman Bangia' : 'Sonu Goswami'}
             </p>
             <p className="text-[10px] text-slate-500">
-              {currentRole === 'ADMIN' ? 'Super Administrator' : currentRole === 'MANAGER' ? 'HR Manager' : 'Sales Executive'}
+              {currentRole === 'ADMIN' ? 'HR / COO' : currentRole === 'MANAGER' ? 'Senior Development Manager' : 'Web Developer'}
             </p>
           </div>
           <button
