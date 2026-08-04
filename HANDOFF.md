@@ -56,6 +56,15 @@ Today, all user requests for employee roster management, salary data removal, bi
    - Added official 2026 company holidays (New Year, Republic Day, Holi, Independence Day, Raksha Bandhan, Diwali, Diwali (Rama Shama), Christmas) to the holidays database and `/api/holidays`.
    - Connected [AttendanceLogTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx) and [page.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) to automatically render rose-pink **Holiday Badges** showing the exact holiday name (e.g. `Diwali`, `Holi`, `Republic Day`) on holiday cells across the Attendance Grid and Working Hours matrix.
 
+10. 🌴 **1:1 WordPress Plugin Leave Tracker & Adjust Leave Engine**:
+    - Extracted exact business rules from `class-hrm-leave-manager.php` and `class-hrm-admin.php`: **2 CL + 4 PL = 6 Total Allowance** per quarter.
+    - Implemented category-wise excess formula matching WP plugin 1:1:
+      $$\text{Extra Casual} = \max(0, \text{Casual Used} - 2)$$
+      $$\text{Extra Planned} = \max(0, \text{Planned Used} - 4)$$
+      $$\text{Extra Total} = \max(0, \text{Total Used} - 6)$$
+      $$\text{Unpaid LOP} = \max(\text{Extra Total}, \text{Extra Casual} + \text{Extra Planned})$$
+    - Built [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) (`⚖️ Adjust Employee Leave Count`) allowing HR/Admin to credit bonus leaves, deduct leaves, or cover short working hours dynamically.
+
 ---
 
 ## 3. 1:1 WordPress Plugin Feature Parity Matrix
