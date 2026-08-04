@@ -9,9 +9,9 @@
 
 ---
 
-## 2. Work Completed Today (Chronological Session Log)
+### 2. Work Completed Today (Chronological Session Log)
 
-Today, all outstanding user requests for feature tabs under HR Admin Suite, Manager Desk, Employee Portal, and Biometric Importers were **fully implemented, verified in-browser with screenshots, committed, and deployed**:
+Today, all user requests for employee roster management, salary data removal, biometric matrix parsing, monthly attendance matrix grid, and punch editing were **fully implemented, verified, committed, and deployed**:
 
 1. 🔒 **Employee Import Security (Role-Based Visibility)**:
    - Completely hid the "Import Attendance" option and administrative tools from standard Employee accounts (`EMPLOYEE` role).
@@ -27,42 +27,30 @@ Today, all outstanding user requests for feature tabs under HR Admin Suite, Mana
    - Added 1-click status deactivation power toggle (`ACTIVE` / `INACTIVE`) and permanent deletion with confirmation modal.
    - Portal Security: Deactivated or deleted employees attempting to log into `/employee` see a prominent red **"Portal Access Revoked"** banner blocking punch clock usage and leave submissions.
 
-4. 👥 **Managers Desk Subordinates & Dual Reporting**:
-   - Strict Manager Filtering: Ensured manager cards strictly filter by `role === 'MANAGER' || role === 'ADMIN'`.
-   - Direct Subordinates: Rendered as chip pills under manager cards with an `(X)` remove button.
-   - **Dual Manager Reporting**: Enabled single employees to report to two managers simultaneously (`Primary Manager` / `Secondary Manager`), appearing on both managers' cards automatically.
-   - Added `+ Assign Subordinate` modal and `+ Designate New Manager` modal.
-
-5. 🏢 **1:1 Edit Department Structure & Removal**:
-   - Built 1:1 `Edit Department Structure` modal matching user screenshot (`Department Name *`, `Department Code *`, `Department Head / Manager` dropdown formatted as `Name (ID • Role)`).
-   - Added `Remove Department` functionality with deletion confirmation modal.
-   - Fixed department deletion re-seeding bug in `GET /api/departments/route.ts` so default departments are never auto-restored after being deleted by HR Admin.
-
-6. 📥 **1:1 Biometric Attendance Import Engine**:
-   - Built 1:1 Attendance Import page (`/admin/attendance/import`) matching WordPress plugin screenshot.
-   - Added dual upload modes:
-     - **`Monthly Punches Upload`**: Parses daily check-in / check-out punch logs and status codes (`P`, `HD`, `A`, `WO`), updating the **Attendance Grid** (`/admin/attendance`) and 15-day attendance trend.
-     - **`Completed Hours`**: Parses pre-calculated completed hours per employee, updating total worked minutes in the **Working Hours & Overtime Engine** (`/admin/working-hours`).
-
-7. 🗓️ **1:1 Import Holidays List Feature**:
-   - Built 1:1 `Import Holidays List` card on `/admin/holidays` matching WordPress plugin screenshot.
-   - Dual ArrayBuffer & CSV text file parser (.csv, .xls, .xlsx) supporting column header fallbacks and date format conversions (`YYYY-MM-DD` and `DD/MM/YYYY`).
-   - Parses custom uploaded holiday files or sample holiday schedules, updating `data/db.json` and refreshing the **Active Company Holidays** grid.
-
-8. 🔤 **App-Wide Typography & Sidebar Scaled Up**:
-   - Scaled root HTML font size to `16px` (`1rem`) and body font size to `16px` for crisp readability.
-   - Upgraded Sidebar menu options font size to `16px` (`text-sm font-semibold`), icon sizes to `20px`, and expanded sidebar width to `w-68`.
-
-9. 👥 **Full Company Roster & Team Reporting Hierarchy (17 Employees)**:
+4. 👥 **Full Company Roster (17 Employees) & Dual Manager Reporting**:
    - Added all 17 company employees into central database (`data/db.json`) and store fallback defaults (`src/lib/store.ts`).
-   - Established HR & COO leadership under **Ravina Khimani** (`ADMIN`), managing all managers and employees.
-   - Configured managers and dual-reporting team structures:
-     - **Naman Bangia** (Senior Development Manager) managing team: Anup Sen, Lochita g1, Rajvardhan, Mudita, Bulbul, Sonu Goswami (dual reporting to HR Ravina Khimani).
-     - **Jigyasa Sen** (Senior Development Manager) managing team: Shweta dadhich (dual reporting to HR Ravina Khimani).
-     - **Divyanshu** (Senior Development Manager).
-     - **Meenal** (SEO Manager) managing team: Charubhati (dual reporting to HR Ravina Khimani).
-     - **Nandini Gupta** (Founders Office).
-     - **Shryanshu**, **Garv**, and **Charu Siddhawat** (Final Suspects).
+   - Configured HR & COO leadership under **Ravina Khimani** (`ADMIN`), managing all managers and employees.
+   - Displayed both **Manager 1** (Primary) and **Manager 2** (Secondary) on employee directory cards whenever secondary reporting is assigned.
+
+5. 💵 **Base Salary Removal**:
+   - Removed `Monthly Base` row from employee cards in [EmployeesTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/EmployeesTab.tsx).
+   - Removed `Monthly Salary` input field from profile edit modals.
+   - Cleared salary values in [db.json](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/data/db.json) and [store.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts).
+
+6. 📥 **Biometric Matrix Sheet Parser (`att login logout july.xls`)**:
+   - Built 2D matrix parser engine ([biometricParser.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/biometricParser.ts)) to parse biometric machine exports (ONtime, Secureye, ESSL, ZKAccess) where days 1 to 31 are matrix columns and punch times are separated by linebreaks (`\n`).
+   - Implemented fuzzy name resolution matching biometric file names (`ravina khemani`, `shweta dadich`, `charuBhati`) to system accounts (`Ravina Khimani`, `Shweta dadhich`, `Charubhati`).
+   - Imported **527 July 2026 biometric punch records** across all 17 employees into the database.
+
+7. 📅 **Monthly Matrix Attendance Grid View**:
+   - Built the **Monthly Matrix Grid View** matching the user's reference UI 1:1.
+   - Sticky left column (`EMPLOYEE NAME`) for employee name & department.
+   - Horizontally scrollable day columns (1..31) for selected month & year.
+   - Rendered soft warm gold badges marked **WO** for Sundays / Weekly Offs (`WO-I`), soft red **A** for Absences, yellow **HD** for Half Days, and stacked check-in/out times for Present days.
+
+8. 🛠️ **Manual Punch Edit & Save Correction Engine**:
+   - Fixed `MANUAL_EDIT` API in [route.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to match logs by `id` or `(employeeId && date)`.
+   - Enabled editing check-in/out times and attendance codes for both existing and newly created log entries, recalculating `workedMinutes`, `shortMinutes`, and `extraMinutes` automatically.
 
 ---
 
