@@ -62,6 +62,10 @@ Today, all user requests for employee roster management, salary data removal, bi
       $$\text{Extra Leaves to Deduct (Unpaid LOP)} = \max(0, \text{Total Leaves Used in Quarter} - 6)$$
     - Built [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) (`⚖️ Adjust Employee Leave Count`) allowing HR/Admin to credit bonus leaves, deduct leaves, or cover short working hours dynamically.
 
+11. ⚙️ **Auto-Approved Save Leave Adjustment Engine**:
+    - Enhanced [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) and [/api/leaves](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/leaves/route.ts) to save direct HR adjustments with status `APPROVED`, targeting the active quarter.
+    - Verified live end-to-end: Deducting or crediting leaves updates Casual Used, Total Used, Remaining Balance, Donut Charts, and Employee Leave Register tables in real-time.
+
 ---
 
 ## 3. 1:1 WordPress Plugin Feature Parity Matrix
