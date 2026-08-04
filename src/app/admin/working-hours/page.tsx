@@ -215,47 +215,46 @@ export default function WorkingHoursPage() {
             </div>
           </div>
 
-          {/* MONTHLY WORKING HOURS MATRIX GRID (Matching User Reference Image 1:1) */}
+          {/* MONTHLY WORKING HOURS MATRIX GRID (With Dual Horizontal & Vertical Scrollbars) */}
           {viewMode === 'matrix' ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-              <div className="overflow-x-auto max-w-full">
-                <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
-                  <thead>
-                    <tr className="bg-slate-950 text-slate-400 uppercase font-black tracking-wider text-[11px] border-b border-slate-800">
-                      {/* Sticky Employee Name Column Header */}
-                      <th className="py-4 px-4 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 min-w-[200px] shadow-md">
-                        EMPLOYEE NAME
-                      </th>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-auto max-h-[580px] relative">
+              <table className="w-full text-left text-xs border-collapse min-w-[1300px]">
+                <thead className="sticky top-0 z-30 bg-slate-950 shadow-md">
+                  <tr className="bg-slate-950 text-slate-400 uppercase font-black tracking-wider text-[11px] border-b border-slate-800">
+                    {/* Sticky Top-Left Employee Name Header */}
+                    <th className="py-4 px-4 sticky top-0 left-0 z-40 bg-slate-950 border-r border-b border-slate-800 min-w-[200px] shadow-md">
+                      EMPLOYEE NAME
+                    </th>
 
-                      {/* Day Columns 1..31 Header */}
-                      {daysArray.map(dayNum => {
-                        const padDay = String(dayNum).padStart(2, '0');
-                        const padMonth = String(selectedMonth).padStart(2, '0');
-                        const dateObj = new Date(`${selectedYear}-${padMonth}-${padDay}`);
-                        const isSunday = dateObj.getDay() === 0;
+                    {/* Day Columns 1..31 Header */}
+                    {daysArray.map(dayNum => {
+                      const padDay = String(dayNum).padStart(2, '0');
+                      const padMonth = String(selectedMonth).padStart(2, '0');
+                      const dateObj = new Date(`${selectedYear}-${padMonth}-${padDay}`);
+                      const isSunday = dateObj.getDay() === 0;
 
-                        return (
-                          <th
-                            key={dayNum}
-                            className={`py-3 px-2 text-center border-r border-slate-800/80 min-w-[70px] ${
-                              isSunday ? 'bg-amber-500/10 text-amber-300 font-extrabold' : ''
-                            }`}
-                          >
-                            <span className="block text-xs">{dayNum}</span>
-                            <span className="block text-[9px] font-normal opacity-70">
-                              {dateObj.toLocaleDateString('en-US', { weekday: 'short' })}
-                            </span>
-                          </th>
-                        );
-                      })}
+                      return (
+                        <th
+                          key={dayNum}
+                          className={`py-3 px-2 text-center border-r border-b border-slate-800 min-w-[70px] ${
+                            isSunday ? 'bg-amber-500/10 text-amber-300 font-extrabold' : ''
+                          }`}
+                        >
+                          <span className="block text-xs">{dayNum}</span>
+                          <span className="block text-[9px] font-normal opacity-70">
+                            {dateObj.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </span>
+                        </th>
+                      );
+                    })}
 
-                      {/* Cumulative Total Hours Header */}
-                      <th className="py-4 px-3 text-center bg-slate-950 border-l border-slate-800 min-w-[100px] text-indigo-300">
-                        TOTAL HRS
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800/60">
+                    {/* Cumulative Total Hours Header */}
+                    <th className="py-4 px-3 text-center bg-slate-950 border-l border-b border-slate-800 min-w-[100px] text-indigo-300">
+                      TOTAL HRS
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
                     {loading ? (
                       <tr>
                         <td colSpan={totalDaysInMonth + 2} className="p-8 text-center text-slate-500">
@@ -336,10 +335,8 @@ export default function WorkingHoursPage() {
                     })}
                   </tbody>
                 </table>
-              </div>
             </div>
           ) : (
-            /* DAILY LOG TABLE VIEW */
             <div className="border border-slate-800 rounded-2xl overflow-hidden bg-slate-900 shadow-lg">
               <div className="p-4 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between">
                 <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Working Hours Daily Log Table</h3>

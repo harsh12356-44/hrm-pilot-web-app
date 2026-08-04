@@ -277,41 +277,40 @@ export default function AttendanceLogTab({ hideImport = false }: AttendanceLogTa
         </div>
       </div>
 
-      {/* MONTHLY MATRIX GRID VIEW (Matching Reference Image 1:1) */}
+      {/* MONTHLY MATRIX GRID VIEW (With Dual Horizontal & Vertical Scrollbars) */}
       {viewMode === 'matrix' ? (
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
-          <div className="overflow-x-auto max-w-full">
-            <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
-              <thead>
-                <tr className="bg-slate-950 text-slate-400 uppercase font-black tracking-wider text-[11px] border-b border-slate-800">
-                  {/* Sticky Employee Name Column Header */}
-                  <th className="py-4 px-4 sticky left-0 z-20 bg-slate-950 border-r border-slate-800 min-w-[200px] shadow-md">
-                    EMPLOYEE NAME
-                  </th>
-                  {/* Days Columns 1..31 Header */}
-                  {daysArray.map(dayNum => {
-                    const padDay = String(dayNum).padStart(2, '0');
-                    const padMonth = String(selectedMonth).padStart(2, '0');
-                    const dateObj = new Date(`${selectedYear}-${padMonth}-${padDay}`);
-                    const isSunday = dateObj.getDay() === 0;
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl overflow-auto max-h-[580px] relative">
+          <table className="w-full text-left text-xs border-collapse min-w-[1200px]">
+            <thead className="sticky top-0 z-30 bg-slate-950 shadow-md">
+              <tr className="bg-slate-950 text-slate-400 uppercase font-black tracking-wider text-[11px] border-b border-slate-800">
+                {/* Sticky Top-Left Employee Name Header */}
+                <th className="py-4 px-4 sticky top-0 left-0 z-40 bg-slate-950 border-r border-b border-slate-800 min-w-[200px] shadow-md">
+                  EMPLOYEE NAME
+                </th>
+                {/* Days Columns 1..31 Header */}
+                {daysArray.map(dayNum => {
+                  const padDay = String(dayNum).padStart(2, '0');
+                  const padMonth = String(selectedMonth).padStart(2, '0');
+                  const dateObj = new Date(`${selectedYear}-${padMonth}-${padDay}`);
+                  const isSunday = dateObj.getDay() === 0;
 
-                    return (
-                      <th
-                        key={dayNum}
-                        className={`py-3 px-2 text-center border-r border-slate-800/80 min-w-[70px] ${
-                          isSunday ? 'bg-amber-500/10 text-amber-300 font-extrabold' : ''
-                        }`}
-                      >
-                        <span className="block text-xs">{dayNum}</span>
-                        <span className="block text-[9px] font-normal opacity-70">
-                          {dateObj.toLocaleDateString('en-US', { weekday: 'short' })}
-                        </span>
-                      </th>
-                    );
-                  })}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
+                  return (
+                    <th
+                      key={dayNum}
+                      className={`py-3 px-2 text-center border-r border-b border-slate-800 min-w-[70px] ${
+                        isSunday ? 'bg-amber-500/10 text-amber-300 font-extrabold' : ''
+                      }`}
+                    >
+                      <span className="block text-xs">{dayNum}</span>
+                      <span className="block text-[9px] font-normal opacity-70">
+                        {dateObj.toLocaleDateString('en-US', { weekday: 'short' })}
+                      </span>
+                    </th>
+                  );
+                })}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-800/60">
                 {employees.map(emp => (
                   <tr key={emp.id} className="hover:bg-slate-850/50 transition">
                     {/* Sticky Employee Name & Department Cell */}
@@ -383,10 +382,8 @@ export default function AttendanceLogTab({ hideImport = false }: AttendanceLogTa
                 ))}
               </tbody>
             </table>
-          </div>
         </div>
       ) : (
-        /* DAILY PUNCH LIST VIEW */
         <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs border-collapse">
