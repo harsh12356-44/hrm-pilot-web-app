@@ -149,7 +149,15 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
             <nav className="space-y-1.5">
               {sec.items.map((item) => {
                 const Icon = item.icon;
-                const isActive = activeTab === item.id;
+                const cleanHref = item.href.split('?')[0];
+                const isActive = activeTabParam
+                  ? activeTabParam === item.id
+                  : currentTab
+                  ? currentTab === item.id
+                  : cleanHref === '/admin' || cleanHref === '/employee'
+                  ? pathname === cleanHref
+                  : pathname === cleanHref || pathname.startsWith(cleanHref);
+
                 return (
                   <Link
                     key={item.id}
