@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getDbData } from '@/lib/store';
 import * as XLSX from 'xlsx';
 
+export const dynamic = 'force-dynamic';
+
 const MONTHS = [
   { value: '1', name: 'January' },
   { value: '2', name: 'February' },
