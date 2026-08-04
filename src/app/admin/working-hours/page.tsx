@@ -21,8 +21,8 @@ export default function WorkingHoursPage() {
         ]);
         const attData = await attRes.json();
         const empData = await empRes.json();
-        setLogs(Array.isArray(attData) ? attData : []);
-        setEmployees(Array.isArray(empData) ? empData : []);
+        setLogs(Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : []);
+        setEmployees(Array.isArray(empData.employees) ? empData.employees : Array.isArray(empData) ? empData : []);
       } catch (err) {
         console.error(err);
       } finally {

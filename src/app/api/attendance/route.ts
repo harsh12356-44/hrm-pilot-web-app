@@ -94,29 +94,91 @@ export async function POST(request: Request) {
     // 2. Completed Hours Import
     if (body.action === 'IMPORT_COMPLETED_HOURS') {
       const rows = body.rows || [];
+      let importedCount = 0;
 
       if (Array.isArray(rows) && rows.length > 0) {
-        rows.forEach((row: any) => {
-          const empId = row.employeeId || row.EmployeeID || 'emp-1';
-          const totalHours = Number(row.completedHours || row.TotalHours || row.hours) || 176;
+        const is2D = Array.isArray(rows[0]);
 
-          // Update worked minutes on employee's attendance logs
-          db.attendanceLogs.forEach((log) => {
-            if (log.employeeId === empId) {
-              log.workedMinutes = Math.round((totalHours * 60) / 22);
+        rows.forEach((row: any) => {
+          if (!row) return;
+
+          let rawEmpCode = '';
+          let rawEmpName = '';
+          let totalHours = 0;
+
+          if (is2D) {
+            rawEmpCode = String(row[0] || '').trim();
+            rawEmpName = String(row[2] || row[1] || '').trim();
+            for (let c = row.length - 1; c >= 0; c--) {
+              const val = parseFloat(String(row[c]));
+              if (!isNaN(val) && val > 0 && val < 500) {
+                totalHours = val;
+                break;
+              }
             }
+          } else {
+            rawEmpCode = String(row.employeeId || row.EmployeeID || row.empId || row['Emp Code'] || '').trim();
+            rawEmpName = String(row.employeeName || row.EmployeeName || row.name || row['Emp Name'] || '').trim();
+            totalHours = Number(row.completedHours || row.TotalHours || row.hours || row['Completed Hours'] || row['Total Hours'] || row['Worked Hours']) || 176;
+          }
+
+          if (!rawEmpName && !rawEmpCode) return;
+
+          const matchedEmp = db.employees.find(e => {
+            if (rawEmpCode && (e.id === rawEmpCode || e.employeeId === rawEmpCode)) return true;
+            if (rawEmpName) {
+              const sysName = e.name.toLowerCase().trim();
+              const inputName = rawEmpName.toLowerCase().trim();
+              if (sysName.includes(inputName) || inputName.includes(sysName)) return true;
+              if (sysName.split(' ')[0] === inputName.split(' ')[0] && inputName.split(' ')[0].length > 2) return true;
+            }
+            return false;
           });
+
+          if (matchedEmp) {
+            importedCount++;
+            const monthYear = body.monthYear || '2026-07';
+            const totalDaysInMonth = new Date(2026, 7, 0).getDate();
+            const avgMinsPerDay = Math.round((totalHours * 60) / totalDaysInMonth);
+
+            for (let day = 1; day <= totalDaysInMonth; day++) {
+              const dayStr = String(day).padStart(2, '0');
+              const dateStr = `${monthYear}-${dayStr}`;
+              const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === matchedEmp.id && l.date === dateStr);
+
+              if (existingIdx !== -1) {
+                db.attendanceLogs[existingIdx].workedMinutes = avgMinsPerDay;
+                db.attendanceLogs[existingIdx].shortMinutes = Math.max(0, 480 - avgMinsPerDay);
+                db.attendanceLogs[existingIdx].extraMinutes = Math.max(0, avgMinsPerDay - 480);
+              } else {
+                db.attendanceLogs.push({
+                  id: `att-${matchedEmp.id}-${dateStr}`,
+                  employeeId: matchedEmp.id,
+                  date: dateStr,
+                  checkIn: '09:00',
+                  checkOut: '18:00',
+                  workedMinutes: avgMinsPerDay,
+                  requiredMinutes: 480,
+                  shortMinutes: Math.max(0, 480 - avgMinsPerDay),
+                  extraMinutes: Math.max(0, avgMinsPerDay - 480),
+                  attendanceCode: 'P',
+                  sundayWorkedMinutes: 0,
+                  isManual: false,
+                });
+              }
+            }
+          }
         });
       }
 
       const newImport: AttendanceImport = {
         id: `imp-hrs-${Date.now()}`,
         filename: body.filename || 'completed_hours.csv',
-        uploadedBy: 'Harshit Bhootra',
+        uploadedBy: 'Ravina Khimani',
         uploadDate: new Date().toISOString(),
-        totalEmployees: db.employees.length || 5,
-        totalRows: rows.length || 5,
-        importedRows: rows.length || 5,
+        totalEmployees: importedCount || db.employees.length,
+        totalRows: rows.length,
+        importedRows: importedCount || rows.length,
         missingPunches: 0,
         status: 'Completed',
       };
@@ -125,7 +187,16 @@ export async function POST(request: Request) {
       logAudit('Import Completed Hours Spreadsheet', 'AttendanceImport', newImport.id, undefined, newImport.filename);
       saveDbData(db);
 
-      return NextResponse.json({ success: true, import: newImport, logs: db.attendanceLogs });
+      const enrichedLogs = db.attendanceLogs.map(l => {
+        const emp = db.employees.find(e => e.id === l.employeeId);
+        return {
+          ...l,
+          employeeName: emp ? emp.name : 'Unknown',
+          department: emp ? emp.department : 'General',
+        };
+      });
+
+      return NextResponse.json({ success: true, import: newImport, logs: enrichedLogs, totalEmployeesUpdated: importedCount });
     }
 
     if (body.action === 'MANUAL_EDIT') {
