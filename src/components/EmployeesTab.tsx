@@ -339,14 +339,6 @@ export default function EmployeesTab() {
                     {emp.primaryManager || '-- None --'}
                   </span>
                 </div>
-
-                <div className="flex items-center justify-between text-slate-400">
-                  <span className="flex items-center space-x-1.5">
-                    <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Monthly Base</span>
-                  </span>
-                  <span className="text-emerald-400 font-bold font-mono">₹{emp.monthlySalary?.toLocaleString()}</span>
-                </div>
               </div>
 
               <div className="pt-2 flex items-center justify-between text-[11px]">
@@ -529,16 +521,7 @@ export default function EmployeesTab() {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="block font-bold text-slate-300 mb-1.5">Monthly Salary</label>
-                    <input
-                      type="number"
-                      value={salary}
-                      onChange={e => setSalary(Number(e.target.value))}
-                      placeholder="0.00"
-                      className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
-                    />
-                  </div>
+
 
                   <div>
                     <label className="block font-bold text-slate-300 mb-1.5">Weekly Off Day</label>
