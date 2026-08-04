@@ -2,8 +2,30 @@ import { NextResponse } from 'next/server';
 import { getDbData, saveDbData, logAudit } from '@/lib/store';
 import { Holiday } from '@/lib/types';
 
+export const dynamic = 'force-dynamic';
+
+export const OFFICIAL_2026_HOLIDAYS: Holiday[] = [
+  { id: 'h-2026-01', name: 'New Year', date: '2026-01-01', isOptional: false },
+  { id: 'h-2026-02', name: 'Republic Day', date: '2026-01-26', isOptional: false },
+  { id: 'h-2026-03', name: 'Holi', date: '2026-03-04', isOptional: false },
+  { id: 'h-2026-04', name: 'Independence Day', date: '2026-08-15', isOptional: false },
+  { id: 'h-2026-05', name: 'Raksha Bandhan', date: '2026-08-28', isOptional: false },
+  { id: 'h-2026-06', name: 'Diwali', date: '2026-11-08', isOptional: false },
+  { id: 'h-2026-07', name: 'Diwali (Rama Shama)', date: '2026-11-09', isOptional: false },
+  { id: 'h-2026-08', name: 'Christmas', date: '2026-12-25', isOptional: false },
+];
+
 export async function GET() {
   const db = getDbData();
+
+  // Ensure all 8 official 2026 holidays exist in DB
+  OFFICIAL_2026_HOLIDAYS.forEach((official) => {
+    const exists = db.holidays.some((h) => h.date === official.date || h.name.toLowerCase() === official.name.toLowerCase());
+    if (!exists) {
+      db.holidays.push(official);
+    }
+  });
+
   return NextResponse.json(db.holidays);
 }
 
@@ -36,7 +58,6 @@ export async function POST(request: Request) {
             row.HolidayDate ||
             row.dateStr;
 
-          // Fallback to array / object values if keys differ
           if (!name || !date) {
             const vals = Object.values(row).filter((v) => v !== null && v !== undefined && String(v).trim() !== '');
             if (vals.length >= 2) {
@@ -48,12 +69,10 @@ export async function POST(request: Request) {
           const isOptional = Boolean(row.isOptional || row.Optional || row['Is Optional'] || row.optional);
 
           if (name && date) {
-            // Standardize date format YYYY-MM-DD
             let formattedDate = String(date).trim();
             if (formattedDate.includes('/')) {
               const parts = formattedDate.split('/');
               if (parts.length === 3) {
-                // DD/MM/YYYY to YYYY-MM-DD
                 if (parts[2].length === 4) {
                   formattedDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
                 }
@@ -117,7 +136,7 @@ export async function DELETE(request: Request) {
     }
 
     const db = getDbData();
-    const index = db.holidays.findIndex(h => h.id === id);
+    const index = db.holidays.findIndex((h) => h.id === id);
 
     if (index !== -1) {
       const deletedHoliday = db.holidays[index];
