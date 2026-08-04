@@ -625,8 +625,9 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
       .filter(l => l.leaveType === 'Planned Leave' || l.leaveType === 'Sick Leave')
       .reduce((sum, l) => sum + (l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : l.daysCount), 0);
 
-    const totalUsed = casualUsed + plannedUsed;
-    const totalAllowance = emp.casualAllowance + emp.plannedAllowance;
+    const casualAllowance = 2;
+    const plannedAllowance = 4;
+    const totalAllowance = casualAllowance + plannedAllowance; // 6 Days
     const remaining = Math.max(0, totalAllowance - totalUsed);
     const extraDeduct = Math.max(0, totalUsed - totalAllowance);
     const utilizationPercentage = Math.min(100, Math.round((totalUsed / totalAllowance) * 100));
