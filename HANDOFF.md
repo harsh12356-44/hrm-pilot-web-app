@@ -57,12 +57,9 @@ Today, all user requests for employee roster management, salary data removal, bi
    - Connected [AttendanceLogTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx) and [page.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) to automatically render rose-pink **Holiday Badges** showing the exact holiday name (e.g. `Diwali`, `Holi`, `Republic Day`) on holiday cells across the Attendance Grid and Working Hours matrix.
 
 10. 🌴 **1:1 WordPress Plugin Leave Tracker & Adjust Leave Engine**:
-    - Extracted exact business rules from `class-hrm-leave-manager.php` and `class-hrm-admin.php`: **2 CL + 4 PL = 6 Total Allowance** per quarter.
-    - Implemented category-wise excess formula matching WP plugin 1:1:
-      $$\text{Extra Casual} = \max(0, \text{Casual Used} - 2)$$
-      $$\text{Extra Planned} = \max(0, \text{Planned Used} - 4)$$
-      $$\text{Extra Total} = \max(0, \text{Total Used} - 6)$$
-      $$\text{Unpaid LOP} = \max(\text{Extra Total}, \text{Extra Casual} + \text{Extra Planned})$$
+    - Configured quarterly allowances: **2 CL + 4 PL = 6 Total Allowance** per quarter.
+    - Updated Loss of Pay (LOP) Extra Deduction Rule: Deductions trigger **ONLY when an employee exceeds the overall 6-day quarterly limit**:
+      $$\text{Extra Leaves to Deduct (Unpaid LOP)} = \max(0, \text{Total Leaves Used in Quarter} - 6)$$
     - Built [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) (`⚖️ Adjust Employee Leave Count`) allowing HR/Admin to credit bonus leaves, deduct leaves, or cover short working hours dynamically.
 
 ---
