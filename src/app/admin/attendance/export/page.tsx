@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { Download, Calendar, FileSpreadsheet, CheckCircle2, FileDown } from 'lucide-react';
-import * as XLSX from 'xlsx';
 
 const MONTHS = [
   { value: '1', name: 'January' },
@@ -29,139 +28,19 @@ export default function AttendanceExportPage() {
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [exporting, setExporting] = useState(false);
   const [downloaded, setDownloaded] = useState(false);
-  const [exportedCount, setExportedCount] = useState(0);
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = () => {
     setExporting(true);
     setDownloaded(false);
-    try {
-      const [attRes, empRes] = await Promise.all([
-        fetch(`/api/attendance?month=${selectedMonth}&year=${selectedYear}&department=${departmentFilter}`),
-        fetch(`/api/employees`),
-      ]);
 
-      const attData = await attRes.json();
-      const empData = await empRes.json();
+    // Direct browser navigation to server-side export API with attachment headers
+    const downloadUrl = `/api/attendance/export?month=${selectedMonth}&year=${selectedYear}&department=${departmentFilter}`;
+    window.location.href = downloadUrl;
 
-      const logs: any[] = Array.isArray(attData.logs) ? attData.logs : [];
-      let employees: any[] = Array.isArray(empData.employees) ? empData.employees : Array.isArray(empData) ? empData : [];
-
-      if (departmentFilter !== 'ALL') {
-        employees = employees.filter(e => e.department === departmentFilter);
-      }
-
-      const totalDaysInMonth = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
-      const daysArray = Array.from({ length: totalDaysInMonth }, (_, i) => i + 1);
-
-      // Create Matrix Data for Sheet 1
-      const matrixRows: any[] = [];
-
-      employees.forEach(emp => {
-        const empLogs = logs.filter(l => l.employeeId === emp.id);
-        const row: any = {
-          'Emp Code': emp.employeeId || emp.id,
-          'Employee Name': emp.name,
-          'Department': emp.department,
-          'Designation': emp.designation,
-        };
-
-        let totalWorkedMins = 0;
-        let totalShortMins = 0;
-        let totalExtraMins = 0;
-
-        daysArray.forEach(dayNum => {
-          const padDay = String(dayNum).padStart(2, '0');
-          const padMonth = String(selectedMonth).padStart(2, '0');
-          const dateStr = `${selectedYear}-${padMonth}-${padDay}`;
-          const log = empLogs.find(l => l.date === dateStr);
-
-          const dateObj = new Date(dateStr);
-          const isSunday = dateObj.getDay() === 0;
-
-          if ((log && (log.attendanceCode === 'WO-I' || log.attendanceCode === 'WO')) || (isSunday && (!log || log.attendanceCode === 'WO-I' || log.attendanceCode === 'WO'))) {
-            row[dayNum] = 'WO';
-          } else if (log) {
-            if (log.attendanceCode === 'A') {
-              row[dayNum] = 'A';
-            } else if (log.attendanceCode === 'HD') {
-              row[dayNum] = 'HD (4h)';
-              totalWorkedMins += 240;
-            } else if (log.workedMinutes > 0) {
-              const h = Math.floor(log.workedMinutes / 60);
-              const m = log.workedMinutes % 60;
-              row[dayNum] = m > 0 ? `${h}h ${m}m` : `${h}h`;
-              totalWorkedMins += log.workedMinutes;
-              totalShortMins += log.shortMinutes || 0;
-              totalExtraMins += log.extraMinutes || 0;
-            } else {
-              row[dayNum] = log.attendanceCode || '-';
-            }
-          } else {
-            row[dayNum] = '-';
-          }
-        });
-
-        row['Total Worked Hours'] = `${(totalWorkedMins / 60).toFixed(1)} hrs`;
-        row['Total Short Hours'] = `${(totalShortMins / 60).toFixed(1)} hrs`;
-        row['Overtime Extra Hours'] = `${(totalExtraMins / 60).toFixed(1)} hrs`;
-
-        matrixRows.push(row);
-      });
-
-      // Create Detailed Punch Logs for Sheet 2
-      const detailedLogs = logs.map(l => {
-        const emp = employees.find(e => e.id === l.employeeId);
-        return {
-          'Emp ID': emp?.employeeId || l.employeeId,
-          'Employee Name': emp?.name || l.employeeName || 'Unknown',
-          'Department': emp?.department || l.department || 'General',
-          'Date': l.date,
-          'Check In': l.checkIn || '--:--',
-          'Check Out': l.checkOut || '--:--',
-          'Worked Minutes': l.workedMinutes || 0,
-          'Worked Hours': (l.workedMinutes / 60).toFixed(2),
-          'Short Minutes': l.shortMinutes || 0,
-          'Overtime Minutes': l.extraMinutes || 0,
-          'Status Code': l.attendanceCode || 'P',
-        };
-      });
-
-      const wb = XLSX.utils.book_new();
-
-      // Sheet 1: Monthly Matrix
-      const wsMatrix = XLSX.utils.json_to_sheet(matrixRows);
-      XLSX.utils.book_append_sheet(wb, wsMatrix, 'Monthly Matrix Grid');
-
-      // Sheet 2: Daily Punch Logs
-      const wsDetails = XLSX.utils.json_to_sheet(detailedLogs);
-      XLSX.utils.book_append_sheet(wb, wsDetails, 'Daily Punch Logs');
-
-      const monthName = MONTHS.find(m => m.value === selectedMonth)?.name || selectedMonth;
-      const filename = `HRM_Pilot_Attendance_${monthName}_${selectedYear}.xlsx`;
-
-      // Generate binary Excel array buffer with explicit openxmlformats MIME type
-      const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-      const blob = new Blob([excelBuffer], {
-        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8',
-      });
-
-      // Trigger browser file download with explicit filename
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', filename);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      setExportedCount(matrixRows.length);
+    setTimeout(() => {
       setDownloaded(true);
-    } catch (err) {
-      console.error(err);
-    } finally {
       setExporting(false);
-    }
+    }, 1500);
   };
 
   const selectedMonthName = MONTHS.find(m => m.value === selectedMonth)?.name;
@@ -258,7 +137,7 @@ export default function AttendanceExportPage() {
               <FileDown className="w-5 h-5" />
               <span>
                 {exporting
-                  ? `Generating ${selectedMonthName} ${selectedYear} Excel...`
+                  ? `Downloading ${selectedMonthName} ${selectedYear} Master Excel...`
                   : `Download ${selectedMonthName} ${selectedYear} Master Excel`}
               </span>
             </button>
@@ -267,7 +146,7 @@ export default function AttendanceExportPage() {
               <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-semibold flex items-center justify-center space-x-2">
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
                 <span>
-                  Successfully exported <strong>{selectedMonthName} {selectedYear}</strong> attendance matrix for {exportedCount} employees!
+                  Spreadsheet <strong>HRM_Pilot_Attendance_{selectedMonthName}_{selectedYear}.xlsx</strong> downloaded!
                 </span>
               </div>
             )}
