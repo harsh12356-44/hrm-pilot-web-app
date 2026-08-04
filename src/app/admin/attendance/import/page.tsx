@@ -12,6 +12,7 @@ export default function AttendanceImportPage() {
   const [uploading, setUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [previewRows, setPreviewRows] = useState<any[]>([]);
+  const [fullRawRows, setFullRawRows] = useState<any[]>([]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -25,9 +26,12 @@ export default function AttendanceImportPage() {
         const wb = XLSX.read(bstr, { type: 'binary' });
         const wsName = wb.SheetNames[0];
         const ws = wb.Sheets[wsName];
-        const data = XLSX.utils.sheet_to_json(ws);
-        setPreviewRows(data.slice(0, 5));
-        setStatusMessage(`Loaded ${data.length} records from ${selectedFile.name}`);
+        const rawMatrix = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const objectData = XLSX.utils.sheet_to_json(ws);
+
+        setFullRawRows(rawMatrix.length > 0 ? rawMatrix : objectData);
+        setPreviewRows(objectData.slice(0, 5));
+        setStatusMessage(`Loaded ${rawMatrix.length || objectData.length} rows from ${selectedFile.name}`);
       } catch (err) {
         setStatusMessage('Loaded file ready for processing.');
         setPreviewRows([
@@ -41,7 +45,7 @@ export default function AttendanceImportPage() {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file && previewRows.length === 0) {
+    if (!file && fullRawRows.length === 0 && previewRows.length === 0) {
       setStatusMessage('Please select a biometric punches or completed hours spreadsheet file.');
       return;
     }
@@ -55,19 +59,19 @@ export default function AttendanceImportPage() {
         body: JSON.stringify({
           action,
           filename: file ? file.name : `${uploadType.toLowerCase().replace(/ /g, '_')}.csv`,
-          rows: previewRows.length > 0 ? previewRows : [
-            { EmployeeID: 'HB001', Date: '2024-08-01', CheckIn: '09:00', CheckOut: '17:30', Status: 'P', completedHours: 176 },
-            { EmployeeID: 'AS002', Date: '2024-08-01', CheckIn: '09:15', CheckOut: '17:45', Status: 'P', completedHours: 176 },
-          ],
+          monthYear: '2026-07',
+          rows: fullRawRows.length > 0 ? fullRawRows : previewRows,
         }),
       });
 
-      await res.json();
+      const data = await res.json();
       setUploading(false);
-      if (uploadType === 'Monthly Punches Upload') {
-        setStatusMessage('Successfully uploaded monthly punches! Daily check-in/out logs and attendance grid updated.');
+      if (data.success) {
+        const count = data.totalLogsParsed || data.import?.importedRows || 0;
+        const emps = data.import?.totalEmployees || 0;
+        setStatusMessage(`Successfully imported ${count} biometric punch records across ${emps} employees! Attendance logs updated.`);
       } else {
-        setStatusMessage('Successfully uploaded completed hours! Employee total completed hours and working hours engine updated.');
+        setStatusMessage(`Error: ${data.error || 'Failed to import file'}`);
       }
     } catch (err) {
       setUploading(false);

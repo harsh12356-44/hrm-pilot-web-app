@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDbData, saveDbData, logAudit } from '@/lib/store';
 import { AttendanceLog, AttendanceImport } from '@/lib/types';
+import { parseBiometricPunches } from '@/lib/biometricParser';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,49 +42,33 @@ export async function POST(request: Request) {
 
     // 1. Monthly Punches Upload
     if (body.action === 'IMPORT' || body.action === 'IMPORT_MONTHLY_PUNCHES') {
-      const rows = body.rows || [];
+      const rawRows = body.rows || [];
+      const monthYear = body.monthYear || '2026-07';
 
-      // Update or insert attendance logs from parsed punch rows
-      if (Array.isArray(rows) && rows.length > 0) {
-        rows.forEach((row: any) => {
-          const empId = row.employeeId || row.EmployeeID || row.empId || 'emp-1';
-          const date = row.date || row.Date || new Date().toISOString().split('T')[0];
-          const checkIn = row.checkIn || row.CheckIn || '09:00';
-          const checkOut = row.checkOut || row.CheckOut || '17:30';
-          const code = row.attendanceCode || row.Status || 'P';
+      const parsedLogs = parseBiometricPunches(rawRows, db.employees, monthYear);
 
-          const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === empId && l.date === date);
+      if (parsedLogs.length > 0) {
+        parsedLogs.forEach(newLog => {
+          const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === newLog.employeeId && l.date === newLog.date);
           if (existingIdx !== -1) {
-            db.attendanceLogs[existingIdx].checkIn = checkIn;
-            db.attendanceLogs[existingIdx].checkOut = checkOut;
-            db.attendanceLogs[existingIdx].attendanceCode = code;
-            db.attendanceLogs[existingIdx].workedMinutes = 510;
+            db.attendanceLogs[existingIdx] = newLog;
           } else {
-            db.attendanceLogs.push({
-              id: `att-${Date.now()}-${Math.random()}`,
-              employeeId: empId,
-              date,
-              checkIn,
-              checkOut,
-              workedMinutes: 510,
-              requiredMinutes: 480,
-              shortMinutes: 0,
-              extraMinutes: 30,
-              attendanceCode: code,
-            });
+            db.attendanceLogs.push(newLog);
           }
         });
       }
 
+      const uniqueEmps = new Set(parsedLogs.map(l => l.employeeId)).size;
+
       const newImport: AttendanceImport = {
         id: `imp-${Date.now()}`,
-        filename: body.filename || 'monthly_punches.csv',
-        uploadedBy: 'Harshit Bhootra',
+        filename: body.filename || 'monthly_punches.xls',
+        uploadedBy: 'Ravina Khimani',
         uploadDate: new Date().toISOString(),
-        totalEmployees: db.employees.length || 5,
-        totalRows: rows.length || 10,
-        importedRows: rows.length || 10,
-        missingPunches: 0,
+        totalEmployees: uniqueEmps || db.employees.length,
+        totalRows: parsedLogs.length || rawRows.length,
+        importedRows: parsedLogs.length || rawRows.length,
+        missingPunches: parsedLogs.filter(l => l.attendanceCode === 'MP').length,
         status: 'Completed',
       };
 
@@ -91,7 +76,7 @@ export async function POST(request: Request) {
       logAudit('Import Biometric Monthly Punches', 'AttendanceImport', newImport.id, undefined, newImport.filename);
       saveDbData(db);
 
-      return NextResponse.json({ success: true, import: newImport, logs: db.attendanceLogs });
+      return NextResponse.json({ success: true, import: newImport, logs: db.attendanceLogs, totalLogsParsed: parsedLogs.length });
     }
 
     // 2. Completed Hours Import
