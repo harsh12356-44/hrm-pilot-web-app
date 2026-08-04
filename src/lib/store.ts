@@ -518,8 +518,15 @@ export function getDbData(): InitialState {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       const data = JSON.parse(raw);
+      const employeesList = (data.employees || DEFAULT_EMPLOYEES).map((e: any) => ({
+        ...e,
+        casualAllowance: 2,
+        plannedAllowance: 4,
+        sickAllowance: 4,
+      }));
+
       memoryDb = {
-        employees: data.employees || DEFAULT_EMPLOYEES,
+        employees: employeesList,
         leaveRecords: data.leaveRecords || DEFAULT_LEAVES,
         attendanceLogs: data.attendanceLogs || DEFAULT_ATTENDANCE,
         settings: data.settings || DEFAULT_SETTINGS,
