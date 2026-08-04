@@ -6,18 +6,29 @@ import { parseBiometricPunches } from '@/lib/biometricParser';
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date');
+  const month = searchParams.get('month');
+  const year = searchParams.get('year') || '2026';
+  const monthYear = searchParams.get('monthYear');
   const department = searchParams.get('department') || 'ALL';
 
   const db = getDbData();
   let logs = db.attendanceLogs;
+  let employees = db.employees;
+
+  if (department !== 'ALL') {
+    employees = employees.filter(e => e.department === department);
+    const deptEmpIds = employees.map(e => e.id);
+    logs = logs.filter(l => deptEmpIds.includes(l.employeeId));
+  }
 
   if (date) {
     logs = logs.filter(l => l.date === date);
-  }
-
-  if (department !== 'ALL') {
-    const deptEmpIds = db.employees.filter(e => e.department === department).map(e => e.id);
-    logs = logs.filter(l => deptEmpIds.includes(l.employeeId));
+  } else if (monthYear) {
+    logs = logs.filter(l => l.date.startsWith(monthYear));
+  } else if (month) {
+    const padMonth = String(month).padStart(2, '0');
+    const targetPrefix = `${year}-${padMonth}`;
+    logs = logs.filter(l => l.date.startsWith(targetPrefix));
   }
 
   const enrichedLogs = logs.map(l => {
@@ -31,6 +42,7 @@ export async function GET(request: Request) {
 
   return NextResponse.json({
     logs: enrichedLogs,
+    employees,
     imports: db.attendanceImports,
   });
 }
