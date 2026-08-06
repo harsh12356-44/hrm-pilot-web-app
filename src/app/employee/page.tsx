@@ -614,34 +614,53 @@ function EmployeePortalContent() {
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
                     {safeLeaves.length > 0 ? (
-                      safeLeaves.map(l => (
-                        <tr key={l.id} className="hover:bg-slate-850 transition">
-                          <td className="py-3.5 px-4 font-mono font-bold text-slate-300">
-                            #{l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}
-                          </td>
-                          <td className="py-3.5 px-4 font-bold text-purple-300">
-                            {l.leaveType}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono text-slate-300">
-                            {l.startDate} to {l.endDate || l.startDate} ({l.daysCount} days)
-                          </td>
-                          <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate">
-                            {l.note || 'Leave application'}
-                          </td>
-                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
-                            {l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
-                          </td>
-                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
-                            {l.hrStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
-                          </td>
-                          <td className="py-3.5 px-4 text-center">
-                            {getLiveStatusBadge(l)}
-                          </td>
-                          <td className="py-3.5 px-4 text-right font-mono text-slate-400 text-[11px]">
-                            {l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '06 Aug 2026'}
-                          </td>
-                        </tr>
-                      ))
+                      safeLeaves.map((l, index) => {
+                        if (!l) return null;
+                        const reqId = l.id && typeof l.id === 'string' ? `#${l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}` : `#${index + 1}`;
+                        const leaveTypeStr = l.leaveType || 'Leave Application';
+                        const startStr = l.startDate || '2026-08-06';
+                        const endStr = l.endDate || startStr;
+                        const daysNum = l.daysCount || 1;
+                        const noteStr = l.note || 'Leave application';
+                        const mgrStat = l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending');
+                        const hrStat = l.hrStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending');
+
+                        let dateStr = '06 Aug 2026';
+                        try {
+                          if (l.createdAt) {
+                            dateStr = new Date(l.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                          }
+                        } catch (e) {}
+
+                        return (
+                          <tr key={l.id || index} className="hover:bg-slate-850 transition">
+                            <td className="py-3.5 px-4 font-mono font-bold text-slate-300">
+                              {reqId}
+                            </td>
+                            <td className="py-3.5 px-4 font-bold text-purple-300">
+                              {leaveTypeStr}
+                            </td>
+                            <td className="py-3.5 px-4 font-mono text-slate-300">
+                              {startStr} to {endStr} ({daysNum} days)
+                            </td>
+                            <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate">
+                              {noteStr}
+                            </td>
+                            <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                              {mgrStat}
+                            </td>
+                            <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                              {hrStat}
+                            </td>
+                            <td className="py-3.5 px-4 text-center">
+                              {getLiveStatusBadge(l)}
+                            </td>
+                            <td className="py-3.5 px-4 text-right font-mono text-slate-400 text-[11px]">
+                              {dateStr}
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       <tr>
                         <td colSpan={8} className="py-8 text-center text-slate-500">
