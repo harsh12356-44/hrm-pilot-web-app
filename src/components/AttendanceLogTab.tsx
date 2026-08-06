@@ -63,14 +63,24 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
       const data = await attRes.json();
       const holData = await holRes.json();
       
-      let empsList = data.employees || [];
-      let logsList = data.logs || [];
+      let empsList: any[] = data.employees || [];
+      let logsList: any[] = data.logs || [];
 
-      if (targetEmployeeId) {
-        empsList = empsList.filter((e: any) => e.id === targetEmployeeId || e.employeeId === targetEmployeeId);
+      // If in Employee Portal mode (hideImport=true or targetEmployeeId provided), strictly show 1 employee only
+      if (hideImport || targetEmployeeId) {
+        const targetId = (targetEmployeeId || 'emp-12').toLowerCase();
+        const found = empsList.find((e: any) =>
+          (e.id && e.id.toLowerCase() === targetId) ||
+          (e.employeeId && e.employeeId.toLowerCase() === targetId) ||
+          (e.name && e.name.toLowerCase().includes(targetId))
+        );
+
+        empsList = found ? [found] : (empsList.length > 0 ? [empsList[0]] : []);
         const activeEmp = empsList[0];
         if (activeEmp) {
-          logsList = logsList.filter((l: any) => l.employeeId === activeEmp.id || l.employeeId === activeEmp.employeeId);
+          logsList = logsList.filter((l: any) =>
+            l.employeeId === activeEmp.id || l.employeeId === activeEmp.employeeId
+          );
         }
       }
 
