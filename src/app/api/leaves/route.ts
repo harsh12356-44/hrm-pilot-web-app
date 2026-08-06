@@ -133,12 +133,14 @@ export async function POST(request: Request) {
       }
 
       // 2b. Process leave records
+      let targetQuarter = 'Q3';
       body.records.forEach((row: any) => {
         const empName = row.employeeName || row['Employee Name'] || row['Employee'] || row['Name'];
         const quarter = row.quarter || row['Quarter'] || 'Q3';
+        targetQuarter = quarter;
         const casual = Number(row.casualUsed || row['Casual Leaves Applied'] || row['Casual Leaves'] || row['Casual'] || 0);
         const planned = Number(row.plannedUsed || row['Planned Leaves Applied'] || row['Planned Leaves'] || row['Planned'] || 0);
-        const startDate = row.startDate || '2026-07-01';
+        const startDate = row.startDate || (quarter === 'Q1' ? '2026-02-15' : quarter === 'Q2' ? '2026-05-15' : quarter === 'Q3' ? '2026-08-15' : '2026-11-15');
         const endDate = row.endDate || startDate;
 
         if (empName) {
@@ -179,6 +181,11 @@ export async function POST(request: Request) {
           }
 
           if (emp) {
+            // Remove previous imported/override records for this employee & quarter
+            db.leaveRecords = db.leaveRecords.filter(
+              l => !((l.employeeId === emp.id || l.employeeId === emp.employeeId || l.employeeId === emp.name) && l.quarter === quarter && l.status === 'APPROVED')
+            );
+
             if (casual > 0) {
               db.leaveRecords.unshift({
                 id: `l-imp-cas-${Date.now()}-${Math.random()}`,
@@ -219,8 +226,8 @@ export async function POST(request: Request) {
 
       saveDbData(db);
       logAudit('Import Quarterly Leaves', 'LeaveRecord', 'batch', undefined, `Imported ${importedCount} records`);
-      const summaries = getQuarterlyLeaveSummaries('Q3', 'ALL');
-      return NextResponse.json({ success: true, message: `Successfully imported ${importedCount} leave records from spreadsheet!`, summaries });
+      const summaries = getQuarterlyLeaveSummaries(targetQuarter, 'ALL');
+      return NextResponse.json({ success: true, message: `Successfully imported ${importedCount} employee leave records from spreadsheet!`, summaries });
     }
 
     // 3. Regular Leave Submission / Record Leave Period
