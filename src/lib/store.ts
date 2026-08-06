@@ -536,7 +536,7 @@ let lastCloudFetchTime = 0;
 
 export async function ensureCloudSync() {
   const now = Date.now();
-  if (!memoryDb || now - lastCloudFetchTime > 2000) {
+  if (!memoryDb || now - lastCloudFetchTime > 15000) {
     try {
       const res = await fetch(PERSISTENT_BLOB_URL, { cache: 'no-store' });
       if (res.ok) {
@@ -562,19 +562,24 @@ export async function ensureCloudSync() {
   }
 }
 
-function syncCloudStorageAsync(data: InitialState) {
+async function syncCloudStorageAsync(data: InitialState) {
   try {
-    fetch(PERSISTENT_BLOB_URL, {
+    lastCloudFetchTime = Date.now() + 10000;
+    await fetch(PERSISTENT_BLOB_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify(data),
-    }).catch(err => console.warn('Cloud sync write skipped:', err));
-  } catch (e) {}
+    });
+    lastCloudFetchTime = Date.now();
+  } catch (e) {
+    console.warn('Cloud sync write skipped:', e);
+  }
 }
 
 export function saveDbData(data: InitialState): void {
   memoryDb = data;
   (globalThis as any)._inMemoryDbData = data;
+  lastCloudFetchTime = Date.now() + 10000;
   try {
     ensureDataDir();
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
