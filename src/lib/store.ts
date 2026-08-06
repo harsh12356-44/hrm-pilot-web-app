@@ -390,36 +390,7 @@ const DEFAULT_SETTINGS: CompanySettings = {
   managerPortalUrl: '/manager',
 };
 
-const DEFAULT_LEAVES: LeaveRecord[] = [
-  {
-    id: 'l-1',
-    employeeId: 'emp-3',
-    leaveType: 'Casual Leave',
-    startDate: '2026-07-10',
-    endDate: '2026-07-11',
-    dayType: 'full',
-    daysCount: 2,
-    quarter: 'Q3',
-    year: 2026,
-    status: 'APPROVED',
-    note: 'Family emergency',
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'l-2',
-    employeeId: 'emp-4',
-    leaveType: 'Planned Leave',
-    startDate: '2026-07-15',
-    endDate: '2026-07-18',
-    dayType: 'full',
-    daysCount: 4,
-    quarter: 'Q3',
-    year: 2026,
-    status: 'APPROVED',
-    note: 'Vacation trip',
-    createdAt: new Date().toISOString(),
-  },
-];
+const DEFAULT_LEAVES: LeaveRecord[] = [];
 
 const DEFAULT_ATTENDANCE: AttendanceLog[] = [
   {
@@ -527,7 +498,7 @@ export function getDbData(): InitialState {
 
       memoryDb = {
         employees: employeesList,
-        leaveRecords: data.leaveRecords || DEFAULT_LEAVES,
+        leaveRecords: Array.isArray(data.leaveRecords) ? data.leaveRecords : [],
         attendanceLogs: data.attendanceLogs || DEFAULT_ATTENDANCE,
         settings: data.settings || DEFAULT_SETTINGS,
         payrollPreviews: data.payrollPreviews || [],
