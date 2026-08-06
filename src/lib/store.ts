@@ -531,6 +531,18 @@ export function getDbData(): InitialState {
   return memoryDb;
 }
 
+const PERSISTENT_BLOB_URL = 'https://jsonblob.com/api/jsonBlob/019fd6e3-ad32-7d7e-9769-7c54c930c050';
+
+function syncCloudStorageAsync(data: InitialState) {
+  try {
+    fetch(PERSISTENT_BLOB_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+      body: JSON.stringify(data),
+    }).catch(err => console.warn('Cloud sync write skipped:', err));
+  } catch (e) {}
+}
+
 export function saveDbData(data: InitialState): void {
   memoryDb = data;
   (globalThis as any)._inMemoryDbData = data;
@@ -540,6 +552,8 @@ export function saveDbData(data: InitialState): void {
   } catch (err) {
     console.warn('FileSystem write skipped (read-only environment), updated in-memory store.');
   }
+
+  syncCloudStorageAsync(data);
 }
 
 export function addNotification(employeeId: string, type: string, title: string, message: string) {
