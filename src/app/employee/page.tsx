@@ -649,8 +649,11 @@ function EmployeePortalContent() {
                         const endStr = l.endDate || startStr;
                         const daysNum = l.daysCount || 1;
                         const noteStr = l.note || 'Leave application';
-                        const mgrStat = l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending');
-                        const hrStat = l.hrStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending');
+                        const isApproved = l.status === 'APPROVED' || (l.managerStatus === 'Approved' && l.hrStatus === 'Approved');
+                        const isRejected = l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected';
+
+                        const mgrStat = isApproved ? 'Approved' : isRejected ? 'Rejected' : (l.managerStatus || 'Pending');
+                        const hrStat = isApproved ? 'Approved' : isRejected ? 'Rejected' : (l.hrStatus || 'Pending');
 
                         let dateStr = '06 Aug 2026';
                         try {

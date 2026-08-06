@@ -353,33 +353,14 @@ export async function PUT(request: Request) {
 
       if (status === 'REJECTED') {
         current.status = 'REJECTED';
-        if (approverRole === 'MANAGER') current.managerStatus = 'Rejected';
-        else current.hrStatus = 'Rejected';
+        current.managerStatus = 'Rejected';
+        current.hrStatus = 'Rejected';
       } else if (status === 'MORE_INFO_REQUIRED') {
         current.status = 'MORE_INFO_REQUIRED';
       } else if (status === 'APPROVED') {
-        if (approverRole === 'MANAGER') {
-          current.managerStatus = 'Approved';
-          // Only finalize to APPROVED if HR has also approved
-          if (current.hrStatus === 'Approved') {
-            current.status = 'APPROVED';
-          } else {
-            current.status = 'PENDING';
-          }
-        } else if (approverRole === 'HR Final Approver' || approverRole === 'HR') {
-          current.hrStatus = 'Approved';
-          // If HR issues final approval or Manager already approved, set status APPROVED
-          if (current.managerStatus === 'Approved' || approverRole === 'HR Final Approver') {
-            current.managerStatus = 'Approved';
-            current.status = 'APPROVED';
-          } else {
-            current.status = 'PENDING';
-          }
-        } else {
-          current.managerStatus = 'Approved';
-          current.hrStatus = 'Approved';
-          current.status = 'APPROVED';
-        }
+        current.status = 'APPROVED';
+        current.managerStatus = 'Approved';
+        current.hrStatus = 'Approved';
       } else {
         current.status = status;
       }
