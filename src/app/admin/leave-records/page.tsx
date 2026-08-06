@@ -86,6 +86,9 @@ export default function LeaveRecordsAdminPage() {
       if (res.ok) {
         setActionStatusMsg(`Leave request #${id} updated to ${newStatus}!`);
         fetchLeavesAndEmployees();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('leaveDataUpdated'));
+        }
       } else {
         const errData = await res.json();
         setActionStatusMsg(`Failed: ${errData.error || 'Could not update status'}`);
@@ -547,6 +550,9 @@ export default function LeaveRecordsAdminPage() {
         onSuccess={() => {
           setActionStatusMsg('New leave request submitted successfully!');
           fetchLeavesAndEmployees();
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(new Event('leaveDataUpdated'));
+          }
         }}
       />
     </div>

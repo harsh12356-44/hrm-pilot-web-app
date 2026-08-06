@@ -46,6 +46,10 @@ export default function LeaveTrackerTab() {
 
   useEffect(() => {
     fetchLeaveData();
+
+    const handleUpdate = () => fetchLeaveData();
+    window.addEventListener('leaveDataUpdated', handleUpdate);
+    return () => window.removeEventListener('leaveDataUpdated', handleUpdate);
   }, [fetchLeaveData]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -363,7 +363,16 @@ export async function PUT(request: Request) {
       }
 
       saveDbData(db);
-      return NextResponse.json({ success: true, record: db.leaveRecords[index], records: db.leaveRecords });
+
+      const targetQuarter = db.leaveRecords[index].quarter || 'Q3';
+      const summaries = getQuarterlyLeaveSummaries(targetQuarter, 'ALL');
+
+      return NextResponse.json({
+        success: true,
+        record: db.leaveRecords[index],
+        records: db.leaveRecords,
+        summaries,
+      });
     }
 
     return NextResponse.json({ error: 'Leave record not found' }, { status: 404 });

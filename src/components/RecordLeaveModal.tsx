@@ -52,6 +52,7 @@ export default function RecordLeaveModal({
           note,
           handoverNote,
           emergencyContact,
+          status: 'APPROVED',
         }),
       });
 
