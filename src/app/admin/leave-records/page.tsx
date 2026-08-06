@@ -157,7 +157,18 @@ export default function LeaveRecordsAdminPage() {
   const departmentsList = Array.from(new Set(employees.map(e => e.department).filter(Boolean)));
 
   // Filter Leaves
-  const filteredLeaves = leaves.filter(l => {
+  // Pending Leave Requests requiring action (Table 1)
+  const pendingApprovals = leaves.filter(
+    l => l.status === 'PENDING' || l.status === 'MORE_INFO_REQUIRED' || (l.hrStatus !== 'Approved' && l.hrStatus !== 'Rejected' && l.status !== 'APPROVED' && l.status !== 'REJECTED')
+  );
+
+  // Historical Leaves Register (Table 2: Approved or Rejected only)
+  const historicalLeaves = leaves.filter(
+    l => l.status === 'APPROVED' || l.status === 'REJECTED' || l.hrStatus === 'Approved' || l.hrStatus === 'Rejected'
+  );
+
+  // Filter Historical Leaves
+  const filteredLeaves = historicalLeaves.filter(l => {
     const emp = employees.find(
       e => e.id === l.employeeId ||
            e.employeeId === l.employeeId ||
@@ -186,11 +197,6 @@ export default function LeaveRecordsAdminPage() {
 
     return matchesSearch && matchesDept && matchesStatus;
   });
-
-  // Pending Leave Requests requiring action
-  const pendingApprovals = leaves.filter(
-    l => l.status === 'PENDING' || l.status === 'MORE_INFO_REQUIRED'
-  );
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
@@ -478,33 +484,15 @@ export default function LeaveRecordsAdminPage() {
 
                           {/* Action */}
                           <td className="py-3.5 px-4 text-center">
-                            <div className="flex items-center justify-center space-x-1.5">
-                              <button
-                                onClick={() => handleUpdateStatus(l.id, 'APPROVED')}
-                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition shadow flex items-center space-x-1 cursor-pointer ${
-                                  l.status === 'APPROVED' || (l.hrStatus === 'Approved' && l.managerStatus === 'Approved')
-                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-600 hover:text-white'
-                                    : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                                }`}
-                                title="Click to approve leave application"
-                              >
-                                <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>{l.status === 'APPROVED' ? 'Approved ✓' : 'Approve'}</span>
-                              </button>
-
-                              <button
-                                onClick={() => handleUpdateStatus(l.id, 'REJECTED')}
-                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition shadow flex items-center space-x-1 cursor-pointer ${
-                                  l.status === 'REJECTED'
-                                    ? 'bg-red-500/20 text-red-300 border border-red-500/50 hover:bg-red-600 hover:text-white'
-                                    : 'bg-red-600 hover:bg-red-500 text-white'
-                                }`}
-                                title="Click to reject leave application"
-                              >
-                                <XCircle className="w-3.5 h-3.5" />
-                                <span>{l.status === 'REJECTED' ? 'Rejected ✗' : 'Reject'}</span>
-                              </button>
-                            </div>
+                            {l.status === 'APPROVED' || l.hrStatus === 'Approved' ? (
+                              <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+                                HR AND MANAGER HAVE APPROVED ✓
+                              </span>
+                            ) : (
+                              <span className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+                                REJECTED ✗
+                              </span>
+                            )}
                           </td>
                         </tr>
                       );
