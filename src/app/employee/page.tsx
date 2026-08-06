@@ -35,25 +35,8 @@ function EmployeePortalContent() {
   const searchParams = useSearchParams();
   const activeTab = searchParams ? searchParams.get('tab') || 'dashboard' : 'dashboard';
 
-  // Current Employee Profile State
-  const [employee, setEmployee] = useState<Employee | null>(null);
-  const [attendance, setAttendance] = useState<AttendanceLog[]>([]);
-  const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Punch Clock state
-  const [punchedIn, setPunchedIn] = useState(false);
-  const [punchTime, setPunchTime] = useState<string | null>(null);
-  const [duration, setDuration] = useState('00:00:00');
-  const [punchMsg, setPunchMsg] = useState('');
-
-  // Apply Leave Form state
-  const [leaveType, setLeaveType] = useState('Casual Leave');
-  const [leaveDuration, setLeaveDuration] = useState('Full Day');
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [reason, setReason] = useState('');
-  const [formMsg, setFormMsg] = useState('');
+  const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('emp-8'); // Default: Lochita g1
 
   const fetchEmployeeDashboardData = useCallback(async () => {
     try {
@@ -72,8 +55,13 @@ function EmployeePortalContent() {
       const logsList: AttendanceLog[] = Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || [];
       const leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
 
-      // Default active profile: Sonu Goswami or Lochita or first employee
-      const currentEmp = employeesList.find(e => e.name.toLowerCase().includes('sonu')) || employeesList.find(e => e.name.toLowerCase().includes('lochita')) || employeesList[0];
+      setAllEmployees(employeesList);
+
+      // Match selected employee by ID or employeeId
+      const currentEmp = employeesList.find(
+        e => e.id === selectedEmployeeId || e.employeeId === selectedEmployeeId || e.name.toLowerCase().includes(selectedEmployeeId.toLowerCase())
+      ) || employeesList.find(e => e.name.toLowerCase().includes('lochita')) || employeesList[0];
+
       setEmployee(currentEmp || null);
 
       if (currentEmp) {
@@ -88,7 +76,7 @@ function EmployeePortalContent() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedEmployeeId]);
 
   useEffect(() => {
     fetchEmployeeDashboardData();
@@ -254,11 +242,23 @@ function EmployeePortalContent() {
         <Sidebar currentTab={activeTab} role="EMPLOYEE" />
         <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto space-y-6 overflow-y-auto">
           {/* Top Date Header */}
-          <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 border-b border-slate-800 pb-3">
             <span>Thursday, 06 August 2026 • Live HRM Portal</span>
-            <span className="bg-slate-900 px-3 py-1 rounded-full border border-slate-800 font-semibold text-slate-300">
-              Role: Developer ({employee?.name || 'Sonu Goswami'})
-            </span>
+
+            <div className="flex items-center space-x-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800 text-xs">
+              <span className="text-slate-400 font-semibold">Active Portal View:</span>
+              <select
+                value={employee?.id || selectedEmployeeId}
+                onChange={e => setSelectedEmployeeId(e.target.value)}
+                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+              >
+                {allEmployees.map(emp => (
+                  <option key={emp.id} value={emp.id} className="bg-slate-900 text-white">
+                    {emp.name} ({emp.employeeId || emp.id})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* TAB 1: DASHBOARD */}
