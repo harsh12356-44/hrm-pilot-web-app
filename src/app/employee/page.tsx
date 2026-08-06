@@ -159,20 +159,33 @@ function EmployeePortalContent() {
     }
   };
 
+  const calcDaysCount = () => {
+    if (!fromDate) return 1;
+    if (leaveDuration.includes('Half Day')) return 0.5;
+    if (!toDate || fromDate === toDate) return 1;
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
+    const diffTime = Math.abs(end.getTime() - start.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+  };
+
   const handleApplyLeaveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setFormMsg('');
     try {
+      const computedDays = calcDaysCount();
       const res = await fetch('/api/leaves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employeeId: employee?.id || 'emp-12',
+          employeeId: employee?.id || 'emp-8',
           leaveType,
+          dayType: leaveDuration.includes('Half Day') ? 'half' : 'full',
           startDate: fromDate,
           endDate: toDate || fromDate,
-          daysCount: fromDate === toDate || !toDate ? 1 : 2,
+          daysCount: computedDays,
           note: reason,
           status: 'PENDING',
           managerStatus: 'Pending',
@@ -181,7 +194,7 @@ function EmployeePortalContent() {
       });
 
       if (res.ok) {
-        setFormMsg('Leave application submitted successfully! Check live status under Leave History tab.');
+        setFormMsg(`Leave application (${computedDays} ${computedDays === 1 ? 'day' : 'days'}) submitted successfully! Check live status under Leave History tab.`);
         setFromDate('');
         setToDate('');
         setReason('');
@@ -563,6 +576,18 @@ function EmployeePortalContent() {
                       />
                     </div>
                   </div>
+
+                  {fromDate && (
+                    <div className="p-3.5 bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-500/30 rounded-xl text-xs text-purple-200 font-semibold flex items-center justify-between shadow-inner">
+                      <span className="flex items-center space-x-1.5">
+                        <CalendarDays className="w-4 h-4 text-purple-400" />
+                        <span>Calculated Leave Duration:</span>
+                      </span>
+                      <strong className="text-purple-300 font-extrabold text-xs bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/40">
+                        {calcDaysCount()} {calcDaysCount() === 1 ? 'Day' : 'Days'} {!toDate || fromDate === toDate ? `(${fromDate})` : `(${fromDate} to ${toDate})`}
+                      </strong>
+                    </div>
+                  )}
 
                   <div>
                     <label className="block text-slate-300 font-semibold mb-1">Reason</label>
