@@ -381,7 +381,7 @@ export async function PUT(request: Request) {
         );
       }
 
-      saveDbData(db);
+      await saveDbData(db);
 
       const targetQuarter = current.quarter || 'Q3';
       const summaries = getQuarterlyLeaveSummaries(targetQuarter, 'ALL');
