@@ -37,6 +37,24 @@ function EmployeePortalContent() {
 
   const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('emp-8'); // Default: Lochita g1
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [attendance, setAttendance] = useState<AttendanceLog[]>([]);
+  const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Punch Clock state
+  const [punchedIn, setPunchedIn] = useState(false);
+  const [punchTime, setPunchTime] = useState<string | null>(null);
+  const [duration, setDuration] = useState('00:00:00');
+  const [punchMsg, setPunchMsg] = useState('');
+
+  // Apply Leave Form state
+  const [leaveType, setLeaveType] = useState('Casual Leave');
+  const [leaveDuration, setLeaveDuration] = useState('Full Day');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [reason, setReason] = useState('');
+  const [formMsg, setFormMsg] = useState('');
 
   const fetchEmployeeDashboardData = useCallback(async () => {
     try {
