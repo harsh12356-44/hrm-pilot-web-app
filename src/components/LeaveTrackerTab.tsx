@@ -73,9 +73,11 @@ export default function LeaveTrackerTab() {
           return date_info.toISOString().split('T')[0];
         };
 
-        // 1. Check for Employee Master sheet
         let employeeMasterRows: any[] = [];
-        const empMasterSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('employee master') || n.toLowerCase().includes('employee'));
+        const parsedRecords: any[] = [];
+
+        // 1. Employee Master Sheet (if present)
+        const empMasterSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('employee master') || n.toLowerCase().includes('employee roster'));
         if (empMasterSheetName) {
           const rawEmpRows: any[] = XLSX.utils.sheet_to_json(wb.Sheets[empMasterSheetName]);
           employeeMasterRows = rawEmpRows.map(r => {
@@ -89,42 +91,95 @@ export default function LeaveTrackerTab() {
               department: clean['Department'] || 'Development',
               status: clean['Status'] || 'ACTIVE',
             };
-          }).filter(e => e.name);
+          }).filter(emp => emp.name);
         }
 
-        // 2. Select Leave Data sheet
-        let leaveSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('leave entry') || n.toLowerCase().includes('leave'));
-        if (!leaveSheetName) {
-          leaveSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('summary') || !n.toLowerCase().includes('how to use')) || wb.SheetNames[0];
-        }
+        // 2. Iterate Sheets and extract leave data
+        wb.SheetNames.forEach(sheetName => {
+          if (sheetName.toLowerCase().includes('how to use')) return;
 
-        const leaveSheet = wb.Sheets[leaveSheetName];
-        const rawRows: any[] = XLSX.utils.sheet_to_json(leaveSheet);
-        const parsedRecords: any[] = [];
+          const sheet = wb.Sheets[sheetName];
+          const matrix: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+          if (!matrix || matrix.length === 0) return;
 
-        rawRows.forEach(r => {
-          const clean: any = {};
-          Object.keys(r).forEach(k => {
-            clean[k.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim()] = r[k];
+          // Check if matrix style quarterly summary (e.g. contains Q1/Q2/Q3/Q4 in headers)
+          let headerRowIndex = -1;
+          matrix.forEach((r, idx) => {
+            const lineStr = (r || []).join(' ').toLowerCase();
+            if ((lineStr.includes('jan-mar') || lineStr.includes('q1')) && (lineStr.includes('q2') || lineStr.includes('q3'))) {
+              headerRowIndex = idx;
+            }
           });
 
-          const empName = clean['Employee Name'] || clean['Employee'] || clean['Name'];
-          if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use')) {
-            const startDate = excelDateToISO(clean['Leave Date (or From Date)']) || excelDateToISO(clean['Leave Date']) || excelDateToISO(clean['From Date']) || excelDateToISO(clean['Start Date']) || '2026-07-01';
-            const endDate = excelDateToISO(clean['To Date (optional, range only)']) || excelDateToISO(clean['To Date']) || excelDateToISO(clean['End Date']) || startDate;
-            const qtr = clean['Quarter'] || clean['Qtr'] || 'Q3';
-            const casual = Number(clean['Casual Leaves Applied'] || clean['Casual Leaves'] || clean['Casual Used'] || clean['Casual'] || 0);
-            const planned = Number(clean['Planned Leaves Applied'] || clean['Planned Leaves'] || clean['Planned Used'] || clean['Planned'] || 0);
-            const status = clean['Approval Status'] || clean['Status'] || 'APPROVED';
+          if (headerRowIndex !== -1 && matrix.length > headerRowIndex + 1) {
+            const colIndices: any = { empName: 0, Q1: {}, Q2: {}, Q3: {}, Q4: {} };
+            const subHeader = matrix[headerRowIndex + 1] || [];
+            let currentQ = 'Q1';
 
-            parsedRecords.push({
-              employeeName: String(empName).trim(),
-              startDate,
-              endDate,
-              quarter: qtr,
-              casualUsed: casual,
-              plannedUsed: planned,
-              status: String(status).toUpperCase() === 'APPROVED' ? 'APPROVED' : 'APPROVED',
+            subHeader.forEach((colVal: any, cIdx: number) => {
+              const str = String(colVal || '').toLowerCase().replace(/\s+/g, ' ');
+              if (cIdx === 0 || str.includes('employee')) colIndices.empName = cIdx;
+
+              const mainHeaderVal = String(matrix[headerRowIndex][cIdx] || '').toLowerCase();
+              if (mainHeaderVal.includes('q1') || mainHeaderVal.includes('jan')) currentQ = 'Q1';
+              else if (mainHeaderVal.includes('q2') || mainHeaderVal.includes('apr')) currentQ = 'Q2';
+              else if (mainHeaderVal.includes('q3') || mainHeaderVal.includes('jul')) currentQ = 'Q3';
+              else if (mainHeaderVal.includes('q4') || mainHeaderVal.includes('oct')) currentQ = 'Q4';
+
+              if (str.includes('casual')) colIndices[currentQ].casual = cIdx;
+              if (str.includes('planned')) colIndices[currentQ].planned = cIdx;
+            });
+
+            matrix.forEach((row, idx) => {
+              if (idx <= headerRowIndex + 1) return;
+              const empName = row[colIndices.empName];
+              if (empName && typeof empName === 'string' && empName.trim() && !empName.toLowerCase().includes('employee')) {
+                const name = empName.trim();
+                ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
+                  const casIdx = colIndices[q].casual;
+                  const plaIdx = colIndices[q].planned;
+                  const casual = casIdx !== undefined ? Number(row[casIdx] || 0) : 0;
+                  const planned = plaIdx !== undefined ? Number(row[plaIdx] || 0) : 0;
+                  if (casual > 0 || planned > 0) {
+                    parsedRecords.push({
+                      employeeName: name,
+                      quarter: q,
+                      casualUsed: casual,
+                      plannedUsed: planned,
+                      startDate: q === 'Q1' ? '2026-02-15' : q === 'Q2' ? '2026-05-15' : q === 'Q3' ? '2026-08-15' : '2026-11-15',
+                      endDate: q === 'Q1' ? '2026-02-15' : q === 'Q2' ? '2026-05-15' : q === 'Q3' ? '2026-08-15' : '2026-11-15',
+                      status: 'APPROVED',
+                    });
+                  }
+                });
+              }
+            });
+          } else if (sheetName.toLowerCase().includes('leave entry') || sheetName.toLowerCase().includes('leave') || sheetName.toLowerCase().includes('sheet1')) {
+            const rawRows: any[] = XLSX.utils.sheet_to_json(sheet);
+            rawRows.forEach(r => {
+              const clean: any = {};
+              Object.keys(r).forEach(k => {
+                clean[k.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim()] = r[k];
+              });
+
+              const empName = clean['Employee Name'] || clean['Employee'] || clean['Name'];
+              if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use')) {
+                const startDate = excelDateToISO(clean['Leave Date (or From Date)']) || excelDateToISO(clean['Leave Date']) || excelDateToISO(clean['From Date']) || excelDateToISO(clean['Start Date']) || '2026-07-01';
+                const endDate = excelDateToISO(clean['To Date (optional, range only)']) || excelDateToISO(clean['To Date']) || excelDateToISO(clean['End Date']) || startDate;
+                const qtr = clean['Quarter'] || clean['Qtr'] || 'Q3';
+                const casual = Number(clean['Casual Leaves Applied'] || clean['Casual Leaves'] || clean['Casual Used'] || clean['Casual'] || 0);
+                const planned = Number(clean['Planned Leaves Applied'] || clean['Planned Leaves'] || clean['Planned Used'] || clean['Planned'] || 0);
+
+                parsedRecords.push({
+                  employeeName: String(empName).trim(),
+                  startDate,
+                  endDate,
+                  quarter: qtr,
+                  casualUsed: casual,
+                  plannedUsed: planned,
+                  status: 'APPROVED',
+                });
+              }
             });
           }
         });
