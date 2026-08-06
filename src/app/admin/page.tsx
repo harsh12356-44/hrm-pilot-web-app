@@ -60,15 +60,15 @@ export default function AdminDashboardPage() {
     return () => window.removeEventListener('leaveDataUpdated', handleUpdate);
   }, []);
 
-  const totalEmployees = employees.length;
+  const totalEmployees = employees.length || 17;
   
-  // Calculate attendance metrics
+  // Calculate today's attendance metrics strictly out of roster employees (17)
   const todayStr = new Date().toISOString().split('T')[0];
   const todayLogs = attendance.filter((a) => a.date === todayStr);
   
-  const presentToday = todayLogs.filter((a) => a.attendanceCode === 'P').length || Math.min(totalEmployees, Math.round(totalEmployees * 0.85));
-  const halfDaysToday = todayLogs.filter((a) => a.attendanceCode === 'HD').length || Math.min(totalEmployees, Math.round(totalEmployees * 0.05));
-  const absentToday = todayLogs.filter((a) => a.attendanceCode === 'A' || a.attendanceCode === 'MP').length || (totalEmployees - presentToday - halfDaysToday);
+  const presentToday = todayLogs.filter((a) => a.attendanceCode === 'P').length;
+  const halfDaysToday = todayLogs.filter((a) => a.attendanceCode === 'HD').length;
+  const absentToday = todayLogs.filter((a) => a.attendanceCode === 'A' || a.attendanceCode === 'MP').length || (todayLogs.length > 0 ? Math.max(0, totalEmployees - presentToday - halfDaysToday) : 0);
   const pendingLeavesCount = leaves.filter((l) => l.status === 'PENDING' || l.status === 'MORE_INFO_REQUIRED').length;
 
   // Compute 15-day attendance count trend dynamically from database
