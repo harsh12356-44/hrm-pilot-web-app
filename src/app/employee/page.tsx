@@ -101,7 +101,16 @@ function EmployeePortalContent() {
 
     const handleUpdate = () => fetchEmployeeDashboardData();
     window.addEventListener('leaveDataUpdated', handleUpdate);
-    return () => window.removeEventListener('leaveDataUpdated', handleUpdate);
+
+    // Real-time live status auto-polling interval (every 3 seconds)
+    const pollInterval = setInterval(() => {
+      fetchEmployeeDashboardData();
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('leaveDataUpdated', handleUpdate);
+      clearInterval(pollInterval);
+    };
   }, [fetchEmployeeDashboardData]);
 
   // Timer interval when punched in
