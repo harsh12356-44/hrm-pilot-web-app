@@ -178,16 +178,20 @@ function EmployeePortalContent() {
   const empId = employee?.employeeId || 'SG012';
   const managerName = employee?.primaryManager || 'Naman Bangia';
 
+  const safeAttendance = Array.isArray(attendance) ? attendance : [];
+  const safeLeaves = Array.isArray(leaves) ? leaves : [];
+  const safeAllEmployees = Array.isArray(allEmployees) ? allEmployees : [];
+
   // Stats
-  const presentDaysCount = attendance.filter(a => a.attendanceCode === 'P').length || 0;
+  const presentDaysCount = safeAttendance.filter(a => a.attendanceCode === 'P').length || 0;
   const workingDaysSoFar = 6;
-  const totalWorkedMins = attendance.reduce((sum, a) => sum + (a.workedMinutes || 0), 0);
+  const totalWorkedMins = safeAttendance.reduce((sum, a) => sum + (a.workedMinutes || 0), 0);
   const totalHours = Math.round(totalWorkedMins / 60);
   const avgDailyHours = presentDaysCount > 0 ? (totalHours / presentDaysCount).toFixed(1) : '0';
-  const lateArrivalsCount = attendance.filter(a => (a.checkIn && a.checkIn > '09:15:00')).length || 0;
+  const lateArrivalsCount = safeAttendance.filter(a => (a.checkIn && a.checkIn > '09:15:00')).length || 0;
   
   // Approved leaves used in Q3
-  const approvedLeaves = leaves.filter(l => l.status === 'APPROVED');
+  const approvedLeaves = safeLeaves.filter(l => l.status === 'APPROVED');
   const leavesUsedCount = approvedLeaves.reduce((sum, l) => sum + (l.daysCount || 1), 0);
   const leaveBalance = (6 - leavesUsedCount).toFixed(1);
 
@@ -195,7 +199,7 @@ function EmployeePortalContent() {
   const augustDays = Array.from({ length: 31 }, (_, i) => {
     const dayNum = i + 1;
     const dateStr = `2026-08-${String(dayNum).padStart(2, '0')}`;
-    const log = attendance.find(a => a.date === dateStr);
+    const log = safeAttendance.find(a => a.date === dateStr);
     const workedHours = log ? (log.workedMinutes / 60) : (dayNum <= 6 ? 8 : 0);
     return {
       day: dayNum,
@@ -206,6 +210,7 @@ function EmployeePortalContent() {
 
   // Helper for live final status badge on Leave History
   const getLiveStatusBadge = (l: LeaveRecord) => {
+    if (!l) return null;
     const isBothApproved = (l.managerStatus === 'Approved' || l.status === 'APPROVED') && (l.hrStatus === 'Approved' || l.status === 'APPROVED');
     if (isBothApproved || l.status === 'APPROVED') {
       return (
@@ -252,7 +257,7 @@ function EmployeePortalContent() {
                 onChange={e => setSelectedEmployeeId(e.target.value)}
                 className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
               >
-                {allEmployees.map(emp => (
+                {safeAllEmployees.map(emp => (
                   <option key={emp.id} value={emp.id} className="bg-slate-900 text-white">
                     {emp.name} ({emp.employeeId || emp.id})
                   </option>
@@ -441,8 +446,8 @@ function EmployeePortalContent() {
                     </div>
 
                     <div className="space-y-3 text-xs">
-                      {leaves.length > 0 ? (
-                        leaves.slice(0, 3).map(l => (
+                      {safeLeaves.length > 0 ? (
+                        safeLeaves.slice(0, 3).map(l => (
                           <div key={l.id} className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
                             <div className="flex items-center justify-between">
                               <strong className="text-white font-bold">{l.leaveType}</strong>
@@ -608,8 +613,8 @@ function EmployeePortalContent() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {leaves.length > 0 ? (
-                      leaves.map(l => (
+                    {safeLeaves.length > 0 ? (
+                      safeLeaves.map(l => (
                         <tr key={l.id} className="hover:bg-slate-850 transition">
                           <td className="py-3.5 px-4 font-mono font-bold text-slate-300">
                             #{l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}
