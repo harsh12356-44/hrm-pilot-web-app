@@ -258,6 +258,7 @@ export default function LeaveRecordsAdminPage() {
                     <tr>
                       <th className="py-3 px-4">Employee</th>
                       <th className="py-3 px-4">Leave Dates</th>
+                      <th className="py-3 px-4 text-center">Duration</th>
                       <th className="py-3 px-4">Subject</th>
                       <th className="py-3 px-4 text-center">Manager Status</th>
                       <th className="py-3 px-4 text-center">Admin Status</th>
@@ -271,6 +272,9 @@ export default function LeaveRecordsAdminPage() {
                         e => e.id === l.employeeId || e.employeeId === l.employeeId || e.name === l.employeeId
                       );
 
+                      const isSingle = !l.endDate || l.endDate === l.startDate;
+                      const countNum = l.daysCount || (isSingle ? 1 : 2);
+
                       return (
                         <tr key={l.id} className="hover:bg-slate-850 transition">
                           {/* Employee */}
@@ -281,17 +285,26 @@ export default function LeaveRecordsAdminPage() {
 
                           {/* Leave Dates */}
                           <td className="py-3 px-4 font-mono text-slate-300">
-                            {!l.endDate || l.endDate === l.startDate ? (
-                              <div>
-                                <span className="text-white font-bold">{l.startDate}</span>
-                                <span className="block text-[10px] text-emerald-400 font-semibold">1 Day</span>
-                              </div>
+                            {isSingle ? (
+                              <span className="text-white font-bold">{l.startDate}</span>
                             ) : (
                               <div>
                                 <div>{l.startDate}</div>
                                 <div className="text-[10px] text-slate-400">to {l.endDate}</div>
-                                <div className="text-[10px] text-purple-400 font-bold">{l.daysCount || 2} Days</div>
                               </div>
+                            )}
+                          </td>
+
+                          {/* Duration Badge */}
+                          <td className="py-3 px-4 text-center">
+                            {isSingle ? (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[11px] inline-block">
+                                {countNum === 0.5 ? '0.5 Day (Half)' : '1 Day'}
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-extrabold text-[11px] inline-block">
+                                {countNum} Days
+                              </span>
                             )}
                           </td>
 
@@ -412,6 +425,7 @@ export default function LeaveRecordsAdminPage() {
                     <th className="py-3.5 px-4">Request ID</th>
                     <th className="py-3.5 px-4">Employee</th>
                     <th className="py-3.5 px-4">Leave Dates</th>
+                    <th className="py-3.5 px-4 text-center">Duration</th>
                     <th className="py-3.5 px-4">Subject</th>
                     <th className="py-3.5 px-4 text-center">Manager Status</th>
                     <th className="py-3.5 px-4 text-center">Admin Status</th>
@@ -424,13 +438,13 @@ export default function LeaveRecordsAdminPage() {
                 <tbody className="divide-y divide-slate-800/60 text-xs">
                   {loading ? (
                     <tr>
-                      <td colSpan={10} className="py-10 text-center text-slate-500">
+                      <td colSpan={11} className="py-10 text-center text-slate-500">
                         Loading leave requests...
                       </td>
                     </tr>
                   ) : filteredLeaves.length === 0 ? (
                     <tr>
-                      <td colSpan={10} className="py-10 text-center text-slate-500">
+                      <td colSpan={11} className="py-10 text-center text-slate-500">
                         No leave records found matching criteria.
                       </td>
                     </tr>
@@ -439,6 +453,9 @@ export default function LeaveRecordsAdminPage() {
                       const emp = employees.find(
                         e => e.id === l.employeeId || e.employeeId === l.employeeId || e.name === l.employeeId
                       );
+
+                      const isSingle = !l.endDate || l.endDate === l.startDate;
+                      const countNum = l.daysCount || (isSingle ? 1 : 2);
 
                       return (
                         <tr key={l.id} className="hover:bg-slate-850 transition">
@@ -457,17 +474,26 @@ export default function LeaveRecordsAdminPage() {
 
                           {/* Leave Dates */}
                           <td className="py-3.5 px-4 font-mono text-slate-300">
-                            {!l.endDate || l.endDate === l.startDate ? (
-                              <div>
-                                <span className="text-white font-bold">{l.startDate}</span>
-                                <span className="block text-[10px] text-emerald-400 font-semibold">1 Day</span>
-                              </div>
+                            {isSingle ? (
+                              <span className="text-white font-bold">{l.startDate}</span>
                             ) : (
                               <div>
                                 <div>{l.startDate}</div>
                                 <div className="text-[10px] text-slate-400">to {l.endDate}</div>
-                                <div className="text-[10px] text-purple-400 font-bold">{l.daysCount || 2} Days</div>
                               </div>
+                            )}
+                          </td>
+
+                          {/* Duration Badge */}
+                          <td className="py-3.5 px-4 text-center">
+                            {isSingle ? (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[11px] inline-block">
+                                {countNum === 0.5 ? '0.5 Day (Half)' : '1 Day'}
+                              </span>
+                            ) : (
+                              <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/40 font-extrabold text-[11px] inline-block">
+                                {countNum} Days
+                              </span>
                             )}
                           </td>
 
