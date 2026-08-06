@@ -1,4 +1,4 @@
-# HRM Pilot Web App - Technical Handoff Document
+# HRM Pilot Web App - Comprehensive Technical & Business Logic Handoff Document
 
 ## 1. Project Overview
 - **Project Name**: HRM Pilot Web App
@@ -9,70 +9,68 @@
 
 ---
 
-### 2. Work Completed Today (Chronological Session Log)
+## 2. Core Business Rules, Formulas & Policy Logic
 
-Today, all user requests for employee roster management, salary data removal, biometric matrix parsing, monthly attendance matrix grid, and punch editing were **fully implemented, verified, committed, and deployed**:
+### 🌴 Rule 1: Quarterly Leave Allowance & Unpaid LOP Deductions
+1. **Quarterly Allowance Structure**:
+   - Each employee is allocated **2 Casual Leaves (CL)** + **4 Planned Leaves (PL)** = **6 Total Allowance Days per Quarter** (Q1: Jan–Mar, Q2: Apr–Jun, Q3: Jul–Sep, Q4: Oct–Dec).
+2. **Unpaid Loss of Pay (LOP) Extra Deduction Formula**:
+   - Unpaid salary deductions trigger **ONLY when the employee exceeds their overall 6-day quarterly limit**:
+   $$\text{Extra Leaves to Deduct (Unpaid LOP)} = \max(0, \text{Total Leaves Used in Quarter} - 6)$$
+3. **Monthly Salary Deduction Attribution**:
+   - The system attributes unpaid deductions to the specific month in which excess leaves occurred:
+   $$\text{Monthly Deduction Text} = \text{"Month Name: } X \text{ day(s)"}$$
 
-1. 🔒 **Employee Import Security (Role-Based Visibility)**:
-   - Completely hid the "Import Attendance" option and administrative tools from standard Employee accounts (`EMPLOYEE` role).
-   - Only `ADMIN` and authorized `MANAGER` roles can access attendance import engines.
+---
 
-2. 📊 **HR Admin Suite Dashboard Interconnectivity**:
-   - Built the **15-Day Attendance Count Trend** visualizer matching WordPress plugin screenshot 1:1, autofetched dynamically from `data/db.json`.
-   - Built **Recent & Pending Leave Requests Inbox** for instant one-click HR/Manager approvals and rejections.
-   - Built **Employees Current Month Overview** table displaying live monthly working hours, attendance rates, and active statuses.
+### 📅 Rule 2: Single Day vs. Period Range Leave Application Formula
+1. **Single Day Application (`From Date` Only)**:
+   - If an employee fills `From Date` (e.g. `2026-09-01`) and leaves `To Date` empty or equal to `From Date`:
+   - System sets `endDate = fromDate` and calculates **1 Day** (`daysCount = 1`).
+   - If `Half Day (Morning)` or `Half Day (Afternoon)` is selected, `daysCount = 0.5`.
+2. **Period Range Application (`From Date` & `To Date`)**:
+   - If an employee selects a date range (e.g. `2026-09-10` to `2026-09-14`):
+   - System calculates inclusive days count:
+   $$\text{daysCount} = (\text{endDate} - \text{startDate}) + 1$$
+   - A live calculated duration preview badge (`⚡ Calculated Leave Duration: X Days`) appears dynamically in the form.
 
-3. ✏️ **1:1 Edit Employee Profile Modal & Security**:
-   - Replaced old modal with a 13-field, 2-column grid layout matching the user's reference screenshot 1:1 (`Employee ID`, `Full Name`, `Email Address`, `Phone Number`, `Department`, `Designation`, `Date of Joining`, `Primary Reporting Manager`, `Secondary Reporting Manager`, `Employment Status`, `Employee Type`, `Monthly Salary`, `Weekly Off Day`).
-   - Added 1-click status deactivation power toggle (`ACTIVE` / `INACTIVE`) and permanent deletion with confirmation modal.
-   - Portal Security: Deactivated or deleted employees attempting to log into `/employee` see a prominent red **"Portal Access Revoked"** banner blocking punch clock usage and leave submissions.
+---
 
-4. 👥 **Full Company Roster (17 Employees) & Dual Manager Reporting**:
-   - Added all 17 company employees into central database (`data/db.json`) and store fallback defaults (`src/lib/store.ts`).
-   - Configured HR & COO leadership under **Ravina Khimani** (`ADMIN`), managing all managers and employees.
-   - Displayed both **Manager 1** (Primary) and **Manager 2** (Secondary) on employee directory cards whenever secondary reporting is assigned.
+### 🔄 Rule 3: Single-Entry & Real-Time Table Shift Workflow
+1. **Table 1: System Pending Leave Approvals (`/admin/leave-records`)**:
+   - When a leave application is submitted, it appears **ONLY** in Table 1 (`pendingApprovals`).
+   - Displays **`Approve (HR Final)`** and **`Reject`** buttons.
+   - It is strictly excluded from Table 2 while pending (no duplicate entries).
+2. **Action & Table Shift Execution**:
+   - When HR Admin clicks **Approve** or **Reject**, the system synchronously sets:
+     - `status = 'APPROVED'` (or `'REJECTED'`)
+     - `managerStatus = 'Approved'` (or `'Rejected'`)
+     - `hrStatus = 'Approved'` (or `'Rejected'`)
+   - The request is **immediately removed / shifted OUT of Table 1** and moves permanently into **Table 2 (`Historical Leave Requests Register`)**.
+3. **Table 2: Historical Leave Requests Register**:
+   - Displays finalized decisions showing audit badges:
+     - 🟢 **`HR AND MANAGER HAVE APPROVED ✓`**
+     - 🔴 **`REJECTED ✗`**
+4. **Real-Time Live Sync Across Portals**:
+   - **Employee Portal (`/employee?tab=leave-history`)**: Auto-polls every 3 seconds and updates status live to `HR AND MANAGER HAVE APPROVED ✓` (Green Badge) or `REJECTED ✗` (Red Badge).
+   - **Leave Tracker (`/admin/leave-tracker`)**: Recalculates Casual Used, Planned Used, Remaining, Utilization %, and Unpaid LOP Deductions automatically.
 
-5. 💵 **Base Salary Removal**:
-   - Removed `Monthly Base` row from employee cards in [EmployeesTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/EmployeesTab.tsx).
-   - Removed `Monthly Salary` input field from profile edit modals.
-   - Cleared salary values in [db.json](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/data/db.json) and [store.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts).
+---
 
-6. 📥 **Biometric Matrix Sheet Parser (`att login logout july.xls`)**:
-   - Built 2D matrix parser engine ([biometricParser.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/biometricParser.ts)) to parse biometric machine exports (ONtime, Secureye, ESSL, ZKAccess) where days 1 to 31 are matrix columns and punch times are separated by linebreaks (`\n`).
-   - Implemented fuzzy name resolution matching biometric file names (`ravina khemani`, `shweta dadich`, `charuBhati`) to system accounts (`Ravina Khimani`, `Shweta dadhich`, `Charubhati`).
-   - Imported **527 July 2026 biometric punch records** across all 17 employees into the database.
+### 🔒 Rule 4: Employee Portal Scoping & Security
+1. **Single Employee View Restriction**:
+   - Under `/employee?tab=attendance` and `/employee?tab=working-hours`, the attendance grid and daily logs display **ONLY 1 row** (the active employee's own record). All other roster members are hidden.
+2. **Active Portal View Selector**:
+   - Allows switching active employee view (**`Lochita g1 (LG008)`**, **`Bulbul (BB011)`**, **`Sonu Goswami (SG012)`**, etc.) dynamically in the top header.
+3. **Deactivated Account Access Revocation**:
+   - Deactivated (`INACTIVE`) or deleted employee accounts attempting to access `/employee` see a prominent red **"Portal Access Revoked"** banner blocking punch clock usage and leave submissions.
 
-7. 📅 **Monthly Matrix Attendance Grid View**:
-   - Built the **Monthly Matrix Grid View** matching the user's reference UI 1:1.
-   - Sticky left column (`EMPLOYEE NAME`) for employee name & department.
-   - Horizontally scrollable day columns (1..31) for selected month & year.
-   - Rendered soft warm gold badges marked **WO** for Sundays / Weekly Offs (`WO-I`), soft red **A** for Absences, yellow **HD** for Half Days, and stacked check-in/out times for Present days.
+---
 
-8. 🛠️ **Manual Punch Edit & Save Correction Engine**:
-   - Fixed `MANUAL_EDIT` API in [route.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to match logs by `id` or `(employeeId && date)`.
-   - Enabled editing check-in/out times and attendance codes for both existing and newly created log entries, recalculating `workedMinutes`, `shortMinutes`, and `extraMinutes` automatically.
-
-9. 📅 **2026 Official Holiday List & Attendance Grid Badges Engine**:
-   - Added official 2026 company holidays (New Year, Republic Day, Holi, Independence Day, Raksha Bandhan, Diwali, Diwali (Rama Shama), Christmas) to the holidays database and `/api/holidays`.
-   - Connected [AttendanceLogTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx) and [page.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) to automatically render rose-pink **Holiday Badges** showing the exact holiday name (e.g. `Diwali`, `Holi`, `Republic Day`) on holiday cells across the Attendance Grid and Working Hours matrix.
-
-10. 🌴 **1:1 WordPress Plugin Leave Tracker & Adjust Leave Engine**:
-    - Configured quarterly allowances: **2 CL + 4 PL = 6 Total Allowance** per quarter.
-    - Updated Loss of Pay (LOP) Extra Deduction Rule: Deductions trigger **ONLY when an employee exceeds the overall 6-day quarterly limit**:
-      $$\text{Extra Leaves to Deduct (Unpaid LOP)} = \max(0, \text{Total Leaves Used in Quarter} - 6)$$
-    - Built [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) (`⚖️ Adjust Employee Leave Count`) allowing HR/Admin to credit bonus leaves, deduct leaves, or cover short working hours dynamically.
-
-11. ⚙️ **Auto-Approved Save Leave Adjustment Engine**:
-    - Enhanced [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) and [/api/leaves](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/leaves/route.ts) to save direct HR adjustments with status `APPROVED`, targeting the active quarter.
-    - Verified live end-to-end: Deducting or crediting leaves updates Casual Used, Total Used, Remaining Balance, Donut Charts, and Employee Leave Register tables in real-time.
-
-12. 🌴 **1:1 Complete Leave Tracker Tab Alignment**:
-    - Created [EditTrackerModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/EditTrackerModal.tsx) matching WP plugin `#trackerEditModal` for manual numerical overrides.
-    - Created [TrackerDetailModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/TrackerDetailModal.tsx) matching WP plugin `#trackerModal` for complete 4-quarter (Q1–Q4) breakdown.
-    - Aligned [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) matching WP plugin `#adjustLeaveModal`.
-    - Aligned [LeaveTrackerTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/LeaveTrackerTab.tsx) with Excel/CSV importer, CSV exporter, Donut Chart, Top 7 Usage bars, Deduction Alerts, and search/filter.
-    - Updated [store.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) with exact WP plugin deduction formula: $\max(\text{Extra Total}, \text{Extra Casual} + \text{Extra Planned})$.
-
+### ⚡ Rule 5: Persistent Cloud KV Write Lock (Race Condition Prevention)
+1. **Write Lock Mechanism**:
+   - To prevent Vercel serverless function race conditions, `saveDbData(data)` sets `lastCloudFetchTime = Date.now() + 10000`.
+   - Locks read fetches for 10 seconds so background cloud `PUT` operations to `jsonblob.com` complete without being overwritten by stale cloud reads.
 
 ---
 
@@ -91,7 +89,7 @@ Today, all user requests for employee roster management, salary data removal, bi
 | **Attendance Analytics** | `/admin/attendance-analytics` | ✅ 100% | Attendance Rate Gauge, Monthly Trend Bars |
 | **Holidays List** | `/admin/holidays` | ✅ 100% | 1:1 `Import Holidays List` card (.csv, .xls, .xlsx), Delete Holiday |
 | **Leave Tracker** | `/admin/leave-tracker` | ✅ 100% | Q1-Q4 Quarter Pills, Leave Distribution Donut Chart |
-| **Administrative Leaves** | `/admin/leave-records` | ✅ 100% | Leave Inbox, 1-Click HR Approvals & Rejections |
+| **Administrative Leaves** | `/admin/leave-records` | ✅ 100% | Single-entry Table Shift, 1-Click HR Approvals & Rejections |
 | **Settings Rules** | `/admin/settings` | ✅ 100% | Shift Start Time (09:00), Grace Thresholds, Portal URLs |
 | **Payroll Preview** | `/admin/payroll` | ✅ 100% | Base Salary, Short Hours Deductions, Net Payout Exporter |
 | **System Audit Logs** | `/admin/audit-logs` | ✅ 100% | Real-time Audit Trail for all CRUD actions |
@@ -100,24 +98,7 @@ Today, all user requests for employee roster management, salary data removal, bi
 
 ---
 
-## 4. Key Architectural Rules & Data Invariants
-
-1. **Central Data Interconnectivity**:
-   - All data modifications write directly to `data/db.json` using `getDbData()` and `saveDbData(db)` from `src/lib/store.ts`.
-   - Any updates in Employee Directory, Department Structure, Biometric Imports, or Leave Approvals autofetch and update dependent views across Admin, Manager, and Employee portals instantly.
-
-2. **Strict Manager Filter**:
-   - Manager Cards on `/admin/managers` filter strictly by `e.role === 'MANAGER' || e.role === 'ADMIN'`.
-
-3. **Dual Manager Hierarchy**:
-   - Employees support both `primaryManager` and `secondaryManager` assignments simultaneously.
-
-4. **Portal Access Enforcement**:
-   - `/employee` checks `status === 'ACTIVE'`. Inactive or deleted accounts trigger a red access revoked alert banner.
-
----
-
-## 5. How to Run Locally & Deploy
+## 4. How to Run Locally & Deploy
 
 ```bash
 # Navigate to workspace
@@ -128,7 +109,7 @@ npm run dev
 
 # Deploy updates to GitHub / Vercel
 git add .
-git commit -m "Your commit message"
+git commit -m "Update documentation and rules"
 git push origin main
 ```
 
