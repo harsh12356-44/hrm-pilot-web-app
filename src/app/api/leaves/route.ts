@@ -2,10 +2,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
-import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarters, addNotification, logAudit } from '@/lib/store';
+import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarters, addNotification, logAudit, ensureCloudSync } from '@/lib/store';
 import { LeaveRecord } from '@/lib/types';
 
 export async function GET(request: Request) {
+  await ensureCloudSync();
   const { searchParams } = new URL(request.url);
   const quarter = searchParams.get('quarter') || 'Q3';
   const department = searchParams.get('department') || 'ALL';
@@ -33,6 +34,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    await ensureCloudSync();
     const body = await request.json();
 
     // 0. Clear All Leaves Action (for testing & reset)

@@ -532,6 +532,35 @@ export function getDbData(): InitialState {
 }
 
 const PERSISTENT_BLOB_URL = 'https://jsonblob.com/api/jsonBlob/019fd6e3-ad32-7d7e-9769-7c54c930c050';
+let lastCloudFetchTime = 0;
+
+export async function ensureCloudSync() {
+  const now = Date.now();
+  if (!memoryDb || now - lastCloudFetchTime > 2000) {
+    try {
+      const res = await fetch(PERSISTENT_BLOB_URL, { cache: 'no-store' });
+      if (res.ok) {
+        const cloudData = await res.json();
+        if (cloudData && Array.isArray(cloudData.leaveRecords)) {
+          if (!memoryDb) {
+            memoryDb = getDbData();
+          }
+          memoryDb.leaveRecords = cloudData.leaveRecords;
+          if (Array.isArray(cloudData.employees) && cloudData.employees.length > 0) {
+            memoryDb.employees = cloudData.employees;
+          }
+          if (Array.isArray(cloudData.attendanceLogs) && cloudData.attendanceLogs.length > 0) {
+            memoryDb.attendanceLogs = cloudData.attendanceLogs;
+          }
+          (globalThis as any)._inMemoryDbData = memoryDb;
+          lastCloudFetchTime = now;
+        }
+      }
+    } catch (err) {
+      console.warn('Cloud read sync skipped:', err);
+    }
+  }
+}
 
 function syncCloudStorageAsync(data: InitialState) {
   try {
