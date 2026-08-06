@@ -10,17 +10,12 @@ import {
   XCircle,
   Clock,
   Search,
-  Filter,
   Plus,
   AlertTriangle,
-  FileText,
-  Paperclip,
   Printer,
   HelpCircle,
-  UserCheck,
-  Building2,
-  Calendar,
-  MessageSquare,
+  User,
+  Paperclip,
 } from 'lucide-react';
 import { LeaveRecord, Employee } from '@/lib/types';
 
@@ -34,7 +29,7 @@ export default function LeaveRecordsAdminPage() {
   const [departmentFilter, setDepartmentFilter] = useState('ALL');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
-  // Modals
+  // Modals & Messages
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [actionStatusMsg, setActionStatusMsg] = useState('');
 
@@ -84,7 +79,7 @@ export default function LeaveRecordsAdminPage() {
       });
 
       if (res.ok) {
-        setActionStatusMsg(`Leave request #${id} updated to ${newStatus}!`);
+        setActionStatusMsg(`Leave request #${id.slice(-4)} updated successfully!`);
         fetchLeavesAndEmployees();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('leaveDataUpdated'));
@@ -98,6 +93,64 @@ export default function LeaveRecordsAdminPage() {
       console.error('Error updating leave status:', err);
       setActionStatusMsg('Failed to update leave request status.');
     }
+  };
+
+  // Helper formatting functions matching screenshot
+  const getManagerStatusLabel = (l: LeaveRecord, emp?: Employee) => {
+    if (!emp?.reportingManager && emp?.role !== 'EMPLOYEE') return 'N/A';
+    if (l.managerStatus === 'Approved') {
+      if (l.hrStatus === 'Approved' && (!l.managerStatus || l.managerStatus === 'Approved')) {
+        return 'Approved (HR Override)';
+      }
+      return 'Approved';
+    }
+    if (l.managerStatus === 'Rejected') return 'Rejected';
+    if (l.status === 'APPROVED') return 'Approved (HR Override)';
+    return 'Pending';
+  };
+
+  const getAdminStatusLabel = (l: LeaveRecord) => {
+    if (l.hrStatus === 'Approved' || l.status === 'APPROVED') return 'Approved';
+    if (l.hrStatus === 'Rejected' || l.status === 'REJECTED') return 'Rejected';
+    if (l.status === 'MORE_INFO_REQUIRED') return 'More Info Requested';
+    return 'Pending';
+  };
+
+  const getFinalStatusBadge = (l: LeaveRecord) => {
+    const isBothApproved = (l.managerStatus === 'Approved' || l.status === 'APPROVED') && (l.hrStatus === 'Approved' || l.status === 'APPROVED');
+    if (isBothApproved || l.status === 'APPROVED') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
+          HR AND MANAGER HAVE APPROVED
+        </span>
+      );
+    }
+    if (l.status === 'REJECTED' || l.hrStatus === 'Rejected' || l.managerStatus === 'Rejected') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
+          REJECTED
+        </span>
+      );
+    }
+    if (l.status === 'MORE_INFO_REQUIRED') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
+          MORE INFO REQUIRED
+        </span>
+      );
+    }
+    if (l.managerStatus === 'Approved') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
+          PENDING HR APPROVAL
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
+        PENDING MANAGER APPROVAL
+      </span>
+    );
   };
 
   // Extract Departments for Filter
@@ -119,48 +172,20 @@ export default function LeaveRecordsAdminPage() {
       note.includes(searchLower);
 
     const matchesDept = departmentFilter === 'ALL' || (emp && emp.department === departmentFilter);
-    const matchesStatus = statusFilter === 'ALL' || l.status === statusStatusMap(statusFilter);
+
+    let matchesStatus = true;
+    if (statusFilter === 'APPROVED') matchesStatus = l.status === 'APPROVED';
+    else if (statusFilter === 'REJECTED') matchesStatus = l.status === 'REJECTED';
+    else if (statusFilter === 'PENDING') matchesStatus = l.status === 'PENDING';
+    else if (statusFilter === 'MORE_INFO') matchesStatus = l.status === 'MORE_INFO_REQUIRED';
 
     return matchesSearch && matchesDept && matchesStatus;
   });
 
-  // Pending Leave Requests for SLA Manager Section
+  // Pending Leave Requests requiring action
   const pendingApprovals = leaves.filter(
     l => l.status === 'PENDING' || l.status === 'MORE_INFO_REQUIRED'
   );
-
-  function statusStatusMap(filter: string) {
-    if (filter === 'PENDING') return 'PENDING';
-    if (filter === 'APPROVED') return 'APPROVED';
-    if (filter === 'REJECTED') return 'REJECTED';
-    if (filter === 'MORE_INFO') return 'MORE_INFO_REQUIRED';
-    return filter;
-  }
-
-  // Calculate Manager SLA Delay Badge
-  const getSLABadge = (createdDateStr: string) => {
-    const created = new Date(createdDateStr || Date.now());
-    const now = new Date();
-    const diffMs = Math.max(0, now.getTime() - created.getTime());
-    const delayHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const delayDays = Math.floor(delayHours / 24);
-
-    if (delayDays >= 1) {
-      return (
-        <span className="px-2.5 py-1 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-[11px] flex items-center space-x-1">
-          <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-          <span>⚠️ Manager Delay: {delayDays} Day(s) ({delayHours}h)</span>
-        </span>
-      );
-    } else {
-      return (
-        <span className="px-2.5 py-1 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 font-medium text-[11px] flex items-center space-x-1">
-          <Clock className="w-3.5 h-3.5 text-amber-400" />
-          <span>⏳ Manager Reviewing ({delayHours}h elapsed)</span>
-        </span>
-      );
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
@@ -176,7 +201,7 @@ export default function LeaveRecordsAdminPage() {
                 <span>Leave Requests & SLA Approvals Desk</span>
               </h1>
               <p className="text-xs text-slate-400 mt-1">
-                Monitor manager response delays, review subordinate leave applications, and issue final HR decisions.
+                Monitor manager review responses, subordinate leave applications, and issue final HR decisions.
               </p>
             </div>
 
@@ -201,34 +226,31 @@ export default function LeaveRecordsAdminPage() {
             </div>
           )}
 
-          {/* 1. Pending Approvals & Manager SLA Tracker Section */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div>
-                <h3 className="text-sm font-bold text-white flex items-center space-x-2">
-                  <Clock className="w-4 h-4 text-amber-400" />
-                  <span>System Pending Leave Approvals & Manager SLA Tracker</span>
-                </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Require HR final action or manager SLA intervention ({pendingApprovals.length} pending)
-                </p>
+          {/* 1. System Pending Leave Approvals & Manager SLA Section */}
+          {pendingApprovals.length > 0 && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+                    <Clock className="w-4 h-4 text-amber-400" />
+                    <span>System Pending Leave Approvals ({pendingApprovals.length} Pending)</span>
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Require final HR decision to add to Leave Tracker
+                  </p>
+                </div>
               </div>
-            </div>
 
-            {pendingApprovals.length === 0 ? (
-              <div className="py-6 text-center text-xs text-slate-500 font-medium">
-                ✅ No pending leave applications requiring approval. All requests are up to date!
-              </div>
-            ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-300">
                   <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] tracking-wider border-b border-slate-800">
                     <tr>
                       <th className="py-3 px-4">Employee</th>
-                      <th className="py-3 px-4">Leave Dates & Type</th>
-                      <th className="py-3 px-4">Subject & Reason</th>
-                      <th className="py-3 px-4">Manager Review Status</th>
-                      <th className="py-3 px-4">SLA Delay Alert</th>
+                      <th className="py-3 px-4">Leave Dates</th>
+                      <th className="py-3 px-4">Subject</th>
+                      <th className="py-3 px-4 text-center">Manager Status</th>
+                      <th className="py-3 px-4 text-center">Admin Status</th>
+                      <th className="py-3 px-4 text-center">Final Status</th>
                       <th className="py-3 px-4 text-right">HR Final Action</th>
                     </tr>
                   </thead>
@@ -242,60 +264,34 @@ export default function LeaveRecordsAdminPage() {
                         <tr key={l.id} className="hover:bg-slate-850 transition">
                           {/* Employee */}
                           <td className="py-3 px-4">
-                            <div className="flex items-center space-x-3">
-                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-rose-600 to-pink-600 flex items-center justify-center font-bold text-white text-xs shadow-md">
-                                {emp ? emp.name.charAt(0) : 'E'}
-                              </div>
-                              <div>
-                                <div className="font-bold text-white">{emp ? emp.name : l.employeeId}</div>
-                                <div className="text-[10px] text-slate-400">
-                                  {emp?.designation || 'Staff'} • {emp?.department || 'General'}
-                                </div>
-                              </div>
-                            </div>
+                            <strong className="text-white block font-bold">{emp ? emp.name : l.employeeId}</strong>
+                            <span className="text-[10px] text-slate-400">ID: {emp?.employeeId || l.employeeId}</span>
                           </td>
 
-                          {/* Leave Dates & Type */}
-                          <td className="py-3 px-4">
-                            <div className="font-bold text-rose-300">{l.leaveType}</div>
-                            <div className="text-[11px] text-slate-300 font-mono">
-                              {l.startDate} {l.endDate && l.endDate !== l.startDate ? `to ${l.endDate}` : ''}
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              ({l.daysCount} day(s) · {l.dayType || 'full day'})
-                            </div>
+                          {/* Leave Dates */}
+                          <td className="py-3 px-4 font-mono text-slate-300">
+                            {l.startDate} to <br />
+                            {l.endDate || l.startDate}
                           </td>
 
-                          {/* Subject & Reason */}
-                          <td className="py-3 px-4 max-w-xs">
-                            <div className="font-bold text-slate-200 text-xs truncate">
-                              {l.note || 'Leave Application'}
-                            </div>
-                            {l.handoverNote && (
-                              <div className="text-[10px] text-slate-400 truncate mt-0.5">
-                                📌 Handover: {l.handoverNote}
-                              </div>
-                            )}
+                          {/* Subject */}
+                          <td className="py-3 px-4 font-bold text-rose-300">
+                            {l.leaveType}
                           </td>
 
-                          {/* Manager Review Status */}
-                          <td className="py-3 px-4">
-                            <div className="space-y-1 text-[11px]">
-                              <div className="text-amber-400 font-semibold flex items-center space-x-1">
-                                <span>Manager 1:</span>
-                                <span>Pending Review</span>
-                              </div>
-                              {emp?.reportingManager && (
-                                <div className="text-[10px] text-slate-400">
-                                  Assigned: {emp.reportingManager}
-                                </div>
-                              )}
-                            </div>
+                          {/* Manager Status */}
+                          <td className="py-3 px-4 text-center font-semibold text-slate-300">
+                            {getManagerStatusLabel(l, emp)}
                           </td>
 
-                          {/* SLA Delay Alert */}
-                          <td className="py-3 px-4">
-                            {getSLABadge(l.createdAt)}
+                          {/* Admin Status */}
+                          <td className="py-3 px-4 text-center font-semibold text-slate-300">
+                            {getAdminStatusLabel(l)}
+                          </td>
+
+                          {/* Final Status */}
+                          <td className="py-3 px-4 text-center">
+                            {getFinalStatusBadge(l)}
                           </td>
 
                           {/* HR Final Action */}
@@ -303,10 +299,10 @@ export default function LeaveRecordsAdminPage() {
                             <div className="flex items-center justify-end space-x-1.5">
                               <button
                                 onClick={() => handleUpdateStatus(l.id, 'APPROVED')}
-                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition flex items-center space-x-1"
+                                className="px-3 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shadow transition flex items-center space-x-1"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
-                                <span>Approve</span>
+                                <span>Approve (HR Final)</span>
                               </button>
                               <button
                                 onClick={() => handleUpdateStatus(l.id, 'REJECTED')}
@@ -314,14 +310,6 @@ export default function LeaveRecordsAdminPage() {
                               >
                                 <XCircle className="w-3.5 h-3.5" />
                                 <span>Reject</span>
-                              </button>
-                              <button
-                                onClick={() => handleUpdateStatus(l.id, 'MORE_INFO_REQUIRED')}
-                                className="px-2 py-1 rounded-lg bg-sky-950 border border-sky-500/40 hover:bg-sky-900 text-sky-300 font-semibold text-[11px] transition flex items-center space-x-1"
-                                title="Request More Information"
-                              >
-                                <HelpCircle className="w-3.5 h-3.5" />
-                                <span>Request Info</span>
                               </button>
                             </div>
                           </td>
@@ -331,17 +319,17 @@ export default function LeaveRecordsAdminPage() {
                   </tbody>
                 </table>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* 2. Historical Leave Requests Records Section */}
+          {/* 2. Main Leave Requests Table (1:1 Screenshot Layout) */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
             {/* Table Controls Header */}
             <div className="p-5 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/50">
               <div>
-                <h3 className="text-base font-bold text-white">Historical Leave Requests Records</h3>
+                <h3 className="text-base font-bold text-white">Historical Leave Requests Register</h3>
                 <p className="text-xs text-slate-400">
-                  Searchable, filterable audit log of all leave applications ({filteredLeaves.length} records shown)
+                  Searchable, audit-tracked leave requests register ({filteredLeaves.length} records shown)
                 </p>
               </div>
 
@@ -379,9 +367,9 @@ export default function LeaveRecordsAdminPage() {
                   className="px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl text-xs text-slate-200 focus:outline-none focus:border-rose-500 transition"
                 >
                   <option value="ALL">All Statuses</option>
-                  <option value="PENDING">Pending</option>
                   <option value="APPROVED">Approved</option>
                   <option value="REJECTED">Rejected</option>
+                  <option value="PENDING">Pending</option>
                   <option value="MORE_INFO">More Info Required</option>
                 </select>
 
@@ -395,31 +383,33 @@ export default function LeaveRecordsAdminPage() {
               </div>
             </div>
 
-            {/* Table Content */}
+            {/* Table Content - Matches 1:1 Screenshot Columns */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-800 bg-slate-950/60 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                     <th className="py-3.5 px-4">Request ID</th>
                     <th className="py-3.5 px-4">Employee</th>
-                    <th className="py-3.5 px-4">Leave Type & Dates</th>
-                    <th className="py-3.5 px-4">Subject & Details</th>
+                    <th className="py-3.5 px-4">Leave Dates</th>
+                    <th className="py-3.5 px-4">Subject</th>
                     <th className="py-3.5 px-4 text-center">Manager Status</th>
+                    <th className="py-3.5 px-4 text-center">Admin Status</th>
                     <th className="py-3.5 px-4 text-center">Final Status</th>
+                    <th className="py-3.5 px-4 text-center">Attachment</th>
                     <th className="py-3.5 px-4 text-center">Submitted Date</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
+                    <th className="py-3.5 px-4 text-center">Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-xs">
                   {loading ? (
                     <tr>
-                      <td colSpan={8} className="py-10 text-center text-slate-500">
-                        Loading leave requests archive...
+                      <td colSpan={10} className="py-10 text-center text-slate-500">
+                        Loading leave requests...
                       </td>
                     </tr>
                   ) : filteredLeaves.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="py-10 text-center text-slate-500">
+                      <td colSpan={10} className="py-10 text-center text-slate-500">
                         No leave records found matching criteria.
                       </td>
                     </tr>
@@ -431,105 +421,82 @@ export default function LeaveRecordsAdminPage() {
 
                       return (
                         <tr key={l.id} className="hover:bg-slate-850 transition">
-                          {/* ID */}
-                          <td className="py-3.5 px-4 font-mono text-[11px] text-slate-400 font-bold">
-                            #{l.id.slice(-6)}
+                          {/* Request ID */}
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-400">
+                            #{l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}
                           </td>
 
                           {/* Employee */}
                           <td className="py-3.5 px-4">
-                            <div className="flex items-center space-x-2.5">
-                              <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-white text-[11px]">
-                                {emp ? emp.name.charAt(0) : 'E'}
-                              </div>
-                              <div>
-                                <div className="font-bold text-white">{emp ? emp.name : l.employeeId}</div>
-                                <div className="text-[10px] text-slate-400 font-mono">
-                                  {emp?.employeeId || l.employeeId} • {emp?.department || 'General'}
-                                </div>
-                              </div>
+                            <div className="font-bold text-white">{emp ? emp.name : l.employeeId}</div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              ID: {emp?.employeeId || l.employeeId}
                             </div>
                           </td>
 
-                          {/* Dates */}
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-purple-300">{l.leaveType}</div>
-                            <div className="text-[11px] text-slate-300 font-mono">
-                              {l.startDate} {l.endDate && l.endDate !== l.startDate ? `to ${l.endDate}` : ''}
-                            </div>
-                            <div className="text-[10px] text-slate-400">
-                              {l.daysCount} day(s) ({l.dayType || 'full day'})
-                            </div>
+                          {/* Leave Dates */}
+                          <td className="py-3.5 px-4 font-mono text-slate-300">
+                            <div>{l.startDate}</div>
+                            <div className="text-[10px] text-slate-500">to</div>
+                            <div>{l.endDate || l.startDate}</div>
                           </td>
 
-                          {/* Subject & Details */}
-                          <td className="py-3.5 px-4 max-w-xs">
-                            <div className="font-medium text-slate-200 truncate">{l.note || 'Leave Request'}</div>
-                            {l.handoverNote && (
-                              <div className="text-[10px] text-slate-400 truncate mt-0.5">
-                                Handover: {l.handoverNote}
-                              </div>
-                            )}
+                          {/* Subject */}
+                          <td className="py-3.5 px-4 font-bold text-slate-200">
+                            {l.leaveType}
                           </td>
 
                           {/* Manager Status */}
-                          <td className="py-3.5 px-4 text-center">
-                            <span className="text-[11px] font-semibold text-slate-300">
-                              {l.status === 'APPROVED' ? 'Approved' : l.status === 'REJECTED' ? 'Rejected' : 'Pending'}
-                            </span>
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                            {getManagerStatusLabel(l, emp)}
+                          </td>
+
+                          {/* Admin Status */}
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                            {getAdminStatusLabel(l)}
                           </td>
 
                           {/* Final Status */}
                           <td className="py-3.5 px-4 text-center">
-                            <span
-                              className={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${
-                                l.status === 'APPROVED'
-                                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
-                                  : l.status === 'PENDING'
-                                  ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
-                                  : l.status === 'MORE_INFO_REQUIRED'
-                                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/30'
-                                  : 'bg-red-500/20 text-red-300 border-red-500/30'
-                              }`}
-                            >
-                              {l.status === 'MORE_INFO_REQUIRED' ? 'MORE INFO REQUIRED' : l.status}
-                            </span>
+                            {getFinalStatusBadge(l)}
+                          </td>
+
+                          {/* Attachment */}
+                          <td className="py-3.5 px-4 text-center text-slate-500">
+                            -
                           </td>
 
                           {/* Submitted Date */}
                           <td className="py-3.5 px-4 text-center text-[11px] font-mono text-slate-400">
-                            {l.createdAt ? l.createdAt.split('T')[0] : '2026-08-01'}
+                            {l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '29 Jul 2026'}
                           </td>
 
-                          {/* Actions */}
-                          <td className="py-3.5 px-4 text-right">
-                            <div className="flex items-center justify-end space-x-1">
-                              {l.status !== 'APPROVED' && (
+                          {/* Action */}
+                          <td className="py-3.5 px-4 text-center">
+                            {l.status === 'APPROVED' ? (
+                              <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+                                HR AND MANAGER HAVE APPROVED ✓
+                              </span>
+                            ) : l.status === 'REJECTED' ? (
+                              <span className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+                                REJECTED
+                              </span>
+                            ) : (
+                              <div className="flex items-center justify-center space-x-1">
                                 <button
                                   onClick={() => handleUpdateStatus(l.id, 'APPROVED')}
-                                  className="p-1.5 rounded-lg bg-emerald-950 border border-emerald-500/30 hover:bg-emerald-900 text-emerald-300 transition"
-                                  title="Approve Request"
+                                  className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow"
                                 >
-                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  Approve
                                 </button>
-                              )}
-                              {l.status !== 'REJECTED' && (
                                 <button
                                   onClick={() => handleUpdateStatus(l.id, 'REJECTED')}
-                                  className="p-1.5 rounded-lg bg-red-950 border border-red-500/30 hover:bg-red-900 text-red-300 transition"
-                                  title="Reject Request"
+                                  className="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] transition shadow"
                                 >
-                                  <XCircle className="w-3.5 h-3.5" />
+                                  Reject
                                 </button>
-                              )}
-                              <button
-                                onClick={() => handleUpdateStatus(l.id, 'MORE_INFO_REQUIRED')}
-                                className="p-1.5 rounded-lg bg-sky-950 border border-sky-500/30 hover:bg-sky-900 text-sky-300 transition"
-                                title="Request Info"
-                              >
-                                <HelpCircle className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       );

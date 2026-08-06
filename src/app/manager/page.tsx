@@ -1,46 +1,228 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import { Users, CheckCircle, XCircle } from 'lucide-react';
+import { Users, CheckCircle2, XCircle, Clock, ShieldCheck } from 'lucide-react';
+import { LeaveRecord, Employee } from '@/lib/types';
 
 export default function ManagerPortalPage() {
+  const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [statusMsg, setStatusMsg] = useState('');
+
+  const fetchManagerData = useCallback(async () => {
+    try {
+      setLoading(true);
+      const [leaveRes, empRes] = await Promise.all([
+        fetch(`/api/leaves?t=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`/api/employees?t=${Date.now()}`, { cache: 'no-store' }),
+      ]);
+
+      const leaveData = await leaveRes.json();
+      const empData = await empRes.json();
+
+      setLeaves(Array.isArray(leaveData) ? leaveData : leaveData.records || []);
+      setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchManagerData();
+  }, [fetchManagerData]);
+
+  const handleManagerAction = async (id: string, action: 'APPROVED' | 'REJECTED') => {
+    try {
+      setStatusMsg('Updating manager review decision...');
+      const res = await fetch('/api/leaves', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          status: action,
+          approverRole: 'MANAGER',
+        }),
+      });
+
+      if (res.ok) {
+        setStatusMsg(`Manager decision recorded: ${action}!`);
+        fetchManagerData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('leaveDataUpdated'));
+        }
+      } else {
+        const data = await res.json();
+        setStatusMsg(`Failed: ${data.error || 'Could not update'}`);
+      }
+      setTimeout(() => setStatusMsg(''), 4000);
+    } catch (err) {
+      console.error(err);
+      setStatusMsg('Failed to process manager action.');
+    }
+  };
+
+  const getAdminStatusText = (l: LeaveRecord) => {
+    if (l.hrStatus === 'Approved' || l.status === 'APPROVED') return 'Approved';
+    if (l.hrStatus === 'Rejected' || l.status === 'REJECTED') return 'Rejected';
+    return 'Pending HR Action';
+  };
+
+  const getFinalBadge = (l: LeaveRecord) => {
+    if (l.status === 'APPROVED') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+          HR AND MANAGER HAVE APPROVED ✓
+        </span>
+      );
+    }
+    if (l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+          REJECTED
+        </span>
+      );
+    }
+    if (l.managerStatus === 'Approved') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+          AWAITING HR FINAL APPROVAL
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+        PENDING MANAGER REVIEW
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
       <Navbar currentRole="MANAGER" />
       <div className="flex flex-1">
-        <Sidebar currentTab="manager-desk" />
+        <Sidebar currentTab="manager-desk" role="MANAGER" />
         <main className="flex-1 p-6 md:p-8 max-w-6xl mx-auto space-y-6">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">
             <div>
               <h2 className="text-xl font-extrabold text-white flex items-center space-x-2.5">
                 <Users className="w-5 h-5 text-indigo-400" />
-                <span>Manager Approval Desk</span>
+                <span>Manager Approval & Subordinate Leave Desk</span>
               </h2>
-              <p className="text-xs text-slate-400">Review team attendance and approve pending leave applications.</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Review subordinate leave applications and monitor real-time HR final decisions.
+              </p>
             </div>
           </div>
 
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg space-y-4">
-            <h3 className="text-sm font-bold text-white">Pending Team Leave Requests</h3>
-            <div className="space-y-3">
-              <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700/60 flex items-center justify-between">
-                <div>
-                  <p className="text-xs font-bold text-white">Rajesh Kumar (Sales)</p>
-                  <p className="text-[11px] text-slate-400">Casual Leave • Jul 10 - Jul 11 (2 Days) • Reason: Family emergency</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <button className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded-lg transition flex items-center space-x-1">
-                    <CheckCircle className="w-3.5 h-3.5" />
-                    <span>Approve</span>
-                  </button>
-                  <button className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-semibold rounded-lg transition flex items-center space-x-1">
-                    <XCircle className="w-3.5 h-3.5" />
-                    <span>Reject</span>
-                  </button>
-                </div>
-              </div>
+          {statusMsg && (
+            <div className="p-3 bg-indigo-950/60 border border-indigo-500/40 rounded-xl text-xs text-indigo-200 font-medium flex items-center justify-between animate-fadeIn">
+              <span>{statusMsg}</span>
+              <button onClick={() => setStatusMsg('')} className="text-indigo-400 font-bold ml-2">
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Subordinate Leave Applications Table */}
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg space-y-4 p-5">
+            <h3 className="text-sm font-bold text-white flex items-center space-x-2">
+              <ShieldCheck className="w-4 h-4 text-emerald-400" />
+              <span>Subordinate Leave Requests Register</span>
+            </h3>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-800 bg-slate-950/60 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th className="py-3 px-4">Request ID</th>
+                    <th className="py-3 px-4">Subordinate</th>
+                    <th className="py-3 px-4">Dates & Leave Type</th>
+                    <th className="py-3 px-4">Reason / Details</th>
+                    <th className="py-3 px-4 text-center">Your Manager Status</th>
+                    <th className="py-3 px-4 text-center">HR / Admin Status</th>
+                    <th className="py-3 px-4 text-center">Final Status</th>
+                    <th className="py-3 px-4 text-right">Manager Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-slate-500">
+                        Loading team leave requests...
+                      </td>
+                    </tr>
+                  ) : leaves.length === 0 ? (
+                    <tr>
+                      <td colSpan={8} className="py-8 text-center text-slate-500">
+                        No team leave applications found.
+                      </td>
+                    </tr>
+                  ) : (
+                    leaves.map(l => {
+                      const emp = employees.find(
+                        e => e.id === l.employeeId || e.employeeId === l.employeeId || e.name === l.employeeId
+                      );
+
+                      return (
+                        <tr key={l.id} className="hover:bg-slate-850 transition">
+                          <td className="py-3 px-4 font-mono font-bold text-slate-400">
+                            #{l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}
+                          </td>
+                          <td className="py-3 px-4">
+                            <strong className="text-white block font-bold">{emp ? emp.name : l.employeeId}</strong>
+                            <span className="text-[10px] text-slate-400">ID: {emp?.employeeId || l.employeeId}</span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="font-bold text-purple-300">{l.leaveType}</div>
+                            <div className="text-[11px] text-slate-400 font-mono">
+                              {l.startDate} to {l.endDate || l.startDate} ({l.daysCount} days)
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 max-w-xs text-slate-300 truncate">
+                            {l.note || 'Leave application'}
+                          </td>
+                          <td className="py-3 px-4 text-center font-semibold text-slate-300">
+                            {l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
+                          </td>
+                          <td className="py-3 px-4 text-center font-semibold text-slate-300">
+                            {getAdminStatusText(l)}
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            {getFinalBadge(l)}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            {l.managerStatus !== 'Approved' && l.status !== 'APPROVED' && l.status !== 'REJECTED' ? (
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <button
+                                  onClick={() => handleManagerAction(l.id, 'APPROVED')}
+                                  className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition shadow flex items-center space-x-1"
+                                >
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Approve</span>
+                                </button>
+                                <button
+                                  onClick={() => handleManagerAction(l.id, 'REJECTED')}
+                                  className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-[11px] font-bold rounded-lg transition flex items-center space-x-1"
+                                >
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Reject</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] text-slate-500 font-mono">Reviewed</span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         </main>
