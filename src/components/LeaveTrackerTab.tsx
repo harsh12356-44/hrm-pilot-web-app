@@ -138,6 +138,7 @@ export default function LeaveTrackerTab() {
 
               if (str.includes('casual')) colIndices[currentQ].casual = cIdx;
               if (str.includes('planned')) colIndices[currentQ].planned = cIdx;
+              if (str.includes('extra')) colIndices[currentQ].extra = cIdx;
             });
 
             matrix.forEach((row, idx) => {
@@ -148,8 +149,20 @@ export default function LeaveTrackerTab() {
                 ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
                   const casIdx = colIndices[q].casual;
                   const plaIdx = colIndices[q].planned;
+                  const extIdx = colIndices[q].extra;
+
                   const casual = casIdx !== undefined ? Number(row[casIdx] || 0) : 0;
-                  const planned = plaIdx !== undefined ? Number(row[plaIdx] || 0) : 0;
+                  let planned = plaIdx !== undefined ? Number(row[plaIdx] || 0) : 0;
+                  const extraRaw = extIdx !== undefined ? row[extIdx] : 0;
+
+                  let extraNum = 0;
+                  if (typeof extraRaw === 'number') extraNum = extraRaw;
+                  else if (typeof extraRaw === 'string') {
+                    const match = extraRaw.match(/(\d+)\s*leave/i) || extraRaw.match(/(\d+)\s*extra/i) || extraRaw.match(/(\d+)\s*day/i) || extraRaw.match(/(\d+)/);
+                    if (match) extraNum = Number(match[1]);
+                  }
+
+                  planned += extraNum;
 
                   parsedRecords.push({
                     employeeName: name,
