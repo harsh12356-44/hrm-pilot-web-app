@@ -7,6 +7,7 @@ import { Holiday } from '@/lib/types';
 
 interface AttendanceLogTabProps {
   hideImport?: boolean;
+  targetEmployeeId?: string;
 }
 
 const MONTHS = [
@@ -26,7 +27,7 @@ const MONTHS = [
 
 const YEARS = ['2024', '2025', '2026', '2027'];
 
-export default function AttendanceLogTab({ hideImport = false }: AttendanceLogTabProps) {
+export default function AttendanceLogTab({ hideImport = false, targetEmployeeId }: AttendanceLogTabProps) {
   const [viewMode, setViewMode] = useState<'matrix' | 'daily'>('matrix');
   const [selectedMonth, setSelectedMonth] = useState('7'); // July
   const [selectedYear, setSelectedYear] = useState('2026');
@@ -61,8 +62,20 @@ export default function AttendanceLogTab({ hideImport = false }: AttendanceLogTa
       ]);
       const data = await attRes.json();
       const holData = await holRes.json();
-      setLogs(data.logs || []);
-      setEmployees(data.employees || []);
+      
+      let empsList = data.employees || [];
+      let logsList = data.logs || [];
+
+      if (targetEmployeeId) {
+        empsList = empsList.filter((e: any) => e.id === targetEmployeeId || e.employeeId === targetEmployeeId);
+        const activeEmp = empsList[0];
+        if (activeEmp) {
+          logsList = logsList.filter((l: any) => l.employeeId === activeEmp.id || l.employeeId === activeEmp.employeeId);
+        }
+      }
+
+      setLogs(logsList);
+      setEmployees(empsList);
       setHolidays(Array.isArray(holData) ? holData : []);
     } catch (err) {
       console.error(err);

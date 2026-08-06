@@ -537,9 +537,9 @@ function EmployeePortalContent() {
           )}
 
           {/* OTHER TABS */}
-          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} />}
+          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-8'} />}
           {(activeTab === 'leave-history' || activeTab === 'team-approvals') && <LeaveTrackerTab />}
-          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} />}
+          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-8'} />}
           {activeTab === 'holidays' && <HolidaysTab />}
         </main>
       </div>
