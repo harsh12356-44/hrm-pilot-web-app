@@ -154,31 +154,42 @@ export default function LeaveTrackerTab() {
                 });
               }
             });
-          } else if (sheetName.toLowerCase().includes('leave entry') || sheetName.toLowerCase().includes('leave') || sheetName.toLowerCase().includes('sheet1')) {
+          } else {
+            // Level 2: Universal Fallback Row Parser (Works on ANY sheet name & CSV)
             const rawRows: any[] = XLSX.utils.sheet_to_json(sheet);
             rawRows.forEach(r => {
               const clean: any = {};
               Object.keys(r).forEach(k => {
-                clean[k.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim()] = r[k];
+                const cleanKey = k.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim().toLowerCase();
+                clean[cleanKey] = r[k];
               });
 
-              const empName = clean['Employee Name'] || clean['Employee'] || clean['Name'];
-              if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use')) {
-                const startDate = excelDateToISO(clean['Leave Date (or From Date)']) || excelDateToISO(clean['Leave Date']) || excelDateToISO(clean['From Date']) || excelDateToISO(clean['Start Date']) || '2026-07-01';
-                const endDate = excelDateToISO(clean['To Date (optional, range only)']) || excelDateToISO(clean['To Date']) || excelDateToISO(clean['End Date']) || startDate;
-                const qtr = clean['Quarter'] || clean['Qtr'] || 'Q3';
-                const casual = Number(clean['Casual Leaves Applied'] || clean['Casual Leaves'] || clean['Casual Used'] || clean['Casual'] || 0);
-                const planned = Number(clean['Planned Leaves Applied'] || clean['Planned Leaves'] || clean['Planned Used'] || clean['Planned'] || 0);
+              // Find employee name key dynamically
+              const nameKey = Object.keys(clean).find(k => k.includes('employee') || k.includes('name') || k === 'emp');
+              const empName = nameKey ? clean[nameKey] : null;
 
-                parsedRecords.push({
-                  employeeName: String(empName).trim(),
-                  startDate,
-                  endDate,
-                  quarter: qtr,
-                  casualUsed: casual,
-                  plannedUsed: planned,
-                  status: 'APPROVED',
-                });
+              if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use') && !String(empName).toLowerCase().includes('step')) {
+                const casualKey = Object.keys(clean).find(k => k.includes('casual'));
+                const plannedKey = Object.keys(clean).find(k => k.includes('planned') || k.includes('sick'));
+                const quarterKey = Object.keys(clean).find(k => k.includes('quarter') || k.includes('qtr'));
+                const dateKey = Object.keys(clean).find(k => k.includes('date') || k.includes('from'));
+
+                const startDate = dateKey ? excelDateToISO(clean[dateKey]) || '2026-07-01' : '2026-07-01';
+                const qtr = quarterKey ? String(clean[quarterKey]).trim() : 'Q3';
+                const casual = casualKey ? Number(clean[casualKey] || 0) : 0;
+                const planned = plannedKey ? Number(clean[plannedKey] || 0) : 0;
+
+                if (casual > 0 || planned > 0 || Object.keys(clean).length >= 2) {
+                  parsedRecords.push({
+                    employeeName: String(empName).trim(),
+                    startDate,
+                    endDate: startDate,
+                    quarter: qtr,
+                    casualUsed: casual,
+                    plannedUsed: planned,
+                    status: 'APPROVED',
+                  });
+                }
               }
             });
           }
