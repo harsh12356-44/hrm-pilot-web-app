@@ -24,6 +24,7 @@ import {
   RefreshCw,
   ArrowRight,
   TrendingUp,
+  XCircle,
 } from 'lucide-react';
 import AttendanceLogTab from '@/components/AttendanceLogTab';
 import HolidaysTab from '@/components/HolidaysTab';
@@ -34,7 +35,7 @@ function EmployeePortalContent() {
   const searchParams = useSearchParams();
   const activeTab = searchParams ? searchParams.get('tab') || 'dashboard' : 'dashboard';
 
-  // Current Employee Profile State (Default: Lochita g1 / EMP003 / Lochita)
+  // Current Employee Profile State
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendance, setAttendance] = useState<AttendanceLog[]>([]);
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -71,15 +72,15 @@ function EmployeePortalContent() {
       const logsList: AttendanceLog[] = Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || [];
       const leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
 
-      // Default active profile: Lochita (or fallback first employee)
-      const currentEmp = employeesList.find(e => e.name.toLowerCase().includes('lochita')) || employeesList[0];
+      // Default active profile: Sonu Goswami or Lochita or first employee
+      const currentEmp = employeesList.find(e => e.name.toLowerCase().includes('sonu')) || employeesList.find(e => e.name.toLowerCase().includes('lochita')) || employeesList[0];
       setEmployee(currentEmp || null);
 
       if (currentEmp) {
         const empLogs = logsList.filter(a => a.employeeId === currentEmp.id || a.employeeId === currentEmp.employeeId);
         setAttendance(empLogs);
 
-        const empLeaves = leavesList.filter(l => l.employeeId === currentEmp.id || l.employeeId === currentEmp.employeeId);
+        const empLeaves = leavesList.filter(l => l.employeeId === currentEmp.id || l.employeeId === currentEmp.employeeId || l.employeeId === currentEmp.name);
         setLeaves(empLeaves);
       }
     } catch (err) {
@@ -91,6 +92,10 @@ function EmployeePortalContent() {
 
   useEffect(() => {
     fetchEmployeeDashboardData();
+
+    const handleUpdate = () => fetchEmployeeDashboardData();
+    window.addEventListener('leaveDataUpdated', handleUpdate);
+    return () => window.removeEventListener('leaveDataUpdated', handleUpdate);
   }, [fetchEmployeeDashboardData]);
 
   // Timer interval when punched in
@@ -117,7 +122,7 @@ function EmployeePortalContent() {
       const res = await fetch('/api/attendance/punch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employeeId: employee?.id || 'emp-8', action }),
+        body: JSON.stringify({ employeeId: employee?.id || 'emp-12', action }),
       });
       await res.json();
 
@@ -148,18 +153,20 @@ function EmployeePortalContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employeeId: employee?.id || 'emp-8',
+          employeeId: employee?.id || 'emp-12',
           leaveType,
           startDate: fromDate,
           endDate: toDate || fromDate,
           daysCount: fromDate === toDate || !toDate ? 1 : 2,
           note: reason,
           status: 'PENDING',
+          managerStatus: 'Pending',
+          hrStatus: 'Pending',
         }),
       });
 
       if (res.ok) {
-        setFormMsg('Leave application submitted successfully for Manager & HR approval!');
+        setFormMsg('Leave application submitted successfully! Check live status under Leave History tab.');
         setFromDate('');
         setToDate('');
         setReason('');
@@ -179,9 +186,9 @@ function EmployeePortalContent() {
   };
 
   // Compute Employee Own Statistics
-  const empName = employee ? employee.name.split(' ')[0] : 'Lochita';
-  const empId = employee?.employeeId || 'EMP003';
-  const managerName = employee?.primaryManager || 'Naman';
+  const empName = employee ? employee.name.split(' ')[0] : 'Sonu';
+  const empId = employee?.employeeId || 'SG012';
+  const managerName = employee?.primaryManager || 'Naman Bangia';
 
   // Stats
   const presentDaysCount = attendance.filter(a => a.attendanceCode === 'P').length || 0;
@@ -209,6 +216,37 @@ function EmployeePortalContent() {
     };
   });
 
+  // Helper for live final status badge on Leave History
+  const getLiveStatusBadge = (l: LeaveRecord) => {
+    const isBothApproved = (l.managerStatus === 'Approved' || l.status === 'APPROVED') && (l.hrStatus === 'Approved' || l.status === 'APPROVED');
+    if (isBothApproved || l.status === 'APPROVED') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+          HR AND MANAGER HAVE APPROVED ✓
+        </span>
+      );
+    }
+    if (l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+          REJECTED
+        </span>
+      );
+    }
+    if (l.managerStatus === 'Approved') {
+      return (
+        <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+          AWAITING HR FINAL APPROVAL
+        </span>
+      );
+    }
+    return (
+      <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+        PENDING MANAGER APPROVAL
+      </span>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">
       <Navbar currentRole="EMPLOYEE" />
@@ -219,11 +257,11 @@ function EmployeePortalContent() {
           <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-3">
             <span>Thursday, 06 August 2026 • Live HRM Portal</span>
             <span className="bg-slate-900 px-3 py-1 rounded-full border border-slate-800 font-semibold text-slate-300">
-              Role: Developer
+              Role: Developer ({employee?.name || 'Sonu Goswami'})
             </span>
           </div>
 
-          {/* TAB 1: DASHBOARD (Matching 1:1 Screenshot) */}
+          {/* TAB 1: DASHBOARD */}
           {activeTab === 'dashboard' && (
             <div className="space-y-6">
               {/* Purple / Blue Hero Banner */}
@@ -244,9 +282,8 @@ function EmployeePortalContent() {
                 </div>
               </div>
 
-              {/* 4 Metric Cards Grid (1:1 Screenshot Layout) */}
+              {/* 4 Metric Cards Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Present Days Card */}
                 <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg flex flex-col justify-between space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400">Present Days</span>
@@ -260,7 +297,6 @@ function EmployeePortalContent() {
                   </div>
                 </div>
 
-                {/* Total Hours Card */}
                 <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg flex flex-col justify-between space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400">Total Hours</span>
@@ -274,7 +310,6 @@ function EmployeePortalContent() {
                   </div>
                 </div>
 
-                {/* Late Arrivals Card */}
                 <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg flex flex-col justify-between space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400">Late Arrivals</span>
@@ -288,7 +323,6 @@ function EmployeePortalContent() {
                   </div>
                 </div>
 
-                {/* Leave Balance Card */}
                 <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-lg flex flex-col justify-between space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-bold text-slate-400">Leave Balance</span>
@@ -303,9 +337,8 @@ function EmployeePortalContent() {
                 </div>
               </div>
 
-              {/* Main Content Grid: Monthly Attendance Analytics (2/3) + Quick Actions / Recent Activity (1/3) */}
+              {/* Main Content Grid */}
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                {/* Left (2/3): Monthly Attendance Analytics Bar Chart */}
                 <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl flex flex-col justify-between space-y-6">
                   <div className="flex items-center justify-between">
                     <div>
@@ -320,7 +353,6 @@ function EmployeePortalContent() {
                     </Link>
                   </div>
 
-                  {/* August 2026 Bar Graph Visualization */}
                   <div className="pt-6 pb-2 border-t border-slate-800/80">
                     <div className="h-48 flex items-end justify-between gap-1 overflow-x-auto">
                       {augustDays.map(item => {
@@ -348,9 +380,7 @@ function EmployeePortalContent() {
                   </div>
                 </div>
 
-                {/* Right (1/3): Quick Actions & Recent Activity */}
                 <div className="space-y-6">
-                  {/* Quick Actions Card */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
                     <div>
                       <h2 className="text-base font-extrabold text-white font-heading">Quick Actions</h2>
@@ -404,7 +434,6 @@ function EmployeePortalContent() {
                     </div>
                   </div>
 
-                  {/* Recent Activity Card */}
                   <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
                     <div>
                       <h2 className="text-base font-extrabold text-white font-heading">Recent Activity</h2>
@@ -417,15 +446,7 @@ function EmployeePortalContent() {
                           <div key={l.id} className="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 space-y-1">
                             <div className="flex items-center justify-between">
                               <strong className="text-white font-bold">{l.leaveType}</strong>
-                              <span
-                                className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                                  l.status === 'APPROVED'
-                                    ? 'bg-emerald-500/20 text-emerald-400'
-                                    : 'bg-amber-500/20 text-amber-400'
-                                }`}
-                              >
-                                {l.status}
-                              </span>
+                              {getLiveStatusBadge(l)}
                             </div>
                             <p className="text-slate-400 text-[11px]">
                               {l.startDate} to {l.endDate || l.startDate} ({l.daysCount} days)
@@ -454,7 +475,7 @@ function EmployeePortalContent() {
                 </div>
 
                 {formMsg && (
-                  <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 font-medium">
+                  <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs text-emerald-300 font-medium">
                     {formMsg}
                   </div>
                 )}
@@ -533,13 +554,105 @@ function EmployeePortalContent() {
                   </button>
                 </form>
               </div>
+
+              {/* Right Policy Card */}
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+                <h3 className="text-sm font-bold text-white font-heading">Leave Balance & Policy</h3>
+                <div className="space-y-3 text-xs">
+                  <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 flex justify-between items-center">
+                    <span className="text-slate-300">Casual Allowance Left</span>
+                    <strong className="text-amber-400 font-bold">2 Days (Q3)</strong>
+                  </div>
+                  <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 flex justify-between items-center">
+                    <span className="text-slate-300">Planned Allowance Left</span>
+                    <strong className="text-purple-400 font-bold">4 Days (Q3)</strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 3: LEAVE HISTORY & LIVE STATUS (1:1 Layout Requested) */}
+          {(activeTab === 'leave-history' || activeTab === 'team-approvals') && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div>
+                  <h2 className="text-lg font-extrabold text-white font-heading">My Leave History & Real-Time Approval Status</h2>
+                  <p className="text-xs text-slate-400">
+                    Track live status of your submitted leave applications (Manager & HR decisions)
+                  </p>
+                </div>
+
+                <Link
+                  href="/employee?tab=apply-leave"
+                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-md transition flex items-center space-x-2 w-fit"
+                >
+                  <Plane className="w-4 h-4" />
+                  <span>+ Apply New Leave</span>
+                </Link>
+              </div>
+
+              {/* Leave Applications Table with Live Manager / HR Status */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                      <th className="py-3.5 px-4">Request ID</th>
+                      <th className="py-3.5 px-4">Leave Type</th>
+                      <th className="py-3.5 px-4">Dates & Duration</th>
+                      <th className="py-3.5 px-4">Reason / Notes</th>
+                      <th className="py-3.5 px-4 text-center">Manager Status</th>
+                      <th className="py-3.5 px-4 text-center">HR / Admin Status</th>
+                      <th className="py-3.5 px-4 text-center">Live Final Status</th>
+                      <th className="py-3.5 px-4 text-right">Submitted Date</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    {leaves.length > 0 ? (
+                      leaves.map(l => (
+                        <tr key={l.id} className="hover:bg-slate-850 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-300">
+                            #{l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}
+                          </td>
+                          <td className="py-3.5 px-4 font-bold text-purple-300">
+                            {l.leaveType}
+                          </td>
+                          <td className="py-3.5 px-4 font-mono text-slate-300">
+                            {l.startDate} to {l.endDate || l.startDate} ({l.daysCount} days)
+                          </td>
+                          <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate">
+                            {l.note || 'Leave application'}
+                          </td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                            {l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
+                          </td>
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                            {l.hrStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            {getLiveStatusBadge(l)}
+                          </td>
+                          <td className="py-3.5 px-4 text-right font-mono text-slate-400 text-[11px]">
+                            {l.createdAt ? new Date(l.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '06 Aug 2026'}
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={8} className="py-8 text-center text-slate-500">
+                          No leave applications submitted yet.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
           {/* OTHER TABS */}
-          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-8'} />}
-          {(activeTab === 'leave-history' || activeTab === 'team-approvals') && <LeaveTrackerTab />}
-          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-8'} />}
+          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-12'} />}
+          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-12'} />}
           {activeTab === 'holidays' && <HolidaysTab />}
         </main>
       </div>
