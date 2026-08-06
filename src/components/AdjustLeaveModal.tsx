@@ -20,8 +20,10 @@ export default function AdjustLeaveModal({
   onSuccess,
 }: AdjustLeaveModalProps) {
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [adjustType, setAdjustType] = useState<'ADD_CL' | 'DEDUCT_CL' | 'ADD_PL' | 'DEDUCT_PL' | 'COVER_SHORT_HOURS'>('ADD_CL');
-  const [days, setDays] = useState(1);
+  const [targetQuarter, setTargetQuarter] = useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>(quarter || 'Q3');
+  const [leaveType, setLeaveType] = useState<'Casual Leave' | 'Planned Leave'>('Casual Leave');
+  const [actionType, setActionType] = useState<'add_used' | 'deduct_used'>('add_used');
+  const [days, setDays] = useState(1.0);
   const [reason, setReason] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
@@ -36,43 +38,41 @@ export default function AdjustLeaveModal({
     setMessage('');
 
     try {
-      // Create leave record or adjustment record
-      const isCasual = adjustType.includes('CL');
-      const isAdd = adjustType.startsWith('ADD');
-      const leaveType = isCasual ? 'Casual Leave' : 'Planned Leave';
+      const emp = employees.find(e => e.name === selectedEmployee || e.id === selectedEmployee || e.employeeId === selectedEmployee);
       
-      const emp = employees.find(e => e.name === selectedEmployee || e.id === selectedEmployee);
+      let targetDate = '2026-08-15';
+      if (targetQuarter === 'Q1') targetDate = '2026-02-15';
+      else if (targetQuarter === 'Q2') targetDate = '2026-05-15';
+      else if (targetQuarter === 'Q3') targetDate = '2026-08-15';
+      else if (targetQuarter === 'Q4') targetDate = '2026-11-15';
 
-      // Determine date in current quarter
-      let targetDate = '2026-08-15'; // default Q3
-      if (quarter === 'Q1') targetDate = '2026-02-15';
-      else if (quarter === 'Q2') targetDate = '2026-05-15';
-      else if (quarter === 'Q3') targetDate = '2026-08-15';
-      else if (quarter === 'Q4') targetDate = '2026-11-15';
+      const daysCount = actionType === 'add_used' ? days : -days;
 
       const res = await fetch('/api/leaves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           employeeId: emp?.id || selectedEmployee,
+          employeeName: emp?.name || selectedEmployee,
           leaveType,
           startDate: targetDate,
           endDate: targetDate,
           dayType: days === 0.5 ? 'first_half' : 'full',
-          daysCount: isAdd ? -days : days,
-          reason: `Manual HR Adjustment (${adjustType}): ${reason || 'Leave balance adjustment'}`,
+          daysCount,
+          allowOverlap: true,
+          reason: `Manual Adjustment (${actionType}): ${reason || 'Leave balance adjustment'}`,
           status: 'APPROVED',
         }),
       });
 
       const data = await res.json();
       if (res.ok) {
-        setMessage('Successfully adjusted employee leave balance!');
+        setMessage('Successfully applied leave adjustment!');
         setTimeout(() => {
           onSuccess();
           onClose();
           setMessage('');
-        }, 1000);
+        }, 800);
       } else {
         setMessage(data.error || 'Failed to adjust leave balance');
       }
@@ -95,7 +95,7 @@ export default function AdjustLeaveModal({
             </div>
             <div>
               <h3 className="font-extrabold text-base tracking-tight">⚖️ Adjust Employee Leave Count</h3>
-              <p className="text-xs text-blue-100/90">Add/deduct leaves for short hours or credit bonus leaves</p>
+              <p className="text-xs text-blue-100/90">Add or deduct leaves for short working hours or credit bonus leaves</p>
             </div>
           </div>
           <button
@@ -109,9 +109,13 @@ export default function AdjustLeaveModal({
         {/* Form Body */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {message && (
-            <div className={`p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 ${
-              message.includes('Successfully') ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
-            }`}>
+            <div
+              className={`p-3 rounded-xl text-xs font-semibold flex items-center space-x-2 ${
+                message.includes('Successfully')
+                  ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+                  : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
+              }`}
+            >
               {message.includes('Successfully') ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
               <span>{message}</span>
             </div>
@@ -135,45 +139,75 @@ export default function AdjustLeaveModal({
             </select>
           </div>
 
-          {/* Adjustment Type */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300">Adjustment Type:</label>
-            <select
-              value={adjustType}
-              onChange={e => setAdjustType(e.target.value as any)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition font-medium"
-            >
-              <option value="ADD_CL">➕ Credit Bonus Casual Leave (+CL)</option>
-              <option value="DEDUCT_CL">➖ Deduct Casual Leave (-CL)</option>
-              <option value="ADD_PL">➕ Credit Bonus Planned Leave (+PL)</option>
-              <option value="DEDUCT_PL">➖ Deduct Planned Leave (-PL)</option>
-              <option value="COVER_SHORT_HOURS">⏱️ Cover Short Working Hours via Leave Deduction</option>
-            </select>
+          {/* Quarter & Leave Type Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">Quarter:</label>
+              <select
+                value={targetQuarter}
+                onChange={e => setTargetQuarter(e.target.value as any)}
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+              >
+                <option value="Q1">Q1 (Jan - Mar)</option>
+                <option value="Q2">Q2 (Apr - Jun)</option>
+                <option value="Q3">Q3 (Jul - Sep)</option>
+                <option value="Q4">Q4 (Oct - Dec)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">Leave Type:</label>
+              <select
+                value={leaveType}
+                onChange={e => setLeaveType(e.target.value as any)}
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition"
+              >
+                <option value="Casual Leave">Casual Leave</option>
+                <option value="Planned Leave">Planned Leave</option>
+              </select>
+            </div>
           </div>
 
-          {/* Number of Days */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300">Days Count:</label>
-            <input
-              type="number"
-              step="0.5"
-              min="0.5"
-              max="30"
-              value={days}
-              onChange={e => setDays(Number(e.target.value))}
-              required
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition font-mono font-bold"
-            />
+          {/* Action Type & Days Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">Adjustment Action:</label>
+              <select
+                value={actionType}
+                onChange={e => setActionType(e.target.value as any)}
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition font-medium"
+              >
+                <option value="add_used">+ Consume Leave (Cover Short Hours)</option>
+                <option value="deduct_used">- Restore/Credit Leave (Bonus Leave)</option>
+              </select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-slate-300">Number of Days:</label>
+              <input
+                type="number"
+                step="0.5"
+                min="0.5"
+                value={days}
+                onChange={e => setDays(Number(e.target.value))}
+                required
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white focus:outline-none focus:border-blue-500 transition font-mono font-bold"
+              />
+            </div>
           </div>
 
           {/* Reason */}
           <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-300">Adjustment Reason / Internal Note:</label>
+            <label className="text-xs font-bold text-slate-300">Reason / Adjustment Note:</label>
             <textarea
               value={reason}
               onChange={e => setReason(e.target.value)}
-              placeholder="e.g. Compensatory credit for weekend work or short hours adjustment..."
+              placeholder="e.g. Adjusted 1 day Casual Leave for 8.0h short working hours"
               rows={3}
+              required
               className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 transition"
             />
           </div>
@@ -192,7 +226,7 @@ export default function AdjustLeaveModal({
               disabled={loading}
               className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition flex items-center space-x-2 disabled:opacity-50"
             >
-              <span>{loading ? 'Saving...' : 'Save Leave Adjustment'}</span>
+              <span>{loading ? 'Applying...' : 'Apply Adjustment'}</span>
             </button>
           </div>
         </form>

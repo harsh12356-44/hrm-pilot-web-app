@@ -614,7 +614,7 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
 
   return employees.map(emp => {
     const empLeaves = db.leaveRecords.filter(
-      l => l.employeeId === emp.id && l.quarter === quarter && l.status === 'APPROVED'
+      l => (l.employeeId === emp.id || l.employeeId === emp.employeeId) && l.quarter === quarter && l.status === 'APPROVED'
     );
 
     const casualUsed = empLeaves
@@ -630,8 +630,9 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
     const plannedAllowance = 4;
     const totalAllowance = casualAllowance + plannedAllowance; // 6 Days
 
-    // Deduction ONLY triggers if total leaves used in a quarter exceed 6 days
+    // Deduction / Unpaid LOP triggers ONLY when total leaves taken in a quarter exceed 6 days
     const extraDeduct = Math.max(0, totalUsed - totalAllowance);
+
     const remaining = Math.max(0, totalAllowance - totalUsed);
     const utilizationPercentage = Math.min(100, Math.round((totalUsed / totalAllowance) * 100));
 
@@ -651,3 +652,33 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
     };
   });
 }
+
+export function getEmployeeAllQuarters(employeeId: string) {
+  const db = getDbData();
+  const emp = db.employees.find(e => e.id === employeeId || e.employeeId === employeeId || e.name === employeeId);
+  if (!emp) return null;
+
+  const quarters = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
+  const result: Record<string, { label: string; casual: number; planned: number; total: number; remaining: number; extra: number }> = {};
+
+  quarters.forEach(q => {
+    const qLeaves = db.leaveRecords.filter(
+      l => (l.employeeId === emp.id || l.employeeId === emp.employeeId) && l.quarter === q && l.status === 'APPROVED'
+    );
+    const casual = qLeaves
+      .filter(l => l.leaveType === 'Casual Leave')
+      .reduce((sum, l) => sum + (l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : l.daysCount), 0);
+    const planned = qLeaves
+      .filter(l => l.leaveType === 'Planned Leave' || l.leaveType === 'Sick Leave')
+      .reduce((sum, l) => sum + (l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : l.daysCount), 0);
+    const total = casual + planned;
+    const remaining = Math.max(0, 6 - total);
+    const extra = Math.max(0, total - 6);
+
+    const labels: Record<string, string> = { Q1: 'Jan–Mar', Q2: 'Apr–Jun', Q3: 'Jul–Sep', Q4: 'Oct–Dec' };
+    result[q] = { label: labels[q], casual, planned, total, remaining, extra };
+  });
+
+  return { employeeName: emp.name, employeeId: emp.employeeId || emp.id, department: emp.department, quarters: result };
+}
+

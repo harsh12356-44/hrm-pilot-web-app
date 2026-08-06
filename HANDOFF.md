@@ -66,6 +66,14 @@ Today, all user requests for employee roster management, salary data removal, bi
     - Enhanced [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) and [/api/leaves](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/leaves/route.ts) to save direct HR adjustments with status `APPROVED`, targeting the active quarter.
     - Verified live end-to-end: Deducting or crediting leaves updates Casual Used, Total Used, Remaining Balance, Donut Charts, and Employee Leave Register tables in real-time.
 
+12. 🌴 **1:1 Complete Leave Tracker Tab Alignment**:
+    - Created [EditTrackerModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/EditTrackerModal.tsx) matching WP plugin `#trackerEditModal` for manual numerical overrides.
+    - Created [TrackerDetailModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/TrackerDetailModal.tsx) matching WP plugin `#trackerModal` for complete 4-quarter (Q1–Q4) breakdown.
+    - Aligned [AdjustLeaveModal.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AdjustLeaveModal.tsx) matching WP plugin `#adjustLeaveModal`.
+    - Aligned [LeaveTrackerTab.tsx](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/LeaveTrackerTab.tsx) with Excel/CSV importer, CSV exporter, Donut Chart, Top 7 Usage bars, Deduction Alerts, and search/filter.
+    - Updated [store.ts](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) with exact WP plugin deduction formula: $\max(\text{Extra Total}, \text{Extra Casual} + \text{Extra Planned})$.
+
+
 ---
 
 ## 3. 1:1 WordPress Plugin Feature Parity Matrix

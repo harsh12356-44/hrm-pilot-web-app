@@ -14,9 +14,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-01-01"
     },
     {
@@ -34,9 +34,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-01-15"
     },
     {
@@ -54,9 +54,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-02-01"
     },
     {
@@ -74,9 +74,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-02-15"
     },
     {
@@ -94,9 +94,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-03-01"
     },
     {
@@ -114,9 +114,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-03-15"
     },
     {
@@ -135,9 +135,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-04-01"
     },
     {
@@ -156,9 +156,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-04-10"
     },
     {
@@ -177,9 +177,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-04-15"
     },
     {
@@ -198,9 +198,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-05-01"
     },
     {
@@ -219,9 +219,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-05-10"
     },
     {
@@ -240,9 +240,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-05-15"
     },
     {
@@ -261,9 +261,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-06-01"
     },
     {
@@ -282,9 +282,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-06-10"
     },
     {
@@ -302,9 +302,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-07-01"
     },
     {
@@ -322,9 +322,9 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-07-05"
     },
     {
@@ -342,13 +342,74 @@
       "monthlySalary": 0,
       "dailyWorkingRequirementMinutes": 480,
       "weeklyOff": "Sunday",
-      "casualAllowance": 6,
-      "plannedAllowance": 6,
-      "sickAllowance": 6,
+      "casualAllowance": 2,
+      "plannedAllowance": 4,
+      "sickAllowance": 4,
       "dateOfJoining": "2024-07-10"
     }
   ],
-  "leaveRecords": [],
+  "leaveRecords": [
+    {
+      "id": "l-override-pla-1786009310564",
+      "employeeId": "emp-1",
+      "leaveType": "Planned Leave",
+      "dayType": "full",
+      "startDate": "2026-08-15",
+      "endDate": "2026-08-15",
+      "daysCount": 3,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Manual HR Override (Planned)",
+      "createdAt": "2026-08-06T09:41:50.564Z"
+    },
+    {
+      "id": "l-override-cas-1786009310564",
+      "employeeId": "emp-1",
+      "leaveType": "Casual Leave",
+      "dayType": "full",
+      "startDate": "2026-08-15",
+      "endDate": "2026-08-15",
+      "daysCount": 4,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Manual HR Override (Casual)",
+      "createdAt": "2026-08-06T09:41:50.564Z"
+    },
+    {
+      "id": "l-1786008852070",
+      "employeeId": "emp-3",
+      "leaveType": "Planned Leave",
+      "dayType": "full",
+      "startDate": "2026-08-10",
+      "endDate": "2026-08-10",
+      "daysCount": 1,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Testing Record Leave Period",
+      "handoverNote": "Priya has backup",
+      "emergencyContact": "",
+      "createdAt": "2026-08-06T09:34:12.070Z"
+    },
+    {
+      "id": "l-1786008543190",
+      "employeeId": "emp-2",
+      "leaveType": "Casual Leave",
+      "dayType": "full",
+      "startDate": "2026-08-15",
+      "endDate": "2026-08-15",
+      "daysCount": 1,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Manual Adjustment (add_used): Testing adjustment tool",
+      "handoverNote": "",
+      "emergencyContact": "",
+      "createdAt": "2026-08-06T09:29:03.190Z"
+    }
+  ],
   "attendanceLogs": [
     {
       "id": "att-emp-1-2026-07-01",
@@ -7770,9 +7831,109 @@
       "name": "New Year's Day",
       "date": "2027-01-01",
       "isOptional": true
+    },
+    {
+      "id": "h-2026-01",
+      "name": "New Year",
+      "date": "2026-01-01",
+      "isOptional": false
+    },
+    {
+      "id": "h-2026-02",
+      "name": "Republic Day",
+      "date": "2026-01-26",
+      "isOptional": false
+    },
+    {
+      "id": "h-2026-03",
+      "name": "Holi",
+      "date": "2026-03-04",
+      "isOptional": false
+    },
+    {
+      "id": "h-2026-05",
+      "name": "Raksha Bandhan",
+      "date": "2026-08-28",
+      "isOptional": false
+    },
+    {
+      "id": "h-2026-07",
+      "name": "Diwali (Rama Shama)",
+      "date": "2026-11-09",
+      "isOptional": false
     }
   ],
   "auditLogs": [
+    {
+      "id": "aud-1786009310564",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Override Quarterly Leave",
+      "objectType": "LeaveRecord",
+      "objectId": "emp-1",
+      "newValue": "{\"casualUsed\":4,\"plannedUsed\":3,\"quarter\":\"Q3\"}",
+      "timestamp": "2026-08-06T09:41:50.564Z"
+    },
+    {
+      "id": "aud-1786009263124",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Override Quarterly Leave",
+      "objectType": "LeaveRecord",
+      "objectId": "emp-1",
+      "newValue": "{\"casualUsed\":4,\"plannedUsed\":2,\"quarter\":\"Q3\"}",
+      "timestamp": "2026-08-06T09:41:03.124Z"
+    },
+    {
+      "id": "aud-1786008979184",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Submit Leave Request",
+      "objectType": "LeaveRecord",
+      "objectId": "l-1786008979184",
+      "newValue": "{\"id\":\"l-1786008979184\",\"employeeId\":\"emp-1\",\"leaveType\":\"Casual Leave\",\"dayType\":\"full\",\"startDate\":\"2026-08-15\",\"endDate\":\"2026-08-15\",\"daysCount\":1,\"quarter\":\"Q3\",\"year\":2026,\"status\":\"APPROVED\",\"note\":\"Manual Adjustment (add_used): short hours\",\"handoverNote\":\"\",\"emergencyContact\":\"\",\"createdAt\":\"2026-08-06T09:36:19.184Z\"}",
+      "timestamp": "2026-08-06T09:36:19.184Z"
+    },
+    {
+      "id": "aud-1786008954358",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Override Quarterly Leave",
+      "objectType": "LeaveRecord",
+      "objectId": "emp-1",
+      "newValue": "{\"casualUsed\":2,\"plannedUsed\":2,\"quarter\":\"Q3\"}",
+      "timestamp": "2026-08-06T09:35:54.358Z"
+    },
+    {
+      "id": "aud-1786008852070",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Submit Leave Request",
+      "objectType": "LeaveRecord",
+      "objectId": "l-1786008852070",
+      "newValue": "{\"id\":\"l-1786008852070\",\"employeeId\":\"emp-3\",\"leaveType\":\"Planned Leave\",\"dayType\":\"full\",\"startDate\":\"2026-08-10\",\"endDate\":\"2026-08-10\",\"daysCount\":1,\"quarter\":\"Q3\",\"year\":2026,\"status\":\"APPROVED\",\"note\":\"Testing Record Leave Period\",\"handoverNote\":\"Priya has backup\",\"emergencyContact\":\"\",\"createdAt\":\"2026-08-06T09:34:12.070Z\"}",
+      "timestamp": "2026-08-06T09:34:12.070Z"
+    },
+    {
+      "id": "aud-1786008543190",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Submit Leave Request",
+      "objectType": "LeaveRecord",
+      "objectId": "l-1786008543190",
+      "newValue": "{\"id\":\"l-1786008543190\",\"employeeId\":\"emp-2\",\"leaveType\":\"Casual Leave\",\"dayType\":\"full\",\"startDate\":\"2026-08-15\",\"endDate\":\"2026-08-15\",\"daysCount\":1,\"quarter\":\"Q3\",\"year\":2026,\"status\":\"APPROVED\",\"note\":\"Manual Adjustment (add_used): Testing adjustment tool\",\"handoverNote\":\"\",\"emergencyContact\":\"\",\"createdAt\":\"2026-08-06T09:29:03.190Z\"}",
+      "timestamp": "2026-08-06T09:29:03.190Z"
+    },
+    {
+      "id": "aud-1786008445593",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Override Quarterly Leave",
+      "objectType": "LeaveRecord",
+      "objectId": "emp-1",
+      "newValue": "{\"casualUsed\":2,\"plannedUsed\":3,\"quarter\":\"Q3\"}",
+      "timestamp": "2026-08-06T09:27:25.593Z"
+    },
     {
       "id": "aud-1",
       "userId": "emp-1",
@@ -7796,7 +7957,35 @@
       "status": "Completed"
     }
   ],
-  "notifications": [],
+  "notifications": [
+    {
+      "id": "notif-1786008979186",
+      "employeeId": "emp-1",
+      "type": "leave_submitted",
+      "title": "Leave Application Submitted",
+      "message": "Your request for Casual Leave (2026-08-15 to 2026-08-15) has been submitted for approval.",
+      "isRead": false,
+      "createdAt": "2026-08-06T09:36:19.186Z"
+    },
+    {
+      "id": "notif-1786008852076",
+      "employeeId": "emp-3",
+      "type": "leave_submitted",
+      "title": "Leave Application Submitted",
+      "message": "Your request for Planned Leave (2026-08-10 to 2026-08-10) has been submitted for approval.",
+      "isRead": false,
+      "createdAt": "2026-08-06T09:34:12.076Z"
+    },
+    {
+      "id": "notif-1786008543194",
+      "employeeId": "emp-2",
+      "type": "leave_submitted",
+      "title": "Leave Application Submitted",
+      "message": "Your request for Casual Leave (2026-08-15 to 2026-08-15) has been submitted for approval.",
+      "isRead": false,
+      "createdAt": "2026-08-06T09:29:03.194Z"
+    }
+  ],
   "departments": [
     {
       "id": "dept-human-resources",
