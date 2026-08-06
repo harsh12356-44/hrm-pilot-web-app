@@ -32,7 +32,9 @@ export interface LeaveRecord {
   daysCount: number;
   quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4';
   year: number;
-  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'CANCELLED';
+  status: 'APPROVED' | 'PENDING' | 'REJECTED' | 'CANCELLED' | 'MORE_INFO_REQUIRED';
+  managerStatus?: 'Pending' | 'Approved' | 'Rejected';
+  hrStatus?: 'Pending' | 'Approved' | 'Rejected';
   note?: string;
   handoverNote?: string;
   emergencyContact?: string;

@@ -293,6 +293,11 @@ export async function POST(request: Request) {
     else if (month >= 7 && month <= 9) quarter = 'Q3';
     else if (month >= 10 && month <= 12) quarter = 'Q4';
 
+    const isHrSubmission = body.isHrSubmission || body.status === 'APPROVED' || body.submittedBy === 'HR';
+    const managerStatus = isHrSubmission ? 'Approved' : 'Pending';
+    const hrStatus = isHrSubmission ? 'Approved' : 'Pending';
+    const finalStatus = isHrSubmission ? 'APPROVED' : (body.status || 'PENDING');
+
     const newRecord: LeaveRecord = {
       id: `l-${Date.now()}`,
       employeeId: emp.id,
@@ -303,7 +308,9 @@ export async function POST(request: Request) {
       daysCount,
       quarter,
       year: start.getFullYear(),
-      status: body.status || 'APPROVED',
+      status: finalStatus,
+      managerStatus,
+      hrStatus,
       note: note || reason || 'Leave application',
       handoverNote: handoverNote || '',
       emergencyContact: emergencyContact || '',
@@ -348,28 +355,61 @@ export async function PUT(request: Request) {
 
     if (index !== -1) {
       const oldVal = JSON.stringify(db.leaveRecords[index]);
-      db.leaveRecords[index].status = status;
+      const current = db.leaveRecords[index];
 
-      logAudit(`Leave Request ${status}`, 'LeaveRecord', id, oldVal, JSON.stringify(db.leaveRecords[index]));
+      if (status === 'REJECTED') {
+        current.status = 'REJECTED';
+        if (approverRole === 'MANAGER') current.managerStatus = 'Rejected';
+        else current.hrStatus = 'Rejected';
+      } else if (status === 'MORE_INFO_REQUIRED') {
+        current.status = 'MORE_INFO_REQUIRED';
+      } else if (status === 'APPROVED') {
+        if (approverRole === 'MANAGER') {
+          current.managerStatus = 'Approved';
+          // Only finalize to APPROVED if HR has also approved
+          if (current.hrStatus === 'Approved') {
+            current.status = 'APPROVED';
+          } else {
+            current.status = 'PENDING';
+          }
+        } else if (approverRole === 'HR Final Approver' || approverRole === 'HR') {
+          current.hrStatus = 'Approved';
+          // If HR issues final approval or Manager already approved, set status APPROVED
+          if (current.managerStatus === 'Approved' || approverRole === 'HR Final Approver') {
+            current.managerStatus = 'Approved';
+            current.status = 'APPROVED';
+          } else {
+            current.status = 'PENDING';
+          }
+        } else {
+          current.managerStatus = 'Approved';
+          current.hrStatus = 'Approved';
+          current.status = 'APPROVED';
+        }
+      } else {
+        current.status = status;
+      }
 
-      const emp = db.employees.find(e => e.id === db.leaveRecords[index].employeeId);
+      logAudit(`Leave Request ${current.status}`, 'LeaveRecord', id, oldVal, JSON.stringify(current));
+
+      const emp = db.employees.find(e => e.id === current.employeeId);
       if (emp) {
         addNotification(
           emp.id,
           'leave_status_updated',
-          `Leave Request ${status}`,
-          `Your leave request #${id} has been ${status.toLowerCase()} by ${approverRole || 'HR'}.`
+          `Leave Request ${current.status}`,
+          `Your leave request #${id} status is now ${current.status}. Manager: ${current.managerStatus || 'Pending'}, HR: ${current.hrStatus || 'Pending'}.`
         );
       }
 
       saveDbData(db);
 
-      const targetQuarter = db.leaveRecords[index].quarter || 'Q3';
+      const targetQuarter = current.quarter || 'Q3';
       const summaries = getQuarterlyLeaveSummaries(targetQuarter, 'ALL');
 
       return NextResponse.json({
         success: true,
-        record: db.leaveRecords[index],
+        record: current,
         records: db.leaveRecords,
         summaries,
       });
