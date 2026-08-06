@@ -226,17 +226,44 @@ export default function LeaveTrackerTab() {
     reader.readAsArrayBuffer(file);
   };
 
+  const handleClearLeaves = async () => {
+    if (!confirm('Are you sure you want to clear all leave records for testing? This will reset all leave counts to 0.')) return;
+
+    try {
+      setImportStatus('Clearing all leave records...');
+      const res = await fetch('/api/leaves', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear', quarter }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setImportStatus('All leave records cleared successfully!');
+        fetchLeaveData();
+      } else {
+        setImportStatus(data.error || 'Failed to clear leaves');
+      }
+      setTimeout(() => setImportStatus(''), 5000);
+    } catch (err) {
+      console.error(err);
+      setImportStatus('Failed to clear leave records.');
+    }
+  };
+
   const handleExport = () => {
-    const exportRows = filteredSummaries.map(s => ({
+    const dataToExport = summaries.map(s => ({
+      'Employee ID': s.employeeId,
       'Employee Name': s.employeeName,
-      'Casual Used': s.casualUsed,
-      'Planned Used': s.plannedUsed,
-      'Total Used': s.totalUsed,
-      'Remaining': s.remaining,
-      'Extra Leaves to Deduct': s.extraDeduct > 0 ? `${s.extraDeduct} Day(s) Unpaid` : '0',
+      Department: s.department,
+      Quarter: quarter,
+      'Casual Leaves Used': s.casualUsed,
+      'Planned Leaves Used': s.plannedUsed,
+      'Total Leaves Used': s.totalUsed,
+      'Remaining Leaves': s.remaining,
+      'Extra Leaves to Deduct': s.extraDeduct,
     }));
 
-    const ws = XLSX.utils.json_to_sheet(exportRows);
+    const ws = XLSX.utils.json_to_sheet(dataToExport);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, `Leave_Summary_${quarter}`);
     XLSX.writeFile(wb, `HRM_Pilot_Leave_Summary_${quarter}.xlsx`);
@@ -342,8 +369,14 @@ export default function LeaveTrackerTab() {
               onClick={handleExport}
               className="px-4 py-2.5 rounded-xl bg-slate-900/80 hover:bg-slate-900 text-white text-xs font-semibold border border-slate-700 transition flex items-center space-x-2"
             >
-              <Download className="w-4 h-4 text-blue-400" />
+              <Download className="w-4 h-4 text-slate-400" />
               <span>Export Current Quarter</span>
+            </button>
+            <button
+              onClick={handleClearLeaves}
+              className="px-4 py-2.5 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/30 text-xs font-semibold shadow-md transition flex items-center space-x-2"
+            >
+              <span>🗑️ Clear All Leaves</span>
             </button>
           </div>
         </div>

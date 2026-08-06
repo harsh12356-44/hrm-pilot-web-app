@@ -32,6 +32,17 @@ export async function POST(request: Request) {
   try {
     const body = await request.json();
 
+    // 0. Clear All Leaves Action (for testing & reset)
+    if (body.action === 'clear') {
+      const db = getDbData();
+      const targetQ = body.quarter || 'Q3';
+      db.leaveRecords = [];
+      saveDbData(db);
+      logAudit('Clear All Leaves', 'LeaveRecord', 'all', undefined, 'All leave records cleared for testing');
+      const summaries = getQuarterlyLeaveSummaries(targetQ, 'ALL');
+      return NextResponse.json({ success: true, message: 'All leave records have been cleared!', summaries });
+    }
+
     // 1. Manual Numerical Override Action (from EditTrackerModal)
     if (body.action === 'override') {
       const { employeeName, quarter, casualUsed, plannedUsed } = body;

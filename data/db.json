@@ -348,68 +348,7 @@
       "dateOfJoining": "2024-07-10"
     }
   ],
-  "leaveRecords": [
-    {
-      "id": "l-override-pla-1786009310564",
-      "employeeId": "emp-1",
-      "leaveType": "Planned Leave",
-      "dayType": "full",
-      "startDate": "2026-08-15",
-      "endDate": "2026-08-15",
-      "daysCount": 3,
-      "quarter": "Q3",
-      "year": 2026,
-      "status": "APPROVED",
-      "note": "Manual HR Override (Planned)",
-      "createdAt": "2026-08-06T09:41:50.564Z"
-    },
-    {
-      "id": "l-override-cas-1786009310564",
-      "employeeId": "emp-1",
-      "leaveType": "Casual Leave",
-      "dayType": "full",
-      "startDate": "2026-08-15",
-      "endDate": "2026-08-15",
-      "daysCount": 4,
-      "quarter": "Q3",
-      "year": 2026,
-      "status": "APPROVED",
-      "note": "Manual HR Override (Casual)",
-      "createdAt": "2026-08-06T09:41:50.564Z"
-    },
-    {
-      "id": "l-1786008852070",
-      "employeeId": "emp-3",
-      "leaveType": "Planned Leave",
-      "dayType": "full",
-      "startDate": "2026-08-10",
-      "endDate": "2026-08-10",
-      "daysCount": 1,
-      "quarter": "Q3",
-      "year": 2026,
-      "status": "APPROVED",
-      "note": "Testing Record Leave Period",
-      "handoverNote": "Priya has backup",
-      "emergencyContact": "",
-      "createdAt": "2026-08-06T09:34:12.070Z"
-    },
-    {
-      "id": "l-1786008543190",
-      "employeeId": "emp-2",
-      "leaveType": "Casual Leave",
-      "dayType": "full",
-      "startDate": "2026-08-15",
-      "endDate": "2026-08-15",
-      "daysCount": 1,
-      "quarter": "Q3",
-      "year": 2026,
-      "status": "APPROVED",
-      "note": "Manual Adjustment (add_used): Testing adjustment tool",
-      "handoverNote": "",
-      "emergencyContact": "",
-      "createdAt": "2026-08-06T09:29:03.190Z"
-    }
-  ],
+  "leaveRecords": [],
   "attendanceLogs": [
     {
       "id": "att-emp-1-2026-07-01",
