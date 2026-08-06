@@ -35,7 +35,7 @@ export default function LeaveTrackerTab() {
 
   const fetchLeaveData = useCallback(async () => {
     try {
-      const res = await fetch(`/api/leaves?quarter=${quarter}`);
+      const res = await fetch(`/api/leaves?quarter=${quarter}&t=${Date.now()}`, { cache: 'no-store' });
       const data = await res.json();
       setSummaries(data.summaries || []);
       setEmployees(data.employees || []);
