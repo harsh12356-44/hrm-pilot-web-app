@@ -336,7 +336,7 @@ export async function PUT(request: Request) {
   try {
     await ensureCloudSync();
     const body = await request.json();
-    const { id, status, approverRole } = body;
+    const { id, status, approverRole, startDate, endDate, daysCount } = body;
 
     const db = getDbData();
     let index = db.leaveRecords.findIndex(l => l.id === id);
@@ -350,6 +350,10 @@ export async function PUT(request: Request) {
     if (index !== -1) {
       const oldVal = JSON.stringify(db.leaveRecords[index]);
       const current = db.leaveRecords[index];
+
+      if (startDate) current.startDate = startDate;
+      if (endDate) current.endDate = endDate;
+      if (typeof daysCount === 'number') current.daysCount = daysCount;
 
       if (status === 'REJECTED') {
         current.status = 'REJECTED';

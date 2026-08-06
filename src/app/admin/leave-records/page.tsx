@@ -281,8 +281,18 @@ export default function LeaveRecordsAdminPage() {
 
                           {/* Leave Dates */}
                           <td className="py-3 px-4 font-mono text-slate-300">
-                            {l.startDate} to <br />
-                            {l.endDate || l.startDate}
+                            {!l.endDate || l.endDate === l.startDate ? (
+                              <div>
+                                <span className="text-white font-bold">{l.startDate}</span>
+                                <span className="block text-[10px] text-emerald-400 font-semibold">1 Day</span>
+                              </div>
+                            ) : (
+                              <div>
+                                <div>{l.startDate}</div>
+                                <div className="text-[10px] text-slate-400">to {l.endDate}</div>
+                                <div className="text-[10px] text-purple-400 font-bold">{l.daysCount || 2} Days</div>
+                              </div>
+                            )}
                           </td>
 
                           {/* Subject */}
@@ -447,9 +457,18 @@ export default function LeaveRecordsAdminPage() {
 
                           {/* Leave Dates */}
                           <td className="py-3.5 px-4 font-mono text-slate-300">
-                            <div>{l.startDate}</div>
-                            <div className="text-[10px] text-slate-500">to</div>
-                            <div>{l.endDate || l.startDate}</div>
+                            {!l.endDate || l.endDate === l.startDate ? (
+                              <div>
+                                <span className="text-white font-bold">{l.startDate}</span>
+                                <span className="block text-[10px] text-emerald-400 font-semibold">1 Day</span>
+                              </div>
+                            ) : (
+                              <div>
+                                <div>{l.startDate}</div>
+                                <div className="text-[10px] text-slate-400">to {l.endDate}</div>
+                                <div className="text-[10px] text-purple-400 font-bold">{l.daysCount || 2} Days</div>
+                              </div>
+                            )}
                           </td>
 
                           {/* Subject */}

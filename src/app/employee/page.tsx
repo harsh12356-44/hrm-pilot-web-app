@@ -696,7 +696,11 @@ function EmployeePortalContent() {
                               {leaveTypeStr}
                             </td>
                             <td className="py-3.5 px-4 font-mono text-slate-300">
-                              {startStr} to {endStr} ({daysNum} days)
+                              {!endStr || startStr === endStr ? (
+                                <span>{startStr} (1 day)</span>
+                              ) : (
+                                <span>{startStr} to {endStr} ({daysNum} days)</span>
+                              )}
                             </td>
                             <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate">
                               {noteStr}
