@@ -478,30 +478,33 @@ export default function LeaveRecordsAdminPage() {
 
                           {/* Action */}
                           <td className="py-3.5 px-4 text-center">
-                            {l.status === 'APPROVED' ? (
-                              <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
-                                HR AND MANAGER HAVE APPROVED ✓
-                              </span>
-                            ) : l.status === 'REJECTED' ? (
-                              <span className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
-                                REJECTED
-                              </span>
-                            ) : (
-                              <div className="flex items-center justify-center space-x-1">
-                                <button
-                                  onClick={() => handleUpdateStatus(l.id, 'APPROVED')}
-                                  className="px-2 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] transition shadow"
-                                >
-                                  Approve
-                                </button>
-                                <button
-                                  onClick={() => handleUpdateStatus(l.id, 'REJECTED')}
-                                  className="px-2 py-1 rounded bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] transition shadow"
-                                >
-                                  Reject
-                                </button>
-                              </div>
-                            )}
+                            <div className="flex items-center justify-center space-x-1.5">
+                              <button
+                                onClick={() => handleUpdateStatus(l.id, 'APPROVED')}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition shadow flex items-center space-x-1 cursor-pointer ${
+                                  l.status === 'APPROVED' || (l.hrStatus === 'Approved' && l.managerStatus === 'Approved')
+                                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 hover:bg-emerald-600 hover:text-white'
+                                    : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                                }`}
+                                title="Click to approve leave application"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                <span>{l.status === 'APPROVED' ? 'Approved ✓' : 'Approve'}</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleUpdateStatus(l.id, 'REJECTED')}
+                                className={`px-2.5 py-1 rounded-lg font-bold text-[11px] transition shadow flex items-center space-x-1 cursor-pointer ${
+                                  l.status === 'REJECTED'
+                                    ? 'bg-red-500/20 text-red-300 border border-red-500/50 hover:bg-red-600 hover:text-white'
+                                    : 'bg-red-600 hover:bg-red-500 text-white'
+                                }`}
+                                title="Click to reject leave application"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                <span>{l.status === 'REJECTED' ? 'Rejected ✗' : 'Reject'}</span>
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       );

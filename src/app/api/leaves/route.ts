@@ -334,11 +334,18 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    await ensureCloudSync();
     const body = await request.json();
     const { id, status, approverRole } = body;
 
     const db = getDbData();
-    const index = db.leaveRecords.findIndex(l => l.id === id);
+    let index = db.leaveRecords.findIndex(l => l.id === id);
+
+    // Fallback matching if ID has formatting differences
+    if (index === -1 && id) {
+      const cleanId = String(id).replace(/[^0-9]/g, '');
+      index = db.leaveRecords.findIndex(l => l.id.replace(/[^0-9]/g, '').endsWith(cleanId) || cleanId.endsWith(l.id.replace(/[^0-9]/g, '')));
+    }
 
     if (index !== -1) {
       const oldVal = JSON.stringify(db.leaveRecords[index]);
