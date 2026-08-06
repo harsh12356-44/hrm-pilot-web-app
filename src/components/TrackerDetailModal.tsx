@@ -10,6 +10,7 @@ interface QuarterDetail {
   total: number;
   remaining: number;
   extra: number;
+  monthText?: string;
 }
 
 interface TrackerDetailData {
@@ -137,12 +138,19 @@ export default function TrackerDetailModal({
                         <span>Remaining:</span>
                         <strong className="text-emerald-400 font-mono font-bold">{qDetail.remaining}</strong>
                       </div>
-                      <div className="flex justify-between items-center text-slate-400">
+                      <div className="flex justify-between items-start text-slate-400">
                         <span>Extra Deduct:</span>
                         {qDetail.extra > 0 ? (
-                          <strong className="text-red-400 font-mono font-bold">
-                            {qDetail.extra} Day(s) Unpaid
-                          </strong>
+                          <div className="text-right">
+                            <strong className="text-red-400 font-mono font-bold block">
+                              {qDetail.extra} Day(s)
+                            </strong>
+                            {qDetail.monthText && (
+                              <span className="text-[10px] text-rose-300 font-semibold block">
+                                ({qDetail.monthText})
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <strong className="text-slate-500 font-mono">0</strong>
                         )}

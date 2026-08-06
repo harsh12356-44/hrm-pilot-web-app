@@ -685,15 +685,21 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
 
 export function getEmployeeAllQuarters(employeeId: string) {
   const db = getDbData();
-  const emp = db.employees.find(e => e.id === employeeId || e.employeeId === employeeId || e.name === employeeId);
+  const cleanSearch = employeeId.trim().toLowerCase();
+  const emp = db.employees.find(
+    e => e.id.toLowerCase() === cleanSearch || 
+         e.employeeId.toLowerCase() === cleanSearch || 
+         e.name.toLowerCase() === cleanSearch ||
+         e.name.toLowerCase().includes(cleanSearch)
+  );
   if (!emp) return null;
 
   const quarters = ['Q1', 'Q2', 'Q3', 'Q4'] as const;
-  const result: Record<string, { label: string; casual: number; planned: number; total: number; remaining: number; extra: number }> = {};
+  const result: Record<string, { label: string; casual: number; planned: number; total: number; remaining: number; extra: number; monthText: string }> = {};
 
   quarters.forEach(q => {
     const qLeaves = db.leaveRecords.filter(
-      l => (l.employeeId === emp.id || l.employeeId === emp.employeeId) && l.quarter === q && l.status === 'APPROVED'
+      l => (l.employeeId === emp.id || l.employeeId === emp.employeeId || l.employeeId === emp.name) && l.quarter === q && l.status === 'APPROVED'
     );
     const casual = qLeaves
       .filter(l => l.leaveType === 'Casual Leave')
@@ -705,8 +711,35 @@ export function getEmployeeAllQuarters(employeeId: string) {
     const remaining = Math.max(0, 6 - total);
     const extra = Math.max(0, total - 6);
 
+    let monthText = '';
+    if (extra > 0) {
+      const sorted = [...qLeaves].sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
+      const monthMap: Record<string, number> = {};
+      let cumulative = 0;
+
+      sorted.forEach(l => {
+        const count = l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : l.daysCount;
+        const prev = cumulative;
+        cumulative += count;
+
+        if (cumulative > 6) {
+          const extraInThis = prev >= 6 ? count : (cumulative - 6);
+          let monthName = 'July';
+          try {
+            const d = new Date(l.startDate || '2026-07-01');
+            if (!isNaN(d.getTime())) {
+              monthName = d.toLocaleString('en-US', { month: 'long' });
+            }
+          } catch (e) {}
+          monthMap[monthName] = (monthMap[monthName] || 0) + extraInThis;
+        }
+      });
+
+      monthText = Object.entries(monthMap).map(([m, c]) => `${m}: ${c} day(s)`).join(', ');
+    }
+
     const labels: Record<string, string> = { Q1: 'Jan–Mar', Q2: 'Apr–Jun', Q3: 'Jul–Sep', Q4: 'Oct–Dec' };
-    result[q] = { label: labels[q], casual, planned, total, remaining, extra };
+    result[q] = { label: labels[q], casual, planned, total, remaining, extra, monthText };
   });
 
   return { employeeName: emp.name, employeeId: emp.employeeId || emp.id, department: emp.department, quarters: result };
