@@ -99,40 +99,99 @@ export async function POST(request: Request) {
       const db = getDbData();
       let importedCount = 0;
 
+      // 2a. Import missing employees from employeeMaster if provided
+      if (Array.isArray(body.employeeMaster)) {
+        body.employeeMaster.forEach((mEmp: any) => {
+          if (mEmp.name) {
+            const cleanName = String(mEmp.name).trim();
+            const exists = db.employees.some(
+              e => e.name.toLowerCase().trim() === cleanName.toLowerCase() || e.employeeId === mEmp.employeeId
+            );
+            if (!exists) {
+              const newEmpId = mEmp.employeeId || `EMP${String(db.employees.length + 1).padStart(3, '0')}`;
+              db.employees.push({
+                id: `emp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+                employeeId: newEmpId,
+                name: cleanName,
+                email: `${cleanName.toLowerCase().replace(/\s+/g, '')}@hrmpilot.com`,
+                phone: '+91 98765 00000',
+                department: mEmp.department || 'Development',
+                designation: 'Staff Member',
+                role: 'EMPLOYEE',
+                status: 'ACTIVE',
+                primaryManager: 'Ravina Khimani',
+                dailyWorkingRequirementMinutes: 480,
+                weeklyOff: 'Sunday',
+                casualAllowance: 2,
+                plannedAllowance: 4,
+                sickAllowance: 4,
+                dateOfJoining: '2024-01-01',
+              });
+            }
+          }
+        });
+      }
+
+      // 2b. Process leave records
       body.records.forEach((row: any) => {
         const empName = row.employeeName || row['Employee Name'] || row['Employee'] || row['Name'];
         const quarter = row.quarter || row['Quarter'] || 'Q3';
-        const casual = Number(row.casualUsed || row['Casual Used'] || row['Casual'] || 0);
-        const planned = Number(row.plannedUsed || row['Planned Used'] || row['Planned'] || 0);
+        const casual = Number(row.casualUsed || row['Casual Leaves Applied'] || row['Casual Leaves'] || row['Casual'] || 0);
+        const planned = Number(row.plannedUsed || row['Planned Leaves Applied'] || row['Planned Leaves'] || row['Planned'] || 0);
+        const startDate = row.startDate || '2026-07-01';
+        const endDate = row.endDate || startDate;
 
         if (empName) {
-          const emp = db.employees.find(
-            e => e.name.toLowerCase().trim() === String(empName).toLowerCase().trim() || e.employeeId === empName
+          const cleanName = String(empName).trim().toLowerCase();
+          let emp = db.employees.find(
+            e => e.name.toLowerCase().trim() === cleanName || e.employeeId.toLowerCase() === cleanName
           );
-          if (emp) {
-            db.leaveRecords = db.leaveRecords.filter(
-              l => !(l.employeeId === emp.id && l.quarter === quarter && l.status === 'APPROVED')
+
+          // Fallback fuzzy search (e.g. Naman Bangia vs Naman)
+          if (!emp) {
+            emp = db.employees.find(
+              e => e.name.toLowerCase().includes(cleanName) || cleanName.includes(e.name.toLowerCase().split(' ')[0])
             );
+          }
 
-            let datePrefix = '2026-08-15';
-            if (quarter === 'Q1') datePrefix = '2026-02-15';
-            else if (quarter === 'Q2') datePrefix = '2026-05-15';
-            else if (quarter === 'Q3') datePrefix = '2026-08-15';
-            else if (quarter === 'Q4') datePrefix = '2026-11-15';
+          // If still not found, dynamically create employee
+          if (!emp) {
+            const rawTitleName = String(empName).trim();
+            emp = {
+              id: `emp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+              employeeId: `EMP${String(db.employees.length + 1).padStart(3, '0')}`,
+              name: rawTitleName,
+              email: `${rawTitleName.toLowerCase().replace(/\s+/g, '')}@hrmpilot.com`,
+              phone: '+91 98765 00000',
+              department: 'Development',
+              designation: 'Staff Member',
+              role: 'EMPLOYEE',
+              status: 'ACTIVE',
+              primaryManager: 'Ravina Khimani',
+              dailyWorkingRequirementMinutes: 480,
+              weeklyOff: 'Sunday',
+              casualAllowance: 2,
+              plannedAllowance: 4,
+              sickAllowance: 4,
+              dateOfJoining: '2024-01-01',
+            };
+            db.employees.push(emp);
+          }
 
+          if (emp) {
             if (casual > 0) {
               db.leaveRecords.unshift({
                 id: `l-imp-cas-${Date.now()}-${Math.random()}`,
                 employeeId: emp.id,
                 leaveType: 'Casual Leave',
                 dayType: 'full',
-                startDate: datePrefix,
-                endDate: datePrefix,
+                startDate,
+                endDate,
                 daysCount: casual,
                 quarter,
                 year: 2026,
                 status: 'APPROVED',
-                note: 'Imported from spreadsheet',
+                note: 'Imported from Leave Policy Tracker',
                 createdAt: new Date().toISOString(),
               });
             }
@@ -143,13 +202,13 @@ export async function POST(request: Request) {
                 employeeId: emp.id,
                 leaveType: 'Planned Leave',
                 dayType: 'full',
-                startDate: datePrefix,
-                endDate: datePrefix,
+                startDate,
+                endDate,
                 daysCount: planned,
                 quarter,
                 year: 2026,
                 status: 'APPROVED',
-                note: 'Imported from spreadsheet',
+                note: 'Imported from Leave Policy Tracker',
                 createdAt: new Date().toISOString(),
               });
             }
@@ -161,7 +220,7 @@ export async function POST(request: Request) {
       saveDbData(db);
       logAudit('Import Quarterly Leaves', 'LeaveRecord', 'batch', undefined, `Imported ${importedCount} records`);
       const summaries = getQuarterlyLeaveSummaries('Q3', 'ALL');
-      return NextResponse.json({ success: true, message: `Successfully imported ${importedCount} employee records!`, summaries });
+      return NextResponse.json({ success: true, message: `Successfully imported ${importedCount} leave records from spreadsheet!`, summaries });
     }
 
     // 3. Regular Leave Submission / Record Leave Period

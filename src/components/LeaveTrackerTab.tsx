@@ -55,38 +55,109 @@ export default function LeaveTrackerTab() {
     const reader = new FileReader();
     reader.onload = async evt => {
       try {
-        const bstr = evt.target?.result;
-        const wb = XLSX.read(bstr, { type: 'binary' });
-        const wsName = wb.SheetNames[0];
-        const ws = wb.Sheets[wsName];
-        const rows: any[] = XLSX.utils.sheet_to_json(ws);
+        const buffer = evt.target?.result;
+        if (!buffer) return;
+        const wb = XLSX.read(buffer, { type: 'array' });
 
-        setImportStatus(`Importing ${rows.length} rows from ${file.name}...`);
+        const excelDateToISO = (serial: any) => {
+          if (!serial) return null;
+          if (typeof serial === 'string') {
+            const trimmed = serial.trim();
+            if (trimmed.match(/^\d{4}-\d{2}-\d{2}$/)) return trimmed;
+          }
+          const num = Number(serial);
+          if (isNaN(num)) return String(serial);
+          const utc_days = Math.floor(num - 25569);
+          const utc_value = utc_days * 86400;
+          const date_info = new Date(utc_value * 1000);
+          return date_info.toISOString().split('T')[0];
+        };
+
+        // 1. Check for Employee Master sheet
+        let employeeMasterRows: any[] = [];
+        const empMasterSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('employee master') || n.toLowerCase().includes('employee'));
+        if (empMasterSheetName) {
+          const rawEmpRows: any[] = XLSX.utils.sheet_to_json(wb.Sheets[empMasterSheetName]);
+          employeeMasterRows = rawEmpRows.map(r => {
+            const clean: any = {};
+            Object.keys(r).forEach(k => {
+              clean[k.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim()] = r[k];
+            });
+            return {
+              employeeId: clean['Employee ID'] || clean['ID'],
+              name: clean['Employee Name'] || clean['Name'] || clean['Employee'],
+              department: clean['Department'] || 'Development',
+              status: clean['Status'] || 'ACTIVE',
+            };
+          }).filter(e => e.name);
+        }
+
+        // 2. Select Leave Data sheet
+        let leaveSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('leave entry') || n.toLowerCase().includes('leave'));
+        if (!leaveSheetName) {
+          leaveSheetName = wb.SheetNames.find(n => n.toLowerCase().includes('summary') || !n.toLowerCase().includes('how to use')) || wb.SheetNames[0];
+        }
+
+        const leaveSheet = wb.Sheets[leaveSheetName];
+        const rawRows: any[] = XLSX.utils.sheet_to_json(leaveSheet);
+        const parsedRecords: any[] = [];
+
+        rawRows.forEach(r => {
+          const clean: any = {};
+          Object.keys(r).forEach(k => {
+            clean[k.replace(/\r?\n|\r/g, ' ').replace(/\s+/g, ' ').trim()] = r[k];
+          });
+
+          const empName = clean['Employee Name'] || clean['Employee'] || clean['Name'];
+          if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use')) {
+            const startDate = excelDateToISO(clean['Leave Date (or From Date)']) || excelDateToISO(clean['Leave Date']) || excelDateToISO(clean['From Date']) || excelDateToISO(clean['Start Date']) || '2026-07-01';
+            const endDate = excelDateToISO(clean['To Date (optional, range only)']) || excelDateToISO(clean['To Date']) || excelDateToISO(clean['End Date']) || startDate;
+            const qtr = clean['Quarter'] || clean['Qtr'] || 'Q3';
+            const casual = Number(clean['Casual Leaves Applied'] || clean['Casual Leaves'] || clean['Casual Used'] || clean['Casual'] || 0);
+            const planned = Number(clean['Planned Leaves Applied'] || clean['Planned Leaves'] || clean['Planned Used'] || clean['Planned'] || 0);
+            const status = clean['Approval Status'] || clean['Status'] || 'APPROVED';
+
+            parsedRecords.push({
+              employeeName: String(empName).trim(),
+              startDate,
+              endDate,
+              quarter: qtr,
+              casualUsed: casual,
+              plannedUsed: planned,
+              status: String(status).toUpperCase() === 'APPROVED' ? 'APPROVED' : 'APPROVED',
+            });
+          }
+        });
+
+        setImportStatus(`Importing ${parsedRecords.length} leave records from ${file.name}...`);
 
         const res = await fetch('/api/leaves', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             action: 'import',
-            records: rows,
+            records: parsedRecords,
+            employeeMaster: employeeMasterRows,
           }),
         });
 
         const resData = await res.json();
         if (res.ok) {
-          setImportStatus(resData.message || `Successfully imported ${rows.length} records!`);
+          setImportStatus(resData.message || `Successfully imported ${parsedRecords.length} leave records!`);
           fetchLeaveData();
         } else {
           setImportStatus(resData.error || 'Import failed');
         }
 
-        setTimeout(() => setImportStatus(''), 5000);
+        setTimeout(() => setImportStatus(''), 6000);
       } catch (err) {
         console.error(err);
-        setImportStatus('Error parsing file. Please upload a valid CSV or XLSX.');
+        setImportStatus('Error parsing spreadsheet file. Please upload a valid CSV or XLSX.');
+      } finally {
+        e.target.value = '';
       }
     };
-    reader.readAsBinaryString(file);
+    reader.readAsArrayBuffer(file);
   };
 
   const handleExport = () => {
