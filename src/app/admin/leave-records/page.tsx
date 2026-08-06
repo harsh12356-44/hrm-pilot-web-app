@@ -158,7 +158,12 @@ export default function LeaveRecordsAdminPage() {
 
   // Filter Leaves
   const filteredLeaves = leaves.filter(l => {
-    const emp = employees.find(e => e.id === l.employeeId || e.employeeId === l.employeeId || e.name === l.employeeId);
+    const emp = employees.find(
+      e => e.id === l.employeeId ||
+           e.employeeId === l.employeeId ||
+           e.name.toLowerCase().trim() === (l.employeeId || '').toLowerCase().trim() ||
+           (l.employeeId && e.id.toLowerCase() === l.employeeId.toLowerCase())
+    );
     const empName = emp ? emp.name.toLowerCase() : '';
     const empId = emp ? emp.employeeId.toLowerCase() : '';
     const note = (l.note || '').toLowerCase();

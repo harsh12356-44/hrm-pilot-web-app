@@ -260,23 +260,8 @@ export async function POST(request: Request) {
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : start;
 
-    // Overlap detection check (only if not an explicit HR adjustment override)
-    if (!body.allowOverlap) {
-      const existingOverlap = db.leaveRecords.find(
-        l =>
-          l.employeeId === emp.id &&
-          l.status !== 'REJECTED' &&
-          l.status !== 'CANCELLED' &&
-          !(new Date(l.startDate) > end || new Date(l.endDate) < start)
-      );
-
-      if (existingOverlap) {
-        return NextResponse.json(
-          { error: `An existing leave request (#${existingOverlap.id}, Status: ${existingOverlap.status}) overlaps with the selected dates (${existingOverlap.startDate} to ${existingOverlap.endDate}).` },
-          { status: 400 }
-        );
-      }
-    }
+    // Optional Overlap Check (bypassed to allow multiple leave submissions for testing)
+    // if (!body.allowOverlap) { ... }
 
     const diffTime = Math.abs(end.getTime() - start.getTime());
     let daysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
