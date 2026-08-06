@@ -633,6 +633,35 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
     // Deduction / Unpaid LOP triggers ONLY when total leaves taken in a quarter exceed 6 days
     const extraDeduct = Math.max(0, totalUsed - totalAllowance);
 
+    // Month-wise breakdown of extra leaves over 6 days
+    let monthDeductionText = '';
+    if (extraDeduct > 0) {
+      const sortedLeaves = [...empLeaves].sort((a, b) => (a.startDate || '').localeCompare(b.startDate || ''));
+      const monthMap: Record<string, number> = {};
+      let cumulative = 0;
+
+      sortedLeaves.forEach(l => {
+        const count = l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : l.daysCount;
+        const prev = cumulative;
+        cumulative += count;
+
+        if (cumulative > totalAllowance) {
+          const extraInThis = prev >= totalAllowance ? count : (cumulative - totalAllowance);
+          let monthName = 'July';
+          try {
+            const d = new Date(l.startDate || '2026-07-01');
+            if (!isNaN(d.getTime())) {
+              monthName = d.toLocaleString('en-US', { month: 'long' });
+            }
+          } catch (e) {}
+          monthMap[monthName] = (monthMap[monthName] || 0) + extraInThis;
+        }
+      });
+
+      const parts = Object.entries(monthMap).map(([m, count]) => `${m}: ${count} day(s)`);
+      monthDeductionText = parts.join(', ');
+    }
+
     const remaining = Math.max(0, totalAllowance - totalUsed);
     const utilizationPercentage = Math.min(100, Math.round((totalUsed / totalAllowance) * 100));
 
@@ -649,6 +678,7 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
       totalAllowance,
       utilizationPercentage,
       extraDeduct,
+      monthDeductionText,
     };
   });
 }

@@ -577,7 +577,7 @@ export default function LeaveTrackerTab() {
               <div className="space-y-0.5 pl-5 text-[11px]">
                 {deductionAlertEmps.map(e => (
                   <div key={e.employeeId}>
-                    <strong>{e.employeeName}</strong>: {e.extraDeduct} Day(s) Unpaid
+                    <strong>{e.employeeName}</strong>: {e.extraDeduct} Day(s) Unpaid {e.monthDeductionText ? `(${e.monthDeductionText})` : ''}
                   </div>
                 ))}
               </div>
@@ -708,9 +708,16 @@ export default function LeaveTrackerTab() {
                       {/* Extra Leaves to Deduct */}
                       <td className="py-3.5 px-4 text-center">
                         {s.extraDeduct > 0 ? (
-                          <span className="px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold font-mono text-xs">
-                            {s.extraDeduct} Day(s) Unpaid
-                          </span>
+                          <div className="flex flex-col items-center">
+                            <span className="px-2.5 py-1 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-bold font-mono text-xs">
+                              {s.extraDeduct} Day(s) Unpaid
+                            </span>
+                            {s.monthDeductionText && (
+                              <span className="text-[10px] font-semibold text-rose-300/90 mt-1">
+                                ({s.monthDeductionText})
+                              </span>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-slate-500 font-mono text-xs">0</span>
                         )}

@@ -81,6 +81,7 @@ export interface LeaveSummary {
   totalAllowance: number;
   utilizationPercentage: number;
   extraDeduct: number;
+  monthDeductionText?: string;
 }
 
 export interface PayrollPreview {
