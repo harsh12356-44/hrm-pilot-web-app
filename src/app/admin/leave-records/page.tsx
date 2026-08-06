@@ -157,14 +157,14 @@ export default function LeaveRecordsAdminPage() {
   const departmentsList = Array.from(new Set(employees.map(e => e.department).filter(Boolean)));
 
   // Filter Leaves
-  // Pending Leave Requests requiring action (Table 1)
+  // Pending Leave Requests requiring action (Table 1: Only non-finalized requests)
   const pendingApprovals = leaves.filter(
-    l => l.status === 'PENDING' || l.status === 'MORE_INFO_REQUIRED' || (l.hrStatus !== 'Approved' && l.hrStatus !== 'Rejected' && l.status !== 'APPROVED' && l.status !== 'REJECTED')
+    l => l.status !== 'APPROVED' && l.status !== 'REJECTED'
   );
 
-  // Historical Leaves Register (Table 2: Approved or Rejected only)
+  // Historical Leaves Register (Table 2: Only finalized requests - Approved or Rejected)
   const historicalLeaves = leaves.filter(
-    l => l.status === 'APPROVED' || l.status === 'REJECTED' || l.hrStatus === 'Approved' || l.hrStatus === 'Rejected'
+    l => l.status === 'APPROVED' || l.status === 'REJECTED'
   );
 
   // Filter Historical Leaves
