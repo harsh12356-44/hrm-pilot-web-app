@@ -94,15 +94,16 @@ export default function LeaveTrackerTab() {
           }).filter(emp => emp.name);
         }
 
-        // 2. Iterate Sheets and extract leave data
-        wb.SheetNames.forEach(sheetName => {
-          if (sheetName.toLowerCase().includes('how to use')) return;
+        // 2. Target EXCLUSIVELY the Quarterly Leave Summary sheet
+        let summarySheetName = wb.SheetNames.find(n => n.toLowerCase().includes('quarterly leave summary') || n.toLowerCase().includes('quarterly summary'));
+        if (!summarySheetName) {
+          summarySheetName = wb.SheetNames.find(n => n.toLowerCase().includes('summary') || !n.toLowerCase().includes('how to use')) || wb.SheetNames[0];
+        }
 
-          const sheet = wb.Sheets[sheetName];
-          const matrix: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-          if (!matrix || matrix.length === 0) return;
+        const sheet = wb.Sheets[summarySheetName];
+        const matrix: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
 
-          // Check if matrix style quarterly summary (e.g. contains Q1/Q2/Q3/Q4 in headers)
+        if (matrix && matrix.length > 0) {
           let headerRowIndex = -1;
           matrix.forEach((r, idx) => {
             const lineStr = (r || []).join(' ').toLowerCase();
@@ -111,6 +112,15 @@ export default function LeaveTrackerTab() {
             }
           });
 
+          if (headerRowIndex === -1) {
+            matrix.forEach((r, idx) => {
+              const lineStr = (r || []).join(' ').toLowerCase();
+              if (lineStr.includes('employee name') || lineStr.includes('casual')) {
+                if (headerRowIndex === -1) headerRowIndex = idx > 0 ? idx - 1 : idx;
+              }
+            });
+          }
+
           if (headerRowIndex !== -1 && matrix.length > headerRowIndex + 1) {
             const colIndices: any = { empName: 0, Q1: {}, Q2: {}, Q3: {}, Q4: {} };
             const subHeader = matrix[headerRowIndex + 1] || [];
@@ -118,7 +128,7 @@ export default function LeaveTrackerTab() {
 
             subHeader.forEach((colVal: any, cIdx: number) => {
               const str = String(colVal || '').toLowerCase().replace(/\s+/g, ' ');
-              if (cIdx === 0 || str.includes('employee')) colIndices.empName = cIdx;
+              if (cIdx === 0 || str.includes('employee') || str.includes('name')) colIndices.empName = cIdx;
 
               const mainHeaderVal = String(matrix[headerRowIndex][cIdx] || '').toLowerCase();
               if (mainHeaderVal.includes('q1') || mainHeaderVal.includes('jan')) currentQ = 'Q1';
@@ -133,29 +143,28 @@ export default function LeaveTrackerTab() {
             matrix.forEach((row, idx) => {
               if (idx <= headerRowIndex + 1) return;
               const empName = row[colIndices.empName];
-              if (empName && typeof empName === 'string' && empName.trim() && !empName.toLowerCase().includes('employee')) {
+              if (empName && typeof empName === 'string' && empName.trim() && !empName.toLowerCase().includes('employee name')) {
                 const name = empName.trim();
                 ['Q1', 'Q2', 'Q3', 'Q4'].forEach(q => {
                   const casIdx = colIndices[q].casual;
                   const plaIdx = colIndices[q].planned;
                   const casual = casIdx !== undefined ? Number(row[casIdx] || 0) : 0;
                   const planned = plaIdx !== undefined ? Number(row[plaIdx] || 0) : 0;
-                  if (casual > 0 || planned > 0) {
-                    parsedRecords.push({
-                      employeeName: name,
-                      quarter: q,
-                      casualUsed: casual,
-                      plannedUsed: planned,
-                      startDate: q === 'Q1' ? '2026-02-15' : q === 'Q2' ? '2026-05-15' : q === 'Q3' ? '2026-08-15' : '2026-11-15',
-                      endDate: q === 'Q1' ? '2026-02-15' : q === 'Q2' ? '2026-05-15' : q === 'Q3' ? '2026-08-15' : '2026-11-15',
-                      status: 'APPROVED',
-                    });
-                  }
+
+                  parsedRecords.push({
+                    employeeName: name,
+                    quarter: q,
+                    casualUsed: casual,
+                    plannedUsed: planned,
+                    startDate: q === 'Q1' ? '2026-02-15' : q === 'Q2' ? '2026-05-15' : q === 'Q3' ? '2026-08-15' : '2026-11-15',
+                    endDate: q === 'Q1' ? '2026-02-15' : q === 'Q2' ? '2026-05-15' : q === 'Q3' ? '2026-08-15' : '2026-11-15',
+                    status: 'APPROVED',
+                  });
                 });
               }
             });
           } else {
-            // Level 2: Universal Fallback Row Parser (Works on ANY sheet name & CSV)
+            // Level 2 Fallback for flat CSV
             const rawRows: any[] = XLSX.utils.sheet_to_json(sheet);
             rawRows.forEach(r => {
               const clean: any = {};
@@ -164,36 +173,30 @@ export default function LeaveTrackerTab() {
                 clean[cleanKey] = r[k];
               });
 
-              // Find employee name key dynamically
               const nameKey = Object.keys(clean).find(k => k.includes('employee') || k.includes('name') || k === 'emp');
               const empName = nameKey ? clean[nameKey] : null;
 
-              if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use') && !String(empName).toLowerCase().includes('step')) {
+              if (empName && !String(empName).includes('ℹ️') && !String(empName).toLowerCase().includes('how to use')) {
                 const casualKey = Object.keys(clean).find(k => k.includes('casual'));
                 const plannedKey = Object.keys(clean).find(k => k.includes('planned') || k.includes('sick'));
                 const quarterKey = Object.keys(clean).find(k => k.includes('quarter') || k.includes('qtr'));
-                const dateKey = Object.keys(clean).find(k => k.includes('date') || k.includes('from'));
-
-                const startDate = dateKey ? excelDateToISO(clean[dateKey]) || '2026-07-01' : '2026-07-01';
-                const qtr = quarterKey ? String(clean[quarterKey]).trim() : 'Q3';
                 const casual = casualKey ? Number(clean[casualKey] || 0) : 0;
                 const planned = plannedKey ? Number(clean[plannedKey] || 0) : 0;
+                const qtr = quarterKey ? String(clean[quarterKey]).trim() : 'Q3';
 
-                if (casual > 0 || planned > 0 || Object.keys(clean).length >= 2) {
-                  parsedRecords.push({
-                    employeeName: String(empName).trim(),
-                    startDate,
-                    endDate: startDate,
-                    quarter: qtr,
-                    casualUsed: casual,
-                    plannedUsed: planned,
-                    status: 'APPROVED',
-                  });
-                }
+                parsedRecords.push({
+                  employeeName: String(empName).trim(),
+                  startDate: '2026-08-15',
+                  endDate: '2026-08-15',
+                  quarter: qtr,
+                  casualUsed: casual,
+                  plannedUsed: planned,
+                  status: 'APPROVED',
+                });
               }
             });
           }
-        });
+        }
 
         setImportStatus(`Importing ${parsedRecords.length} leave records from ${file.name}...`);
 
