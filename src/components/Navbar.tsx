@@ -101,63 +101,67 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           </div>
         </Link>
 
-        {/* Dynamic Portal Switcher Links (Admin, Manager, Employee) */}
-        <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1">
-          <Link
-            href="/admin"
-            onClick={() => setRoleCookie('ADMIN')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-              pathname.startsWith('/admin')
-                ? 'bg-blue-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            }`}
-          >
-            <LayoutDashboard className="w-3.5 h-3.5" />
-            <span>HR Admin Suite</span>
-          </Link>
+        {/* Dynamic Portal Switcher Links (Restricted for regular Employees) */}
+        {currentRole !== 'EMPLOYEE' && (
+          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1">
+            <Link
+              href="/admin"
+              onClick={() => setRoleCookie('ADMIN')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+                pathname.startsWith('/admin')
+                  ? 'bg-blue-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+              }`}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              <span>HR Admin Suite</span>
+            </Link>
 
-          <Link
-            href="/manager"
-            onClick={() => setRoleCookie('MANAGER')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-              pathname === '/manager'
-                ? 'bg-purple-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            }`}
-          >
-            <UserCheck2 className="w-3.5 h-3.5" />
-            <span>Manager Desk</span>
-          </Link>
+            <Link
+              href="/manager"
+              onClick={() => setRoleCookie('MANAGER')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+                pathname === '/manager'
+                  ? 'bg-purple-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+              }`}
+            >
+              <UserCheck2 className="w-3.5 h-3.5" />
+              <span>Manager Desk</span>
+            </Link>
 
-          <Link
-            href="/employee"
-            onClick={() => setRoleCookie('EMPLOYEE')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-              pathname === '/employee'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            <span>Employee Portal</span>
-          </Link>
-        </div>
+            <Link
+              href="/employee"
+              onClick={() => setRoleCookie('EMPLOYEE')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+                pathname === '/employee'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Employee Portal</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center space-x-3 sm:space-x-4">
-        {/* WP Admin Account Switcher Dropdown */}
-        <div className="hidden md:flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Switch View:</span>
-          <select
-            onChange={handleAccountSwitch}
-            value={pathname.startsWith('/admin') ? 'ADMIN' : pathname === '/manager' ? 'MANAGER' : 'EMPLOYEE'}
-            className="bg-transparent text-xs font-bold text-blue-600 focus:outline-none cursor-pointer"
-          >
-            <option value="ADMIN">Super Admin (Ravina Khimani)</option>
-            <option value="MANAGER">Development Mgr (Naman Bangia)</option>
-            <option value="EMPLOYEE">Web Developer (Sonu Goswami)</option>
-          </select>
-        </div>
+        {/* WP Admin Account Switcher Dropdown (Restricted to Admin / Manager) */}
+        {currentRole !== 'EMPLOYEE' && (
+          <div className="hidden md:flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Switch View:</span>
+            <select
+              onChange={handleAccountSwitch}
+              value={pathname.startsWith('/admin') ? 'ADMIN' : pathname === '/manager' ? 'MANAGER' : 'EMPLOYEE'}
+              className="bg-transparent text-xs font-bold text-blue-600 focus:outline-none cursor-pointer"
+            >
+              <option value="ADMIN">Super Admin (Ravina Khimani)</option>
+              <option value="MANAGER">Development Mgr (Naman Bangia)</option>
+              <option value="EMPLOYEE">Web Developer (Sonu Goswami)</option>
+            </select>
+          </div>
+        )}
 
         {/* Authenticated Role Badge */}
         <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">

@@ -371,18 +371,22 @@ function EmployeePortalContent() {
             <span>Thursday, 06 August 2026 • Live HRM Portal</span>
 
             <div className="flex items-center space-x-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800 text-xs">
-              <span className="text-slate-400 font-semibold">Active Portal View:</span>
-              <select
-                value={employee?.id || selectedEmployeeId}
-                onChange={e => setSelectedEmployeeId(e.target.value)}
-                className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
-              >
-                {safeAllEmployees.map(emp => (
-                  <option key={emp.id} value={emp.id} className="bg-slate-900 text-white">
-                    {emp.name} ({emp.employeeId || emp.id})
-                  </option>
-                ))}
-              </select>
+              <span className="text-slate-400 font-semibold">Active Employee:</span>
+              {typeof document !== 'undefined' && document.cookie.includes('hrm_user_role=ADMIN') ? (
+                <select
+                  value={employee?.id || selectedEmployeeId}
+                  onChange={e => setSelectedEmployeeId(e.target.value)}
+                  className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
+                >
+                  {safeAllEmployees.map(emp => (
+                    <option key={emp.id} value={emp.id} className="bg-slate-900 text-white">
+                      {emp.name} ({emp.employeeId || emp.id})
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <span className="text-white font-bold font-mono">{employee?.name || 'Sonu Goswami'} ({employee?.employeeId || 'SG012'})</span>
+              )}
             </div>
           </div>
 
