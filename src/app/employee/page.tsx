@@ -36,7 +36,7 @@ function EmployeePortalContent() {
   const activeTab = searchParams ? searchParams.get('tab') || 'dashboard' : 'dashboard';
 
   const [allEmployees, setAllEmployees] = useState<Employee[]>([]);
-  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('emp-8'); // Default: Lochita g1
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('emp-12'); // Default: Sonu Goswami (SG012)
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendance, setAttendance] = useState<AttendanceLog[]>([]);
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -106,10 +106,22 @@ function EmployeePortalContent() {
       setAllEmployees(employeesList);
       setAllLeaves(leavesList);
 
-      // Match selected employee by ID or employeeId
+      // Resolve target active employee ID (defaulting to Sonu Goswami, clearing stale emp-8)
+      let activeTargetId = 'emp-12';
+      if (typeof window !== 'undefined') {
+        const storedId = localStorage.getItem('hrm_active_employee_id');
+        if (storedId && storedId !== 'emp-8' && employeesList.some(e => e.id === storedId || e.employeeId === storedId)) {
+          activeTargetId = storedId;
+        } else {
+          activeTargetId = 'emp-12';
+          localStorage.setItem('hrm_active_employee_id', 'emp-12');
+        }
+      }
+
+      // Match selected employee by ID, employeeId, or name
       const currentEmp = employeesList.find(
-        e => e.id === selectedEmployeeId || e.employeeId === selectedEmployeeId || e.name.toLowerCase().includes(selectedEmployeeId.toLowerCase())
-      ) || employeesList.find(e => e.name.toLowerCase().includes('lochita')) || employeesList[0];
+        e => e.id === activeTargetId || e.employeeId === activeTargetId || e.name.toLowerCase().includes(activeTargetId.toLowerCase())
+      ) || employeesList.find(e => e.name.toLowerCase().includes('sonu')) || employeesList.find(e => e.employeeId === 'SG012') || employeesList.find(e => e.role === 'EMPLOYEE') || employeesList[0];
 
       setEmployee(currentEmp || null);
 
@@ -241,7 +253,7 @@ function EmployeePortalContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employeeId: employee?.id || 'emp-8',
+          employeeId: employee?.id || 'emp-12',
           leaveType,
           dayType: leaveDuration.includes('Half Day') ? 'half' : 'full',
           startDate: fromDate,
