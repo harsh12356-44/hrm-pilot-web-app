@@ -350,6 +350,24 @@
   ],
   "leaveRecords": [
     {
+      "id": "l-1786527017942",
+      "employeeId": "emp-8",
+      "leaveType": "Casual Leave",
+      "dayType": "full",
+      "startDate": "2026-08-20",
+      "endDate": "2026-08-21",
+      "daysCount": 2,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "managerStatus": "Approved",
+      "hrStatus": "Approved",
+      "note": "Testing leave submission",
+      "handoverNote": "",
+      "emergencyContact": "",
+      "createdAt": "2026-08-12T09:30:17.942Z"
+    },
+    {
       "id": "l-test-1",
       "employeeId": "emp-1",
       "leaveType": "Casual Leave",
@@ -7819,6 +7837,27 @@
   ],
   "auditLogs": [
     {
+      "id": "aud-1786527184785",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Leave Request APPROVED",
+      "objectType": "LeaveRecord",
+      "objectId": "l-1786527017942",
+      "oldValue": "{\"id\":\"l-1786527017942\",\"employeeId\":\"emp-8\",\"leaveType\":\"Casual Leave\",\"dayType\":\"full\",\"startDate\":\"2026-08-20\",\"endDate\":\"2026-08-21\",\"daysCount\":2,\"quarter\":\"Q3\",\"year\":2026,\"status\":\"PENDING\",\"managerStatus\":\"Pending\",\"hrStatus\":\"Pending\",\"note\":\"Testing leave submission\",\"handoverNote\":\"\",\"emergencyContact\":\"\",\"createdAt\":\"2026-08-12T09:30:17.942Z\"}",
+      "newValue": "{\"id\":\"l-1786527017942\",\"employeeId\":\"emp-8\",\"leaveType\":\"Casual Leave\",\"dayType\":\"full\",\"startDate\":\"2026-08-20\",\"endDate\":\"2026-08-21\",\"daysCount\":2,\"quarter\":\"Q3\",\"year\":2026,\"status\":\"APPROVED\",\"managerStatus\":\"Approved\",\"hrStatus\":\"Approved\",\"note\":\"Testing leave submission\",\"handoverNote\":\"\",\"emergencyContact\":\"\",\"createdAt\":\"2026-08-12T09:30:17.942Z\"}",
+      "timestamp": "2026-08-12T09:33:04.785Z"
+    },
+    {
+      "id": "aud-1786527017942",
+      "userId": "emp-1",
+      "userName": "Harshit Bhootra",
+      "action": "Submit Leave Request",
+      "objectType": "LeaveRecord",
+      "objectId": "l-1786527017942",
+      "newValue": "{\"id\":\"l-1786527017942\",\"employeeId\":\"emp-8\",\"leaveType\":\"Casual Leave\",\"dayType\":\"full\",\"startDate\":\"2026-08-20\",\"endDate\":\"2026-08-21\",\"daysCount\":2,\"quarter\":\"Q3\",\"year\":2026,\"status\":\"PENDING\",\"managerStatus\":\"Pending\",\"hrStatus\":\"Pending\",\"note\":\"Testing leave submission\",\"handoverNote\":\"\",\"emergencyContact\":\"\",\"createdAt\":\"2026-08-12T09:30:17.942Z\"}",
+      "timestamp": "2026-08-12T09:30:17.942Z"
+    },
+    {
       "id": "aud-1786009310564",
       "userId": "emp-1",
       "userName": "Harshit Bhootra",
@@ -7912,6 +7951,24 @@
     }
   ],
   "notifications": [
+    {
+      "id": "notif-1786527184801",
+      "employeeId": "emp-8",
+      "type": "leave_status_updated",
+      "title": "Leave Request APPROVED",
+      "message": "Your leave request #l-1786527017942 status is now APPROVED. Manager: Approved, HR: Approved.",
+      "isRead": false,
+      "createdAt": "2026-08-12T09:33:04.801Z"
+    },
+    {
+      "id": "notif-1786527018007",
+      "employeeId": "emp-8",
+      "type": "leave_submitted",
+      "title": "Leave Application Submitted",
+      "message": "Your request for Casual Leave (2026-08-20 to 2026-08-21) has been submitted for approval.",
+      "isRead": false,
+      "createdAt": "2026-08-12T09:30:18.007Z"
+    },
     {
       "id": "notif-1786008979186",
       "employeeId": "emp-1",
