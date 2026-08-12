@@ -335,11 +335,13 @@ function EmployeePortalContent() {
     try {
       setLoading(true);
       setStatusMsg('Updating manager decision...');
+      const targetRecord = leaves.find(l => l.id === id) || allLeaves.find(l => l.id === id);
       const res = await fetch('/api/leaves', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
+          record: targetRecord,
           status: action,
           approverRole: 'MANAGER',
         }),

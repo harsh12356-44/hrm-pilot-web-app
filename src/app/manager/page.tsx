@@ -39,11 +39,13 @@ export default function ManagerPortalPage() {
   const handleManagerAction = async (id: string, action: 'APPROVED' | 'REJECTED') => {
     try {
       setStatusMsg('Updating manager review decision...');
+      const targetRecord = leaves.find(l => l.id === id);
       const res = await fetch('/api/leaves', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
+          record: targetRecord,
           status: action,
           approverRole: 'MANAGER',
         }),
