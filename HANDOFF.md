@@ -115,3 +115,19 @@ git push origin main
 
 - **Local App URL**: `http://localhost:3000`
 - **Live Vercel URL**: `https://hrm-pilot-web-app.vercel.app`
+
+---
+
+## 5. Current Project Status & Action Plan
+
+### Today's Completed Accomplishments:
+1. **Dynamic Login & RBAC Routing**: Resolved login redirection so HR Admin routes to `/admin`, Manager to `/manager`, and Employee to `/employee`. Logout clears cookies and `localStorage` session keys.
+2. **Systematic 2-Tier Approval Workflow**: Synchronized Manager Desk (`/manager`) and HR Admin Suite (`/admin/leave-records`) so Manager approval sets `managerStatus = 'Approved'` (displaying `AWAITING HR FINAL APPROVAL`), and HR approval sets `hrStatus = 'Approved'` and `status = 'APPROVED'` (displaying `HR AND MANAGER HAVE APPROVED ✓`).
+3. **Server Auto-Recovery**: Fixed `Leave record not found` error by implementing multi-fallback ID/record matching and server auto-recovery for client backup records on Vercel serverless environments.
+4. **Full Live QA Audit**: Completed an end-to-end live testing audit across all 17 functional modules.
+
+### Tomorrow's Roadmap & QA Action Items:
+- [ ] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Format raw ISO date strings in the calculated duration badge into clean readable dates (e.g. `20 Aug 2026`).
+- [ ] **Item 2: Payroll Default Base Salary Presets (`/admin/payroll`)**: Add realistic default base salary values for employees missing custom salaries.
+- [ ] **Item 3: Mobile Sidebar Drawer Auto-Close**: Add responsive auto-close handler for mobile viewports (< 768px).
+- [ ] **Item 4: Leave Tracker Quarter Switch Smooth Scroll (`/admin/leave-tracker`)**: Add smooth-scroll behavior when switching between Q1, Q2, Q3, and Q4 quarter pills.
