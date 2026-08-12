@@ -67,12 +67,18 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
   const handleLogout = () => {
     document.cookie = 'hrm_user_role=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT';
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('hrm_active_employee_id');
+      localStorage.removeItem('hrm_active_employee_role');
+      localStorage.removeItem('hrm_active_employee_is_manager');
+    }
     router.push('/login');
   };
 
   const setRoleCookie = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE') => {
     document.cookie = `hrm_user_role=${role}; path=/`;
     if (typeof window !== 'undefined') {
+      localStorage.setItem('hrm_active_employee_role', role);
       window.dispatchEvent(new Event('roleChange'));
     }
   };

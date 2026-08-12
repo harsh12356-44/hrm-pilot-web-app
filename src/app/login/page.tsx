@@ -23,24 +23,53 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // Demo authentication routine
-      if ((email === 'ravina@hrmpilot.com' || email === 'harshit@hrmpilot.com') && password === 'Admin@123') {
-        document.cookie = 'hrm_user_role=ADMIN; path=/; max-age=86400';
+      const cleanEmail = email.trim().toLowerCase();
+
+      // Fetch employees list to resolve dynamic role & employee ID
+      let employeesList: any[] = [];
+      try {
+        const res = await fetch(`/api/employees?t=${Date.now()}`);
+        const data = await res.json();
+        employeesList = Array.isArray(data) ? data : data.employees || [];
+      } catch (err) {}
+
+      // Find matching employee by email
+      const emp = employeesList.find((e: any) => e.email && e.email.toLowerCase().trim() === cleanEmail);
+
+      let targetRole: 'ADMIN' | 'MANAGER' | 'EMPLOYEE' = 'EMPLOYEE';
+      let empId = 'emp-12';
+
+      if (emp) {
+        targetRole = (emp.role as 'ADMIN' | 'MANAGER' | 'EMPLOYEE') || 'EMPLOYEE';
+        empId = emp.id;
+      } else if (cleanEmail.includes('ravina') || cleanEmail.includes('admin') || cleanEmail.includes('harshit')) {
+        targetRole = 'ADMIN';
+        empId = 'emp-1';
+      } else if (cleanEmail.includes('naman') || cleanEmail.includes('jigyasa') || cleanEmail.includes('meenal') || cleanEmail.includes('divyanshu') || cleanEmail.includes('manager')) {
+        targetRole = 'MANAGER';
+        empId = 'emp-2';
+      }
+
+      // Set cookie and localStorage for role & active employee
+      document.cookie = `hrm_user_role=${targetRole}; path=/; max-age=86400`;
+      
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('hrm_active_employee_id', empId);
+        localStorage.setItem('hrm_active_employee_role', targetRole);
+        window.dispatchEvent(new Event('roleChange'));
+      }
+
+      // Perform strict role-based dashboard redirection
+      if (targetRole === 'ADMIN') {
         router.push('/admin');
-      } else if (
-        (email === 'naman@hrmpilot.com' || email === 'jigyasa@hrmpilot.com' || email === 'meenal@hrmpilot.com' || email === 'divyanshu@hrmpilot.com' || email === 'ananya@hrmpilot.com') &&
-        password === 'Manager@123'
-      ) {
-        document.cookie = 'hrm_user_role=MANAGER; path=/; max-age=86400';
+      } else if (targetRole === 'MANAGER') {
         router.push('/manager');
-      } else if (password === 'Employee@123') {
-        document.cookie = 'hrm_user_role=EMPLOYEE; path=/; max-age=86400';
-        router.push('/employee');
       } else {
-        throw new Error('Invalid email or password. Please use one of the demo credentials below.');
+        router.push('/employee');
       }
     } catch (err: any) {
-      setError(err.message);
+      console.error(err);
+      setError(err.message || 'Authentication failed.');
     } finally {
       setLoading(false);
     }
