@@ -493,7 +493,7 @@ export function getDbData(): InitialState {
       const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
       const data = JSON.parse(raw);
       if (data && Array.isArray(data.employees) && data.employees.length > 0) {
-        memoryDb = data;
+        memoryDb = data as InitialState;
         (globalThis as any)._inMemoryDbData = memoryDb;
         return memoryDb;
       }
