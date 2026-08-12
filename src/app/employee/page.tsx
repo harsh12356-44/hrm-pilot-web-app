@@ -367,27 +367,8 @@ function EmployeePortalContent() {
         <Sidebar currentTab={activeTab} role="EMPLOYEE" />
         <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto space-y-6 overflow-y-auto">
           {/* Top Date Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 border-b border-slate-800 pb-3">
+          <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-3">
             <span>Thursday, 06 August 2026 • Live HRM Portal</span>
-
-            <div className="flex items-center space-x-2 bg-slate-900 px-3 py-1 rounded-full border border-slate-800 text-xs">
-              <span className="text-slate-400 font-semibold">Active Employee:</span>
-              {typeof document !== 'undefined' && document.cookie.includes('hrm_user_role=ADMIN') ? (
-                <select
-                  value={employee?.id || selectedEmployeeId}
-                  onChange={e => setSelectedEmployeeId(e.target.value)}
-                  className="bg-transparent text-white font-bold focus:outline-none cursor-pointer"
-                >
-                  {safeAllEmployees.map(emp => (
-                    <option key={emp.id} value={emp.id} className="bg-slate-900 text-white">
-                      {emp.name} ({emp.employeeId || emp.id})
-                    </option>
-                  ))}
-                </select>
-              ) : (
-                <span className="text-white font-bold font-mono">{employee?.name || 'Sonu Goswami'} ({employee?.employeeId || 'SG012'})</span>
-              )}
-            </div>
           </div>
 
           {/* TAB 1: DASHBOARD */}

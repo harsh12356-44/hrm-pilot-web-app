@@ -147,22 +147,6 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
       </div>
 
       <div className="flex items-center space-x-3 sm:space-x-4">
-        {/* WP Admin Account Switcher Dropdown (Restricted to Admin / Manager) */}
-        {currentRole !== 'EMPLOYEE' && (
-          <div className="hidden md:flex items-center space-x-2 bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Switch View:</span>
-            <select
-              onChange={handleAccountSwitch}
-              value={pathname.startsWith('/admin') ? 'ADMIN' : pathname === '/manager' ? 'MANAGER' : 'EMPLOYEE'}
-              className="bg-transparent text-xs font-bold text-blue-600 focus:outline-none cursor-pointer"
-            >
-              <option value="ADMIN">Super Admin (Ravina Khimani)</option>
-              <option value="MANAGER">Development Mgr (Naman Bangia)</option>
-              <option value="EMPLOYEE">Web Developer (Sonu Goswami)</option>
-            </select>
-          </div>
-        )}
-
         {/* Authenticated Role Badge */}
         <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
           {currentRole === 'ADMIN' ? (
