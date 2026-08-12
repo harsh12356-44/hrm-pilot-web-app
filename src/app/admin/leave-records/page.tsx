@@ -159,12 +159,12 @@ export default function LeaveRecordsAdminPage() {
   // Filter Leaves
   // Pending Leave Requests requiring action (Table 1: Only non-finalized requests)
   const pendingApprovals = leaves.filter(
-    l => l.status !== 'APPROVED' && l.status !== 'REJECTED'
+    l => l.status !== 'APPROVED' && l.status !== 'REJECTED' && l.managerStatus !== 'Rejected' && l.hrStatus !== 'Rejected'
   );
 
   // Historical Leaves Register (Table 2: Only finalized requests - Approved or Rejected)
   const historicalLeaves = leaves.filter(
-    l => l.status === 'APPROVED' || l.status === 'REJECTED'
+    l => l.status === 'APPROVED' || l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected'
   );
 
   // Filter Historical Leaves
