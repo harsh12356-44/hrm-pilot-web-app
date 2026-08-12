@@ -105,7 +105,21 @@ function EmployeePortalContent() {
         const empLogs = logsList.filter(a => a.employeeId === currentEmp.id || a.employeeId === currentEmp.employeeId);
         setAttendance(empLogs);
 
-        const empLeaves = leavesList.filter(l => l.employeeId === currentEmp.id || l.employeeId === currentEmp.employeeId || l.employeeId === currentEmp.name);
+        const empIdStr = String(currentEmp.id || '').trim().toLowerCase();
+        const empCodeStr = String(currentEmp.employeeId || '').trim().toLowerCase();
+        const empNameStr = String(currentEmp.name || '').trim().toLowerCase();
+
+        const empLeaves = leavesList.filter(l => {
+          if (!l || !l.employeeId) return false;
+          const target = String(l.employeeId).trim().toLowerCase();
+          return (
+            target === empIdStr ||
+            target === empCodeStr ||
+            target === empNameStr ||
+            (empNameStr.length > 2 && target.includes(empNameStr)) ||
+            (empNameStr.length > 2 && empNameStr.includes(target))
+          );
+        });
         setLeaves(empLeaves);
       }
     } catch (err) {
