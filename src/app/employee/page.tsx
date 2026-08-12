@@ -73,7 +73,35 @@ function EmployeePortalContent() {
 
       const employeesList: Employee[] = Array.isArray(empData) ? empData : empData.employees || [];
       const logsList: AttendanceLog[] = Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || [];
-      const leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
+      let leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
+
+      if (typeof window !== 'undefined') {
+        try {
+          const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+          if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
+            localSubmitted.forEach(l => {
+              if (l && l.id) {
+                const srvIndex = leavesList.findIndex(srv => srv.id === l.id);
+                if (srvIndex === -1) {
+                  leavesList.unshift(l);
+                } else {
+                  // Keep the latest server status if available
+                  leavesList[srvIndex] = { ...l, ...leavesList[srvIndex] };
+                }
+              }
+            });
+
+            // Trigger server restore if server database missing records
+            if (leaveData.records && leavesList.length > leaveData.records.length) {
+              fetch('/api/leaves', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'sync_client_backup', records: leavesList }),
+              }).catch(console.error);
+            }
+          }
+        } catch (e) {}
+      }
 
       setAllEmployees(employeesList);
       setAllLeaves(leavesList);
@@ -227,6 +255,14 @@ function EmployeePortalContent() {
       });
 
       if (res.ok) {
+        const resData = await res.json();
+        if (resData && resData.record && typeof window !== 'undefined') {
+          try {
+            const existing = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+            const updatedList = Array.isArray(existing) ? [resData.record, ...existing] : [resData.record];
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedList));
+          } catch (e) {}
+        }
         setFormMsg(`Leave application (${computedDays} ${computedDays === 1 ? 'day' : 'days'}) submitted successfully! Check live status under Leave History tab.`);
         setFromDate('');
         setToDate('');

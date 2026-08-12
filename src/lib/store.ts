@@ -555,51 +555,13 @@ export function getDbData(): InitialState {
   return memoryDb;
 }
 
-const PERSISTENT_BLOB_URL = 'https://jsonblob.com/api/jsonBlob/019fd6e3-ad32-7d7e-9769-7c54c930c050';
-let lastCloudFetchTime = 0;
-
 export async function ensureCloudSync() {
-  const now = Date.now();
-  if (!memoryDb || now - lastCloudFetchTime > 15000) {
-    lastCloudFetchTime = now;
-    try {
-      const res = await fetch(PERSISTENT_BLOB_URL, { cache: 'no-store' });
-      if (res.ok) {
-        const cloudData = await res.json();
-        if (cloudData && Array.isArray(cloudData.leaveRecords) && cloudData.leaveRecords.length > 0) {
-          if (!memoryDb) {
-            memoryDb = getDbData();
-          }
-          if (cloudData.leaveRecords.length >= (memoryDb.leaveRecords?.length || 0)) {
-            memoryDb.leaveRecords = cloudData.leaveRecords;
-          }
-          if (Array.isArray(cloudData.employees) && cloudData.employees.length > 0) {
-            memoryDb.employees = cloudData.employees;
-          }
-          if (Array.isArray(cloudData.attendanceLogs) && cloudData.attendanceLogs.length > 0) {
-            memoryDb.attendanceLogs = cloudData.attendanceLogs;
-          }
-          (globalThis as any)._inMemoryDbData = memoryDb;
-        }
-      }
-    } catch (err) {
-      console.warn('Cloud read sync skipped:', err);
-    }
-  }
+  // Cloud sync overwrite disabled to prevent stale jsonblob data from wiping real-time leave submissions
+  return;
 }
 
 async function syncCloudStorageAsync(data: InitialState) {
-  try {
-    lastCloudFetchTime = Date.now() + 10000;
-    await fetch(PERSISTENT_BLOB_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    lastCloudFetchTime = Date.now();
-  } catch (e) {
-    console.warn('Cloud sync write skipped:', e);
-  }
+  return;
 }
 
 export function saveDbData(data: InitialState): void {
