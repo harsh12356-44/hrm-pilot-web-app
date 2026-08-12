@@ -12,9 +12,11 @@ import {
 } from './types';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
+const TMP_DB_FILE = path.join(os.tmpdir(), 'hrm_db.json');
 
 interface InitialState {
   employees: Employee[];
@@ -485,6 +487,22 @@ export function getDbData(): InitialState {
     return memoryDb;
   }
 
+  // 1. Try reading from writable /tmp directory if initialized (Vercel lambda fallback)
+  try {
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.employees) && data.employees.length > 0) {
+        memoryDb = data;
+        (globalThis as any)._inMemoryDbData = memoryDb;
+        return memoryDb;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read from tmp db file:', e);
+  }
+
+  // 2. Read from bundled data/db.json
   try {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -509,6 +527,12 @@ export function getDbData(): InitialState {
         departments: data.departments || [],
       };
       (globalThis as any)._inMemoryDbData = memoryDb;
+
+      // Seed /tmp/hrm_db.json for serverless lambdas
+      try {
+        fs.writeFileSync(TMP_DB_FILE, JSON.stringify(memoryDb, null, 2));
+      } catch (e) {}
+
       return memoryDb;
     }
   } catch (e) {
@@ -586,10 +610,15 @@ export function saveDbData(data: InitialState): void {
     ensureDataDir();
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
   } catch (err) {
-    console.warn('FileSystem write skipped (read-only environment), updated in-memory store.');
+    // Read-only filesystem on Vercel
   }
 
-  syncCloudStorageAsync(data);
+  // Writable /tmp filesystem fallback on Vercel lambdas
+  try {
+    fs.writeFileSync(TMP_DB_FILE, JSON.stringify(data, null, 2));
+  } catch (err) {
+    console.warn('Could not write to tmp db file:', err);
+  }
 }
 
 export function addNotification(employeeId: string, type: string, title: string, message: string) {
