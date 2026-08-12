@@ -567,7 +567,6 @@ async function syncCloudStorageAsync(data: InitialState) {
 export function saveDbData(data: InitialState): void {
   memoryDb = data;
   (globalThis as any)._inMemoryDbData = data;
-  lastCloudFetchTime = Date.now() + 10000;
   try {
     ensureDataDir();
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
