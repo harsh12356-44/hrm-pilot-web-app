@@ -376,18 +376,33 @@ export async function PUT(request: Request) {
       if (endDate) current.endDate = endDate;
       if (typeof daysCount === 'number') current.daysCount = daysCount;
 
-      if (status === 'REJECTED') {
-        current.status = 'REJECTED';
-        current.managerStatus = 'Rejected';
-        current.hrStatus = 'Rejected';
-      } else if (status === 'MORE_INFO_REQUIRED') {
-        current.status = 'MORE_INFO_REQUIRED';
-      } else if (status === 'APPROVED') {
-        current.status = 'APPROVED';
-        current.managerStatus = 'Approved';
-        current.hrStatus = 'Approved';
+      if (approverRole === 'MANAGER') {
+        if (status === 'REJECTED') {
+          current.status = 'REJECTED';
+          current.managerStatus = 'Rejected';
+          current.hrStatus = 'Rejected';
+        } else if (status === 'APPROVED') {
+          current.managerStatus = 'Approved';
+          if (current.hrStatus === 'Approved') {
+            current.status = 'APPROVED';
+          }
+        } else {
+          current.status = status;
+        }
       } else {
-        current.status = status;
+        if (status === 'REJECTED') {
+          current.status = 'REJECTED';
+          current.managerStatus = current.managerStatus || 'Rejected';
+          current.hrStatus = 'Rejected';
+        } else if (status === 'MORE_INFO_REQUIRED') {
+          current.status = 'MORE_INFO_REQUIRED';
+        } else if (status === 'APPROVED') {
+          current.status = 'APPROVED';
+          current.managerStatus = 'Approved';
+          current.hrStatus = 'Approved';
+        } else {
+          current.status = status;
+        }
       }
 
       logAudit(`Leave Request ${current.status}`, 'LeaveRecord', id, oldVal, JSON.stringify(current));
