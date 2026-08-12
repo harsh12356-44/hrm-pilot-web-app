@@ -70,6 +70,7 @@
 ### ⚡ Rule 5: Server-Authoritative Storage & Robust Leave Matching
 1. **Server Storage Integrity**: `data/db.json` and in-memory store (`memoryDb`) are the single source of truth. Unsafe client backup overwrites have been removed to prevent `localStorage` from wiping server data.
 3. **Strict Manager & Subordinate Isolation**: `isManager` and `teamSubordinates` in `employee/page.tsx` strictly evaluate direct reporting lines (`primaryManager` or `secondaryManager`). Non-manager employees (such as `Lochita g1`) evaluate to `isManager = false`, completely hiding the `Team Approvals` menu tab from their sidebar.
+4. **Live Vercel Auto-Deployment**: All changes pushed to `main` branch automatically deploy live to `https://hrm-pilot-web-app.vercel.app`. Every fix must be committed and pushed (`git push origin main`) to keep the production Vercel app in 100% sync.
 
 ---
 
