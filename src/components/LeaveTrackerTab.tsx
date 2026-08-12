@@ -22,7 +22,7 @@ import { LeaveSummary, Employee } from '@/lib/types';
 import * as XLSX from 'xlsx';
 
 export default function LeaveTrackerTab() {
-  const [quarter, setQuarter] = useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>('Q3');
+  const [quarter, setQuarterState] = useState<'Q1' | 'Q2' | 'Q3' | 'Q4'>('Q3');
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<'all' | 'used' | 'unused' | 'alert'>('all');
   const [summaries, setSummaries] = useState<LeaveSummary[]>([]);
@@ -32,6 +32,28 @@ export default function LeaveTrackerTab() {
   const [editModalSummary, setEditModalSummary] = useState<LeaveSummary | null>(null);
   const [detailModalEmp, setDetailModalEmp] = useState<{ id: string; name: string } | null>(null);
   const [importStatus, setImportStatus] = useState('');
+
+  // Sync quarter from URL parameter or localStorage on mount & navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const urlQ = params.get('quarter');
+      const saved = urlQ || localStorage.getItem('hrm_leave_quarter');
+      if (saved && ['Q1', 'Q2', 'Q3', 'Q4'].includes(saved)) {
+        setQuarterState(saved as 'Q1' | 'Q2' | 'Q3' | 'Q4');
+      }
+    }
+  }, []);
+
+  const setQuarter = (newQ: 'Q1' | 'Q2' | 'Q3' | 'Q4') => {
+    setQuarterState(newQ);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('hrm_leave_quarter', newQ);
+      const url = new URL(window.location.href);
+      url.searchParams.set('quarter', newQ);
+      window.history.replaceState({}, '', url.toString());
+    }
+  };
 
   const fetchLeaveData = useCallback(async () => {
     try {
@@ -250,6 +272,9 @@ export default function LeaveTrackerTab() {
     if (!confirm('Are you sure you want to clear all leave records for testing? This will reset all leave counts to 0.')) return;
 
     try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('hrm_leave_records_backup');
+      }
       setImportStatus('Clearing all leave records...');
       const res = await fetch('/api/leaves', {
         method: 'POST',
@@ -412,7 +437,13 @@ export default function LeaveTrackerTab() {
         ].map(q => (
           <button
             key={q.key}
-            onClick={() => setQuarter(q.key as 'Q1' | 'Q2' | 'Q3' | 'Q4')}
+            onClick={() => {
+              const qKey = q.key as 'Q1' | 'Q2' | 'Q3' | 'Q4';
+              setQuarter(qKey);
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('hrm_leave_quarter', qKey);
+              }
+            }}
             className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
               quarter === q.key
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30'

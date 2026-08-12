@@ -29,10 +29,10 @@ const YEARS = ['2024', '2025', '2026', '2027'];
 
 export default function AttendanceLogTab({ hideImport = false, targetEmployeeId }: AttendanceLogTabProps) {
   const [viewMode, setViewMode] = useState<'matrix' | 'daily'>('matrix');
-  const [selectedMonth, setSelectedMonth] = useState('7'); // July
+  const [selectedMonth, setSelectedMonth] = useState('8'); // August 2026
   const [selectedYear, setSelectedYear] = useState('2026');
   const [department, setDepartment] = useState('ALL');
-  const [date, setDate] = useState('2026-07-30');
+  const [date, setDate] = useState('2026-08-12');
 
   const [logs, setLogs] = useState<any[]>([]);
   const [employees, setEmployees] = useState<any[]>([]);
@@ -66,20 +66,23 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
       let empsList: any[] = data.employees || [];
       let logsList: any[] = data.logs || [];
 
-      // If in Employee Portal mode (hideImport=true or targetEmployeeId provided), strictly show 1 employee only
+      // If in Employee Portal mode (hideImport=true or targetEmployeeId provided), strictly show target employee only
       if (hideImport || targetEmployeeId) {
-        const targetId = (targetEmployeeId || 'emp-12').toLowerCase();
-        const found = empsList.find((e: any) =>
-          (e.id && e.id.toLowerCase() === targetId) ||
-          (e.employeeId && e.employeeId.toLowerCase() === targetId) ||
-          (e.name && e.name.toLowerCase().includes(targetId))
-        );
-
-        empsList = found ? [found] : (empsList.length > 0 ? [empsList[0]] : []);
+        const targetId = (targetEmployeeId || '').toLowerCase().trim();
+        if (targetId) {
+          const found = empsList.find((e: any) =>
+            (e.id && e.id.toLowerCase() === targetId) ||
+            (e.employeeId && e.employeeId.toLowerCase() === targetId) ||
+            (e.name && e.name.toLowerCase().includes(targetId))
+          );
+          if (found) {
+            empsList = [found];
+          }
+        }
         const activeEmp = empsList[0];
         if (activeEmp) {
           logsList = logsList.filter((l: any) =>
-            l.employeeId === activeEmp.id || l.employeeId === activeEmp.employeeId
+            l.employeeId === activeEmp.id || l.employeeId === activeEmp.employeeId || l.employeeId === activeEmp.name
           );
         }
       }
@@ -96,7 +99,7 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
 
   useEffect(() => {
     fetchAttendance();
-  }, [viewMode, selectedMonth, selectedYear, department, date]);
+  }, [viewMode, selectedMonth, selectedYear, department, date, targetEmployeeId]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

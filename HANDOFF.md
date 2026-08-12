@@ -67,10 +67,9 @@
 
 ---
 
-### ⚡ Rule 5: Persistent Cloud KV Write Lock (Race Condition Prevention)
-1. **Write Lock Mechanism**:
-   - To prevent Vercel serverless function race conditions, `saveDbData(data)` sets `lastCloudFetchTime = Date.now() + 10000`.
-   - Locks read fetches for 10 seconds so background cloud `PUT` operations to `jsonblob.com` complete without being overwritten by stale cloud reads.
+### ⚡ Rule 5: Server-Authoritative Storage & Robust Leave Matching
+1. **Server Storage Integrity**: `data/db.json` and in-memory store (`memoryDb`) are the single source of truth. Unsafe client backup overwrites have been removed to prevent `localStorage` from wiping server data.
+3. **Strict Manager & Subordinate Isolation**: `isManager` and `teamSubordinates` in `employee/page.tsx` strictly evaluate direct reporting lines (`primaryManager` or `secondaryManager`). Non-manager employees (such as `Lochita g1`) evaluate to `isManager = false`, completely hiding the `Team Approvals` menu tab from their sidebar.
 
 ---
 

@@ -4,7 +4,7 @@ import { Holiday } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
-export const OFFICIAL_2026_HOLIDAYS: Holiday[] = [
+const OFFICIAL_2026_HOLIDAYS: Holiday[] = [
   { id: 'h-2026-01', name: 'New Year', date: '2026-01-01', isOptional: false },
   { id: 'h-2026-02', name: 'Republic Day', date: '2026-01-26', isOptional: false },
   { id: 'h-2026-03', name: 'Holi', date: '2026-03-04', isOptional: false },

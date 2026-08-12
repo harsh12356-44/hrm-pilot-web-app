@@ -20,6 +20,20 @@ export interface Employee {
   plannedAllowance: number;
   sickAllowance: number;
   reportingManager?: string;
+  primaryManager?: string;
+  secondaryManager?: string;
+  manager1?: string;
+  managerName?: string;
+  employeeType?: string;
+}
+
+export interface Department {
+  id: string;
+  code: string;
+  name: string;
+  managerName?: string;
+  description?: string;
+  employeeCount?: number;
 }
 
 export interface LeaveRecord {
@@ -45,7 +59,7 @@ export interface AttendanceLog {
   id: string;
   employeeId: string;
   date: string;
-  attendanceCode: 'P' | 'HD' | 'A' | 'PL' | 'UL' | 'WO-I' | 'H' | 'MP' | 'SW';
+  attendanceCode: 'P' | 'HD' | 'A' | 'PL' | 'UL' | 'WO' | 'WO-I' | 'H' | 'MP' | 'SW';
   checkIn?: string;
   checkOut?: string;
   workedMinutes: number;

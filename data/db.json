@@ -348,7 +348,22 @@
       "dateOfJoining": "2024-07-10"
     }
   ],
-  "leaveRecords": [],
+  "leaveRecords": [
+    {
+      "id": "l-test-1",
+      "employeeId": "emp-1",
+      "leaveType": "Casual Leave",
+      "dayType": "full",
+      "startDate": "2026-08-15",
+      "endDate": "2026-08-15",
+      "daysCount": 1,
+      "quarter": "Q3",
+      "year": 2026,
+      "status": "APPROVED",
+      "note": "Test Leave Record",
+      "createdAt": "2026-08-12T07:07:33.003Z"
+    }
+  ],
   "attendanceLogs": [
     {
       "id": "att-emp-1-2026-07-01",

@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarters, addNotification, logAudit, ensureCloudSync } from '@/lib/store';
-import { LeaveRecord } from '@/lib/types';
+import { LeaveRecord, Employee } from '@/lib/types';
 
 export async function GET(request: Request) {
   await ensureCloudSync();
@@ -46,6 +46,19 @@ export async function POST(request: Request) {
       logAudit('Clear All Leaves', 'LeaveRecord', 'all', undefined, 'All leave records cleared for testing');
       const summaries = getQuarterlyLeaveSummaries(targetQ, 'ALL');
       return NextResponse.json({ success: true, message: 'All leave records have been cleared!', summaries });
+    }
+
+    // 0b. Sync Client Backup Action (restore from localStorage backup if server store is empty)
+    if (body.action === 'sync_client_backup' && Array.isArray(body.records) && body.records.length > 0) {
+      const db = getDbData();
+      if (!db.leaveRecords || db.leaveRecords.length === 0) {
+        db.leaveRecords = body.records;
+        saveDbData(db);
+        logAudit('Sync Client Backup Leaves', 'LeaveRecord', 'backup', undefined, `Restored ${body.records.length} records from client backup`);
+      }
+      const targetQ = body.quarter || 'Q3';
+      const summaries = getQuarterlyLeaveSummaries(targetQ, 'ALL');
+      return NextResponse.json({ success: true, message: 'Restored leave records from client backup', summaries, records: db.leaveRecords });
     }
 
     // 1. Manual Numerical Override Action (from EditTrackerModal)
@@ -136,6 +149,7 @@ export async function POST(request: Request) {
                 role: 'EMPLOYEE',
                 status: 'ACTIVE',
                 primaryManager: 'Ravina Khimani',
+                monthlySalary: 0,
                 dailyWorkingRequirementMinutes: 480,
                 weeklyOff: 'Sunday',
                 casualAllowance: 2,
@@ -175,7 +189,7 @@ export async function POST(request: Request) {
           // If still not found, dynamically create employee
           if (!emp) {
             const rawTitleName = String(empName).trim();
-            emp = {
+            const newCreatedEmp: Employee = {
               id: `emp-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
               employeeId: `EMP${String(db.employees.length + 1).padStart(3, '0')}`,
               name: rawTitleName,
@@ -186,6 +200,7 @@ export async function POST(request: Request) {
               role: 'EMPLOYEE',
               status: 'ACTIVE',
               primaryManager: 'Ravina Khimani',
+              monthlySalary: 0,
               dailyWorkingRequirementMinutes: 480,
               weeklyOff: 'Sunday',
               casualAllowance: 2,
@@ -193,13 +208,17 @@ export async function POST(request: Request) {
               sickAllowance: 4,
               dateOfJoining: '2024-01-01',
             };
-            db.employees.push(emp);
+            db.employees.push(newCreatedEmp);
+            emp = newCreatedEmp;
           }
 
           if (emp) {
+            const empId = emp.id;
+            const empCode = emp.employeeId;
+            const empNameStr = emp.name;
             // Remove previous imported/override records for this employee & quarter
             db.leaveRecords = db.leaveRecords.filter(
-              l => !((l.employeeId === emp.id || l.employeeId === emp.employeeId || l.employeeId === emp.name) && l.quarter === quarter && l.status === 'APPROVED')
+              l => !((l.employeeId === empId || l.employeeId === empCode || l.employeeId === empNameStr) && l.quarter === quarter && l.status === 'APPROVED')
             );
 
             if (casual > 0) {
@@ -274,11 +293,13 @@ export async function POST(request: Request) {
 
     // Determine quarter
     const month = start.getMonth() + 1;
-    let quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4' = 'Q3';
-    if (month >= 1 && month <= 3) quarter = 'Q1';
-    else if (month >= 4 && month <= 6) quarter = 'Q2';
-    else if (month >= 7 && month <= 9) quarter = 'Q3';
-    else if (month >= 10 && month <= 12) quarter = 'Q4';
+    let quarter: 'Q1' | 'Q2' | 'Q3' | 'Q4' = body.quarter || 'Q3';
+    if (!body.quarter) {
+      if (month >= 1 && month <= 3) quarter = 'Q1';
+      else if (month >= 4 && month <= 6) quarter = 'Q2';
+      else if (month >= 7 && month <= 9) quarter = 'Q3';
+      else if (month >= 10 && month <= 12) quarter = 'Q4';
+    }
 
     const isHrSubmission = body.isHrSubmission || body.status === 'APPROVED' || body.submittedBy === 'HR';
     const managerStatus = isHrSubmission ? 'Approved' : 'Pending';

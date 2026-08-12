@@ -537,15 +537,18 @@ let lastCloudFetchTime = 0;
 export async function ensureCloudSync() {
   const now = Date.now();
   if (!memoryDb || now - lastCloudFetchTime > 15000) {
+    lastCloudFetchTime = now;
     try {
       const res = await fetch(PERSISTENT_BLOB_URL, { cache: 'no-store' });
       if (res.ok) {
         const cloudData = await res.json();
-        if (cloudData && Array.isArray(cloudData.leaveRecords)) {
+        if (cloudData && Array.isArray(cloudData.leaveRecords) && cloudData.leaveRecords.length > 0) {
           if (!memoryDb) {
             memoryDb = getDbData();
           }
-          memoryDb.leaveRecords = cloudData.leaveRecords;
+          if (cloudData.leaveRecords.length >= (memoryDb.leaveRecords?.length || 0)) {
+            memoryDb.leaveRecords = cloudData.leaveRecords;
+          }
           if (Array.isArray(cloudData.employees) && cloudData.employees.length > 0) {
             memoryDb.employees = cloudData.employees;
           }
@@ -553,7 +556,6 @@ export async function ensureCloudSync() {
             memoryDb.attendanceLogs = cloudData.attendanceLogs;
           }
           (globalThis as any)._inMemoryDbData = memoryDb;
-          lastCloudFetchTime = now;
         }
       }
     } catch (err) {
@@ -623,6 +625,20 @@ export function logAudit(action: string, objectType: string, objectId: string, o
   saveDbData(db);
 }
 
+function getQuarterFromDateStr(dateStr?: string): string {
+  if (!dateStr) return 'Q3';
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return 'Q3';
+    const m = d.getMonth() + 1;
+    if (m >= 1 && m <= 3) return 'Q1';
+    if (m >= 4 && m <= 6) return 'Q2';
+    if (m >= 7 && m <= 9) return 'Q3';
+    if (m >= 10 && m <= 12) return 'Q4';
+  } catch (e) {}
+  return 'Q3';
+}
+
 export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFilter: string = 'ALL'): LeaveSummary[] {
   const db = getDbData();
   let employees = db.employees;
@@ -632,9 +648,19 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
   }
 
   return employees.map(emp => {
-    const empLeaves = db.leaveRecords.filter(
-      l => (l.employeeId === emp.id || l.employeeId === emp.employeeId) && l.quarter === quarter && l.status === 'APPROVED'
-    );
+    const empLeaves = db.leaveRecords.filter(l => {
+      const matchesEmp =
+        l.employeeId === emp.id ||
+        l.employeeId === emp.employeeId ||
+        (l.employeeId && l.employeeId.toLowerCase().trim() === emp.name.toLowerCase().trim()) ||
+        (l.employeeId && emp.name.toLowerCase().includes(l.employeeId.toLowerCase().trim()));
+
+      const recQuarter = l.quarter || getQuarterFromDateStr(l.startDate);
+      const matchesQuarter = recQuarter === quarter;
+      const matchesStatus = l.status === 'APPROVED' || l.status === 'PENDING' || !l.status;
+
+      return matchesEmp && matchesQuarter && matchesStatus;
+    });
 
     const casualUsed = empLeaves
       .filter(l => l.leaveType === 'Casual Leave')
@@ -717,9 +743,19 @@ export function getEmployeeAllQuarters(employeeId: string) {
   const result: Record<string, { label: string; casual: number; planned: number; total: number; remaining: number; extra: number; monthText: string }> = {};
 
   quarters.forEach(q => {
-    const qLeaves = db.leaveRecords.filter(
-      l => (l.employeeId === emp.id || l.employeeId === emp.employeeId || l.employeeId === emp.name) && l.quarter === q && l.status === 'APPROVED'
-    );
+    const qLeaves = db.leaveRecords.filter(l => {
+      const matchesEmp =
+        l.employeeId === emp.id ||
+        l.employeeId === emp.employeeId ||
+        (l.employeeId && l.employeeId.toLowerCase().trim() === emp.name.toLowerCase().trim()) ||
+        (l.employeeId && emp.name.toLowerCase().includes(l.employeeId.toLowerCase().trim()));
+
+      const recQuarter = l.quarter || getQuarterFromDateStr(l.startDate);
+      const matchesQuarter = recQuarter === q;
+      const matchesStatus = l.status === 'APPROVED' || l.status === 'PENDING' || !l.status;
+
+      return matchesEmp && matchesQuarter && matchesStatus;
+    });
     const casual = qLeaves
       .filter(l => l.leaveType === 'Casual Leave')
       .reduce((sum, l) => sum + (l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : l.daysCount), 0);

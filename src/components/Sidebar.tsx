@@ -40,6 +40,8 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
 
   const [activeRole, setActiveRole] = useState<string>('ADMIN');
 
+  const [isManager, setIsManager] = useState<boolean>(false);
+
   const getCookieRole = () => {
     if (typeof document === 'undefined') return 'ADMIN';
     const match = document.cookie.match(new RegExp('(^| )hrm_user_role=([^;]+)'));
@@ -50,6 +52,14 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
     const updateRole = () => {
       const currentRole = role || getCookieRole();
       setActiveRole(currentRole);
+
+      if (typeof window !== 'undefined') {
+        const isMgr =
+          localStorage.getItem('hrm_active_employee_is_manager') === 'true' ||
+          localStorage.getItem('hrm_active_employee_role') === 'MANAGER' ||
+          localStorage.getItem('hrm_active_employee_role') === 'ADMIN';
+        setIsManager(isMgr);
+      }
     };
 
     updateRole();
@@ -105,7 +115,7 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
     },
   ];
 
-  // 2. Employee Portal Menu Options (Matching User Screenshot 1)
+  // 2. Employee Portal Menu Options
   const employeeSections = [
     {
       title: '',
@@ -114,7 +124,7 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
         { id: 'attendance', label: 'Attendance', icon: Clock, href: '/employee?tab=attendance' },
         { id: 'apply-leave', label: 'Apply Leave', icon: Plane, href: '/employee?tab=apply-leave' },
         { id: 'leave-history', label: 'Leave History', icon: FileText, href: '/employee?tab=leave-history' },
-        { id: 'team-approvals', label: 'Team Approvals', icon: ClipboardCheck, href: '/employee?tab=team-approvals' },
+        ...(isManager ? [{ id: 'team-approvals', label: 'Team Approvals', icon: ClipboardCheck, href: '/employee?tab=team-approvals' }] : []),
         { id: 'working-hours', label: 'Working Hours', icon: Clock, href: '/employee?tab=working-hours' },
         { id: 'holidays', label: 'Holidays List', icon: CalendarDays, href: '/employee?tab=holidays' },
         { id: 'notifications', label: 'Notifications', icon: Bell, href: '/employee?tab=notifications' },

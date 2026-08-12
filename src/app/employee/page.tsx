@@ -40,7 +40,9 @@ function EmployeePortalContent() {
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [attendance, setAttendance] = useState<AttendanceLog[]>([]);
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
+  const [allLeaves, setAllLeaves] = useState<LeaveRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusMsg, setStatusMsg] = useState('');
 
   // Punch Clock state
   const [punchedIn, setPunchedIn] = useState(false);
@@ -74,6 +76,7 @@ function EmployeePortalContent() {
       const leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
 
       setAllEmployees(employeesList);
+      setAllLeaves(leavesList);
 
       // Match selected employee by ID or employeeId
       const currentEmp = employeesList.find(
@@ -83,6 +86,22 @@ function EmployeePortalContent() {
       setEmployee(currentEmp || null);
 
       if (currentEmp) {
+        const isMgr = Boolean(
+          currentEmp.role === 'MANAGER' ||
+          currentEmp.role === 'ADMIN' ||
+          employeesList.some(e =>
+            (e.primaryManager && e.primaryManager.toLowerCase() === currentEmp.name.toLowerCase()) ||
+            (e.secondaryManager && e.secondaryManager.toLowerCase() === currentEmp.name.toLowerCase())
+          )
+        );
+
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('hrm_active_employee_id', currentEmp.id);
+          localStorage.setItem('hrm_active_employee_role', currentEmp.role || 'EMPLOYEE');
+          localStorage.setItem('hrm_active_employee_is_manager', String(isMgr));
+          window.dispatchEvent(new CustomEvent('roleChange', { detail: { isManager: isMgr, role: currentEmp.role } }));
+        }
+
         const empLogs = logsList.filter(a => a.employeeId === currentEmp.id || a.employeeId === currentEmp.employeeId);
         setAttendance(empLogs);
 
@@ -213,7 +232,7 @@ function EmployeePortalContent() {
     }
   };
 
-  // Compute Employee Own Statistics
+  // Compute Employee Own & Team Statistics
   const empName = employee ? employee.name.split(' ')[0] : 'Sonu';
   const empId = employee?.employeeId || 'SG012';
   const managerName = employee?.primaryManager || 'Naman Bangia';
@@ -221,6 +240,67 @@ function EmployeePortalContent() {
   const safeAttendance = Array.isArray(attendance) ? attendance : [];
   const safeLeaves = Array.isArray(leaves) ? leaves : [];
   const safeAllEmployees = Array.isArray(allEmployees) ? allEmployees : [];
+
+  const isManager = Boolean(
+    employee && (
+      employee.role === 'MANAGER' ||
+      employee.role === 'ADMIN' ||
+      safeAllEmployees.some(e =>
+        (e.primaryManager && e.primaryManager.toLowerCase() === employee.name.toLowerCase()) ||
+        (e.secondaryManager && e.secondaryManager.toLowerCase() === employee.name.toLowerCase())
+      )
+    )
+  );
+
+  const teamSubordinates = safeAllEmployees.filter(
+    e => e.id !== employee?.id && (
+      (e.primaryManager && e.primaryManager.toLowerCase() === employee?.name.toLowerCase()) ||
+      (e.secondaryManager && e.secondaryManager.toLowerCase() === employee?.name.toLowerCase()) ||
+      employee?.role === 'ADMIN'
+    )
+  );
+
+  const teamSubordinateIds = teamSubordinates.map(e => e.id);
+  const teamSubordinateNames = teamSubordinates.map(e => e.name.toLowerCase());
+
+  const teamLeaves = (allLeaves || []).filter(l =>
+    teamSubordinateIds.includes(l.employeeId) ||
+    teamSubordinateNames.includes((l.employeeId || '').toLowerCase()) ||
+    teamSubordinates.some(e => e.employeeId === l.employeeId || e.name.toLowerCase() === (l.employeeId || '').toLowerCase())
+  );
+
+  const handleManagerReview = async (id: string, action: 'APPROVED' | 'REJECTED') => {
+    try {
+      setLoading(true);
+      setStatusMsg('Updating manager decision...');
+      const res = await fetch('/api/leaves', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          status: action,
+          approverRole: 'MANAGER',
+        }),
+      });
+
+      if (res.ok) {
+        setStatusMsg(`Manager decision recorded: ${action}!`);
+        fetchEmployeeDashboardData();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('leaveDataUpdated'));
+        }
+      } else {
+        const data = await res.json();
+        setStatusMsg(`Failed: ${data.error || 'Could not update'}`);
+      }
+      setTimeout(() => setStatusMsg(''), 4000);
+    } catch (err) {
+      console.error(err);
+      setStatusMsg('Failed to process manager action.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Stats
   const presentDaysCount = safeAttendance.filter(a => a.attendanceCode === 'P').length || 0;
@@ -629,8 +709,8 @@ function EmployeePortalContent() {
             </div>
           )}
 
-          {/* TAB 3: LEAVE HISTORY & LIVE STATUS (1:1 Layout Requested) */}
-          {(activeTab === 'leave-history' || activeTab === 'team-approvals') && (
+          {/* TAB 3: LEAVE HISTORY & LIVE STATUS */}
+          {activeTab === 'leave-history' && (
             <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
                 <div>
@@ -733,10 +813,241 @@ function EmployeePortalContent() {
             </div>
           )}
 
+          {/* TAB 4: TEAM APPROVALS (Exclusive Manager Workspace) */}
+          {activeTab === 'team-approvals' && (
+            !isManager ? (
+              <div className="bg-slate-900 border border-amber-500/30 rounded-2xl p-8 text-center space-y-4 shadow-xl">
+                <AlertCircle className="w-12 h-12 text-amber-400 mx-auto" />
+                <h2 className="text-xl font-bold text-white font-heading">Access Restricted to Managers</h2>
+                <p className="text-sm text-slate-300 max-w-md mx-auto">
+                  The <strong className="text-purple-300">Team Approvals</strong> desk is strictly reserved for Managers, Team Leads, and Admins. Your active profile (<span className="text-blue-300 font-bold">{employee?.name}</span>) is assigned as a non-manager Employee.
+                </p>
+                <div className="pt-2">
+                  <span className="text-xs text-slate-400">To test Manager features, switch to a Manager profile in the top bar (e.g., Naman Bangia or Jigyasa Sen).</span>
+                </div>
+              </div>
+            ) : (
+              <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                  <div>
+                    <h2 className="text-lg font-extrabold text-white font-heading flex items-center space-x-2">
+                      <ClipboardCheck className="w-5 h-5 text-indigo-400" />
+                      <span>Team Leave Approvals Desk</span>
+                    </h2>
+                    <p className="text-xs text-slate-400">
+                      Manager Approval Workspace for <strong className="text-purple-300">{employee?.name}</strong> • Team Member Leave Requests
+                    </p>
+                  </div>
+                </div>
+
+                {statusMsg && (
+                  <div className="p-3 bg-indigo-950/60 border border-indigo-500/40 rounded-xl text-xs text-indigo-200 font-medium flex items-center justify-between">
+                    <span>{statusMsg}</span>
+                    <button onClick={() => setStatusMsg('')} className="text-indigo-400 font-bold ml-2">✕</button>
+                  </div>
+                )}
+
+                {/* Subordinate Summary Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="p-4 bg-slate-800/60 rounded-xl border border-slate-700/60">
+                    <p className="text-xs text-slate-400 uppercase font-bold">Managed Team Members</p>
+                    <p className="text-2xl font-black text-white font-heading mt-1">{teamSubordinates.length} Employees</p>
+                  </div>
+                  <div className="p-4 bg-slate-800/60 rounded-xl border border-amber-500/30">
+                    <p className="text-xs text-amber-400 uppercase font-bold">Pending Team Requests</p>
+                    <p className="text-2xl font-black text-amber-300 font-heading mt-1">
+                      {teamLeaves.filter(l => l.managerStatus === 'Pending' || (!l.managerStatus && l.status === 'PENDING')).length} Pending
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-800/60 rounded-xl border border-emerald-500/30">
+                    <p className="text-xs text-emerald-400 uppercase font-bold">Reviewed & Approved</p>
+                    <p className="text-2xl font-black text-emerald-300 font-heading mt-1">
+                      {teamLeaves.filter(l => l.managerStatus === 'Approved' || l.status === 'APPROVED').length} Approved
+                    </p>
+                  </div>
+                </div>
+
+                {/* Team Leave Applications Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr className="bg-slate-950/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                        <th className="py-3.5 px-4">Request ID</th>
+                        <th className="py-3.5 px-4">Team Member</th>
+                        <th className="py-3.5 px-4">Leave Details</th>
+                        <th className="py-3.5 px-4">Reason / Details</th>
+                        <th className="py-3.5 px-4 text-center">Your Manager Status</th>
+                        <th className="py-3.5 px-4 text-center">HR / Admin Status</th>
+                        <th className="py-3.5 px-4 text-right">Manager Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-800/60">
+                      {teamLeaves.length > 0 ? (
+                        teamLeaves.map((l, index) => {
+                          const subEmp = safeAllEmployees.find(e => e.id === l.employeeId || e.employeeId === l.employeeId || e.name.toLowerCase() === (l.employeeId || '').toLowerCase());
+                          const reqId = l.id && typeof l.id === 'string' ? `#${l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}` : `#${index + 1}`;
+                          const isReviewed = l.managerStatus === 'Approved' || l.managerStatus === 'Rejected' || l.status === 'APPROVED' || l.status === 'REJECTED';
+
+                          return (
+                            <tr key={l.id || index} className="hover:bg-slate-850 transition">
+                              <td className="py-3.5 px-4 font-mono font-bold text-slate-300">
+                                {reqId}
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <strong className="text-white block font-bold">{subEmp?.name || l.employeeId}</strong>
+                                <span className="text-[10px] text-slate-400">{subEmp?.department || 'Team Subordinate'}</span>
+                              </td>
+                              <td className="py-3.5 px-4">
+                                <span className="font-bold text-purple-300 block">{l.leaveType}</span>
+                                <span className="font-mono text-slate-300 text-[11px]">{l.startDate} ({l.daysCount} day{l.daysCount !== 1 ? 's' : ''})</span>
+                              </td>
+                              <td className="py-3.5 px-4 text-slate-300 max-w-xs truncate">
+                                {l.note || 'Leave application'}
+                              </td>
+                              <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                                {l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
+                              </td>
+                              <td className="py-3.5 px-4 text-center font-semibold text-slate-300">
+                                {l.hrStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending HR Action')}
+                              </td>
+                              <td className="py-3.5 px-4 text-right">
+                                {!isReviewed ? (
+                                  <div className="flex items-center justify-end space-x-2">
+                                    <button
+                                      onClick={() => handleManagerReview(l.id, 'APPROVED')}
+                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg transition shadow flex items-center space-x-1"
+                                    >
+                                      <CheckCircle2 className="w-3.5 h-3.5" />
+                                      <span>Approve (Manager)</span>
+                                    </button>
+                                    <button
+                                      onClick={() => handleManagerReview(l.id, 'REJECTED')}
+                                      className="px-2.5 py-1.5 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-xs font-bold rounded-lg transition flex items-center space-x-1"
+                                    >
+                                      <XCircle className="w-3.5 h-3.5" />
+                                      <span>Reject</span>
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs font-mono text-slate-500">Reviewed ({l.managerStatus || l.status})</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="py-8 text-center text-slate-500">
+                            No leave applications submitted by your team members.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )
+          )}
+
           {/* OTHER TABS */}
-          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-12'} />}
-          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id || 'emp-12'} />}
+          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id} />}
+          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id} />}
           {activeTab === 'holidays' && <HolidaysTab />}
+
+          {/* TAB: MY PROFILE */}
+          {activeTab === 'profile' && employee && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                <div className="flex items-center space-x-4">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-black font-heading shadow-lg shadow-blue-500/20">
+                    {employee.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-extrabold text-white font-heading">{employee.name}</h2>
+                    <p className="text-xs text-slate-400 font-mono">ID: {employee.employeeId || employee.id} • {employee.designation || 'Team Member'}</p>
+                  </div>
+                </div>
+                <span className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-xs font-bold uppercase tracking-wider">
+                  {employee.status || 'ACTIVE'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 space-y-2">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Employment Details</p>
+                  <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                    <span className="text-slate-400">Department:</span>
+                    <span className="font-bold text-white">{employee.department || 'General'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                    <span className="text-slate-400">Designation:</span>
+                    <span className="font-bold text-white">{employee.designation || 'Staff'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                    <span className="text-slate-400">Employee Type:</span>
+                    <span className="font-bold text-white">{employee.employeeType || 'Full Time'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-slate-400">Date of Joining:</span>
+                    <span className="font-bold font-mono text-purple-300">{employee.dateOfJoining || '2024-04-10'}</span>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700/50 space-y-2">
+                  <p className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Reporting & Contact</p>
+                  <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                    <span className="text-slate-400">Primary Manager:</span>
+                    <span className="font-bold text-indigo-300">{employee.primaryManager || 'Naman Bangia'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                    <span className="text-slate-400">Secondary Manager:</span>
+                    <span className="font-bold text-indigo-300">{employee.secondaryManager || 'Ravina Khimani'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5 border-b border-slate-700/40">
+                    <span className="text-slate-400">Work Email:</span>
+                    <span className="font-bold font-mono text-white">{employee.email || 'employee@hrmpilot.com'}</span>
+                  </div>
+                  <div className="flex justify-between py-1.5">
+                    <span className="text-slate-400">Phone Number:</span>
+                    <span className="font-bold font-mono text-white">{employee.phone || '+91 98765 00000'}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: NOTIFICATIONS */}
+          {activeTab === 'notifications' && (
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+              <div className="border-b border-slate-800 pb-3">
+                <h2 className="text-lg font-extrabold text-white font-heading flex items-center space-x-2">
+                  <Bell className="w-5 h-5 text-indigo-400" />
+                  <span>Notifications & System Alerts</span>
+                </h2>
+                <p className="text-xs text-slate-400">Live alerts for leave approvals, attendance logs, and system announcements.</p>
+              </div>
+
+              <div className="space-y-3">
+                <div className="p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl flex items-start space-x-3">
+                  <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-white">Leave Status Update</p>
+                    <p className="text-xs text-slate-300 mt-0.5">Your submitted leave application status is updated live on the portal.</p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-1">Today at 09:30 AM</p>
+                  </div>
+                </div>
+
+                <div className="p-4 bg-slate-800/60 border border-slate-700/60 rounded-xl flex items-start space-x-3">
+                  <Calendar className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-xs font-bold text-white">Official Holiday Notice</p>
+                    <p className="text-xs text-slate-300 mt-0.5">Upcoming official holiday for Independence Day on 15 Aug 2026.</p>
+                    <p className="text-[10px] text-slate-500 font-mono mt-1">Yesterday</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </div>
