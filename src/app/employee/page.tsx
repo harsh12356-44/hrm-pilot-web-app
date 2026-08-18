@@ -216,7 +216,7 @@ function EmployeePortalContent() {
       const res = await fetch('/api/attendance/punch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ employeeId: employee?.id || 'emp-12', action }),
+        body: JSON.stringify({ employeeId: employee?.id || selectedEmployeeId || 'emp-2', action }),
       });
       await res.json();
 
@@ -259,7 +259,7 @@ function EmployeePortalContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employeeId: employee?.id || 'emp-12',
+          employeeId: employee?.id || selectedEmployeeId || 'emp-2',
           leaveType,
           dayType: leaveDuration.includes('Half Day') ? 'half' : 'full',
           startDate: fromDate,
