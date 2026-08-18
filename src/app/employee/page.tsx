@@ -58,9 +58,9 @@ function EmployeePortalContent() {
   const [reason, setReason] = useState('');
   const [formMsg, setFormMsg] = useState('');
 
-  const fetchEmployeeDashboardData = useCallback(async () => {
+  const fetchEmployeeDashboardData = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [empRes, attRes, leaveRes] = await Promise.all([
         fetch(`/api/employees?t=${Date.now()}`, { cache: 'no-store' }),
         fetch(`/api/attendance?t=${Date.now()}`, { cache: 'no-store' }),
@@ -85,20 +85,10 @@ function EmployeePortalContent() {
                 if (srvIndex === -1) {
                   leavesList.unshift(l);
                 } else {
-                  // Keep the latest server status if available
                   leavesList[srvIndex] = { ...l, ...leavesList[srvIndex] };
                 }
               }
             });
-
-            // Trigger server restore if server database missing records
-            if (leaveData.records && leavesList.length > leaveData.records.length) {
-              fetch('/api/leaves', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'sync_client_backup', records: leavesList }),
-              }).catch(console.error);
-            }
           }
         } catch (e) {}
       }
@@ -127,7 +117,7 @@ function EmployeePortalContent() {
       // Match selected employee by ID, employeeId, or name
       const currentEmp = employeesList.find(
         e => e.id === activeTargetId || e.employeeId === activeTargetId || e.name.toLowerCase().includes(activeTargetId.toLowerCase())
-      ) || employeesList.find(e => e.name.toLowerCase().includes('sonu')) || employeesList.find(e => e.employeeId === 'SG012') || employeesList.find(e => e.role === 'EMPLOYEE') || employeesList[0];
+      ) || employeesList[0];
 
       setEmployee(currentEmp || null);
 
@@ -142,10 +132,14 @@ function EmployeePortalContent() {
         );
 
         if (typeof window !== 'undefined') {
+          const prevId = localStorage.getItem('hrm_active_employee_id');
           localStorage.setItem('hrm_active_employee_id', currentEmp.id);
           localStorage.setItem('hrm_active_employee_role', currentEmp.role || 'EMPLOYEE');
           localStorage.setItem('hrm_active_employee_is_manager', String(isMgr));
-          window.dispatchEvent(new CustomEvent('roleChange', { detail: { isManager: isMgr, role: currentEmp.role } }));
+          
+          if (prevId !== currentEmp.id) {
+            window.dispatchEvent(new CustomEvent('roleChange', { detail: { isManager: isMgr, role: currentEmp.role } }));
+          }
         }
 
         const empLogs = logsList.filter(a => a.employeeId === currentEmp.id || a.employeeId === currentEmp.employeeId);
@@ -171,20 +165,20 @@ function EmployeePortalContent() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, [selectedEmployeeId]);
 
   useEffect(() => {
-    fetchEmployeeDashboardData();
+    fetchEmployeeDashboardData(false);
 
-    const handleUpdate = () => fetchEmployeeDashboardData();
+    const handleUpdate = () => fetchEmployeeDashboardData(true);
     window.addEventListener('leaveDataUpdated', handleUpdate);
 
-    // Real-time live status auto-polling interval (every 3 seconds)
+    // Silent background poll without triggering loading spinner or event loops
     const pollInterval = setInterval(() => {
-      fetchEmployeeDashboardData();
-    }, 3000);
+      fetchEmployeeDashboardData(true);
+    }, 4000);
 
     return () => {
       window.removeEventListener('leaveDataUpdated', handleUpdate);

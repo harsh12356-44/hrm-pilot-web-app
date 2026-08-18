@@ -71,11 +71,19 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
           : currentEmp.name.slice(0, 2).toUpperCase();
 
-        setActiveUser({
-          name: currentEmp.name,
-          designation: currentEmp.designation || (currentEmp.role === 'ADMIN' ? 'HR / COO' : currentEmp.role === 'MANAGER' ? 'Senior Development Manager' : 'Employee'),
-          initials,
-          employeeId: currentEmp.employeeId || currentEmp.id,
+        const newEmpId = currentEmp.employeeId || currentEmp.id;
+        const newDesignation = currentEmp.designation || (currentEmp.role === 'ADMIN' ? 'HR / COO' : currentEmp.role === 'MANAGER' ? 'Senior Development Manager' : 'Employee');
+
+        setActiveUser(prev => {
+          if (prev.name === currentEmp.name && prev.employeeId === newEmpId && prev.designation === newDesignation) {
+            return prev;
+          }
+          return {
+            name: currentEmp.name,
+            designation: newDesignation,
+            initials,
+            employeeId: newEmpId,
+          };
         });
       }
     } catch (err) {

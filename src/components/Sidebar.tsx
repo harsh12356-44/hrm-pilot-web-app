@@ -66,11 +66,8 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
           const data = await res.json();
           const employeesList: any[] = Array.isArray(data) ? data : data.employees || [];
           const emp = employeesList.find((e: any) => e.id === storedId || e.employeeId === storedId);
-          if (emp) {
-            setEmpCodeDisplay(emp.employeeId || emp.id);
-          } else if (storedId) {
-            setEmpCodeDisplay(storedId);
-          }
+          const newCode = emp ? (emp.employeeId || emp.id) : (storedId || 'NB002');
+          setEmpCodeDisplay(prev => prev === newCode ? prev : newCode);
         } catch (e) {}
       }
     };
