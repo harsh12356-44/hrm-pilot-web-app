@@ -106,16 +106,22 @@ function EmployeePortalContent() {
       setAllEmployees(employeesList);
       setAllLeaves(leavesList);
 
-      // Resolve target active employee ID (defaulting to Sonu Goswami, clearing stale emp-8)
-      let activeTargetId = 'emp-12';
+      // Resolve target active employee ID (respecting storedRole and storedId)
+      let activeTargetId = 'emp-2';
       if (typeof window !== 'undefined') {
         const storedId = localStorage.getItem('hrm_active_employee_id');
-        if (storedId && storedId !== 'emp-8' && employeesList.some(e => e.id === storedId || e.employeeId === storedId)) {
+        const storedRole = localStorage.getItem('hrm_active_employee_role');
+
+        if (storedId && employeesList.some(e => e.id === storedId || e.employeeId === storedId)) {
           activeTargetId = storedId;
+        } else if (storedRole === 'ADMIN') {
+          activeTargetId = 'emp-1';
+        } else if (storedRole === 'MANAGER') {
+          activeTargetId = 'emp-2';
         } else {
           activeTargetId = 'emp-12';
-          localStorage.setItem('hrm_active_employee_id', 'emp-12');
         }
+        localStorage.setItem('hrm_active_employee_id', activeTargetId);
       }
 
       // Match selected employee by ID, employeeId, or name

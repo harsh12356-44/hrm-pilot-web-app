@@ -43,6 +43,7 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   const loadActiveUser = async () => {
     try {
       const storedId = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : null;
+      const storedRole = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_role') : null;
       const res = await fetch(`/api/employees?t=${Date.now()}`);
       const data = await res.json();
       const employeesList: any[] = Array.isArray(data) ? data : data.employees || [];
@@ -54,10 +55,11 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
       }
 
       if (!currentEmp) {
-        if (currentRole === 'ADMIN') {
+        const effectiveRole = storedRole || currentRole;
+        if (effectiveRole === 'ADMIN') {
           currentEmp = employeesList.find((e: any) => e.role === 'ADMIN') || employeesList[0];
-        } else if (currentRole === 'MANAGER') {
-          currentEmp = employeesList.find((e: any) => e.role === 'MANAGER') || employeesList[1];
+        } else if (effectiveRole === 'MANAGER') {
+          currentEmp = employeesList.find((e: any) => e.role === 'MANAGER' || e.name.toLowerCase().includes('naman')) || employeesList[1];
         } else {
           currentEmp = employeesList.find((e: any) => e.employeeId === 'SG012' || e.name.toLowerCase().includes('sonu')) || employeesList[0];
         }
