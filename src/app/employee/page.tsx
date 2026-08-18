@@ -341,7 +341,7 @@ function EmployeePortalContent() {
     try {
       setLoading(true);
       setStatusMsg('Updating manager decision...');
-      const targetRecord = leaves.find(l => l.id === id) || allLeaves.find(l => l.id === id);
+      const targetRecord = (allLeaves || []).find(l => l.id === id) || (teamLeaves || []).find(l => l.id === id) || (leaves || []).find(l => l.id === id);
       const res = await fetch('/api/leaves', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -354,7 +354,7 @@ function EmployeePortalContent() {
       });
 
       if (res.ok) {
-        setStatusMsg(`Manager decision recorded: ${action}!`);
+        setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
         fetchEmployeeDashboardData();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('leaveDataUpdated'));
@@ -1015,7 +1015,19 @@ function EmployeePortalContent() {
                                     </button>
                                   </div>
                                 ) : (
-                                  <span className="text-xs font-mono text-slate-500">Reviewed ({l.managerStatus || l.status})</span>
+                                  <div className="flex items-center justify-end space-x-2">
+                                    <span className={`text-xs font-semibold px-2.5 py-1 rounded-full border ${
+                                      l.managerStatus === 'Approved' || l.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-red-500/10 text-red-300 border-red-500/30'
+                                    }`}>
+                                      {l.managerStatus === 'Approved' || l.status === 'APPROVED' ? '✓ Manager Approved' : '✗ Manager Rejected'}
+                                    </span>
+                                    <button
+                                      onClick={() => handleManagerReview(l.id, l.managerStatus === 'Approved' || l.status === 'APPROVED' ? 'REJECTED' : 'APPROVED')}
+                                      className="text-[11px] text-blue-400 hover:text-blue-300 font-bold underline ml-1"
+                                    >
+                                      Change
+                                    </button>
+                                  </div>
                                 )}
                               </td>
                             </tr>

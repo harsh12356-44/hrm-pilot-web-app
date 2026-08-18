@@ -39,7 +39,7 @@ export default function ManagerPortalPage() {
   const handleManagerAction = async (id: string, action: 'APPROVED' | 'REJECTED') => {
     try {
       setStatusMsg('Updating manager review decision...');
-      const targetRecord = leaves.find(l => l.id === id);
+      const targetRecord = (leaves || []).find(l => l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, ''))));
       const res = await fetch('/api/leaves', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -52,7 +52,7 @@ export default function ManagerPortalPage() {
       });
 
       if (res.ok) {
-        setStatusMsg(`Manager decision recorded: ${action}!`);
+        setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
         fetchManagerData();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('leaveDataUpdated'));
@@ -198,7 +198,7 @@ export default function ManagerPortalPage() {
                             {getFinalBadge(l)}
                           </td>
                           <td className="py-3 px-4 text-right">
-                            {l.managerStatus !== 'Approved' && l.status !== 'APPROVED' && l.status !== 'REJECTED' ? (
+                            {l.managerStatus !== 'Approved' && l.managerStatus !== 'Rejected' && l.status !== 'APPROVED' && l.status !== 'REJECTED' ? (
                               <div className="flex items-center justify-end space-x-1.5">
                                 <button
                                   onClick={() => handleManagerAction(l.id, 'APPROVED')}
@@ -216,7 +216,19 @@ export default function ManagerPortalPage() {
                                 </button>
                               </div>
                             ) : (
-                              <span className="text-[11px] text-slate-500 font-mono">Reviewed</span>
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${
+                                  l.managerStatus === 'Approved' || l.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-red-500/10 text-red-300 border-red-500/30'
+                                }`}>
+                                  {l.managerStatus === 'Approved' || l.status === 'APPROVED' ? '✓ Manager Approved' : '✗ Manager Rejected'}
+                                </span>
+                                <button
+                                  onClick={() => handleManagerAction(l.id, l.managerStatus === 'Approved' || l.status === 'APPROVED' ? 'REJECTED' : 'APPROVED')}
+                                  className="text-[10px] text-blue-400 hover:text-blue-300 font-bold underline ml-1"
+                                >
+                                  Change
+                                </button>
+                              </div>
                             )}
                           </td>
                         </tr>
