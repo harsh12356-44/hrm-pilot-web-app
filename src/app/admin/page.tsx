@@ -9,6 +9,8 @@ import {
   Calendar,
   Clock,
   CheckCircle2,
+  XCircle,
+  ClipboardCheck,
   AlertTriangle,
   Upload,
   UserCheck2,
@@ -49,6 +51,53 @@ export default function AdminDashboardPage() {
       console.error('Error fetching dashboard data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleHRReview = async (id: string, action: 'APPROVED' | 'REJECTED') => {
+    const newHrStatus = action === 'APPROVED' ? 'Approved' : 'Rejected';
+    const newStatus = action === 'REJECTED' ? 'REJECTED' : 'APPROVED';
+
+    setLeaves((prev) =>
+      prev.map((l) => {
+        if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+          return {
+            ...l,
+            hrStatus: newHrStatus,
+            managerStatus: l.managerStatus === 'Approved' ? 'Approved' : newHrStatus,
+            status: newStatus,
+          };
+        }
+        return l;
+      })
+    );
+
+    try {
+      const targetRecord = leaves.find(
+        (l) => l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))
+      );
+
+      const res = await fetch('/api/leaves', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id,
+          record: targetRecord,
+          status: action,
+          approverRole: 'HR Final Approver',
+        }),
+      });
+
+      if (res.ok) {
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('leaveDataUpdated'));
+        }
+      } else {
+        loadDashboardData();
+      }
+    } catch (err) {
+      console.error(err);
+      loadDashboardData();
     }
   };
 
@@ -182,10 +231,7 @@ export default function AdminDashboardPage() {
                   <Calendar className="w-4 h-4" />
                   <span>Open Leave Tracker</span>
                 </Link>
-                <Link
-                  href="/admin/payroll"
-                  className="px-4 py-2 rounded-xl bg-purple-600/80 hover:bg-purple-600 border border-purple-400/40 text-white font-bold text-xs transition flex items-center space-x-2"
-                >
+                <Link href="/admin/payroll" className="px-4 py-2 rounded-xl bg-purple-600/80 hover:bg-purple-600 border border-purple-400/40 text-white font-bold text-xs transition flex items-center space-x-2">
                   <DollarSign className="w-4 h-4" />
                   <span>Payroll & Deductions</span>
                 </Link>
@@ -193,112 +239,87 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* Metric Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-md space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Total Employees</span>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider">Total Active Employees</span>
                 <Users className="w-5 h-5 text-blue-400" />
               </div>
-              <p className="text-3xl font-extrabold text-white font-heading">{loading ? '...' : totalEmployees}</p>
-              <p className="text-[11px] text-slate-400">Active roster members</p>
+              <p className="text-3xl font-black text-white font-heading">{totalEmployees}</p>
+              <p className="text-[11px] text-slate-400">Full roster headcount</p>
             </div>
-
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-md space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">Present Today</span>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider">Present Today</span>
                 <CheckCircle2 className="w-5 h-5 text-emerald-400" />
               </div>
-              <p className="text-3xl font-extrabold text-emerald-400 font-heading">{loading ? '...' : presentToday}</p>
-              <p className="text-[11px] text-slate-400">Biometric verified</p>
+              <p className="text-3xl font-black text-emerald-400 font-heading">{presentToday}</p>
+              <p className="text-[11px] text-emerald-300 font-medium">
+                {totalEmployees > 0 ? Math.round((presentToday / totalEmployees) * 100) : 0}% daily attendance rate
+              </p>
             </div>
-
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-md space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">Half Day (HD)</span>
-                <Clock className="w-5 h-5 text-amber-400" />
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider">Absent / On Leave</span>
+                <AlertTriangle className="w-5 h-5 text-amber-400" />
               </div>
-              <p className="text-3xl font-extrabold text-amber-400 font-heading">{loading ? '...' : halfDaysToday}</p>
-              <p className="text-[11px] text-slate-400">Under 480 mins shift</p>
+              <p className="text-3xl font-black text-amber-400 font-heading">{absentToday}</p>
+              <p className="text-[11px] text-slate-400">{halfDaysToday} half-day logs recorded</p>
             </div>
-
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-md space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-red-400">Absent Today</span>
-                <AlertTriangle className="w-5 h-5 text-red-400" />
-              </div>
-              <p className="text-3xl font-extrabold text-red-400 font-heading">{loading ? '...' : absentToday}</p>
-              <p className="text-[11px] text-slate-400">Unexcused / Leave</p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-slate-900 border border-slate-800 shadow-md space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold uppercase tracking-wider text-purple-400">Pending Requests</span>
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-2">
+              <div className="flex items-center justify-between text-slate-400">
+                <span className="text-xs font-bold uppercase tracking-wider">Pending Leave Reviews</span>
                 <FileCheck className="w-5 h-5 text-purple-400" />
               </div>
-              <p className="text-3xl font-extrabold text-purple-400 font-heading">{loading ? '...' : pendingLeavesCount}</p>
-              <p className="text-[11px] text-slate-400">Awaiting HR approval</p>
+              <p className="text-3xl font-black text-purple-400 font-heading">{pendingLeavesCount}</p>
+              <Link href="/admin/team-approvals" className="text-[11px] text-purple-300 font-bold hover:underline">
+                Review on HR Team Approvals Desk →
+              </Link>
             </div>
           </div>
 
-          {/* COMPONENT 1: Attendance Count Trend (Last 15 Days) (Screenshot 1 - Interconnected Live Data) */}
-          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
                 <h2 className="text-lg font-extrabold text-white font-heading flex items-center space-x-2">
                   <BarChart2 className="w-5 h-5 text-blue-400" />
-                  <span>Attendance Count Trend (Last 15 Days)</span>
+                  <span>15-Days Daily Attendance Count</span>
                 </h2>
-                <p className="text-xs text-slate-400 mt-0.5">Live biometric punch records & attendance percentage autofetched from database</p>
+                <p className="text-xs text-slate-400">Live attendance count trend across active employee roster (17 Members)</p>
               </div>
+              <span className="text-xs font-bold px-3 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded-full self-start sm:self-center">
+                Automated 15-Day Rollup
+              </span>
             </div>
-
-            <div className="pt-4 pb-2 px-2 border-t border-slate-800/80">
-              <div className="flex items-end justify-between gap-2 h-44">
-                {trend15Days.map((item, index) => (
-                  <div key={index} className="flex-1 flex flex-col items-center gap-2 group">
-                    <span className="text-[10px] font-mono font-bold text-slate-300 opacity-0 group-hover:opacity-100 transition">
-                      {item.count}
-                    </span>
-                    <div className="w-full bg-slate-800/80 rounded-t-lg h-32 flex items-end overflow-hidden p-1">
-                      <div
-                        style={{ height: `${item.pct}%` }}
-                        className={`w-full rounded-md transition-all duration-500 ${
-                          item.pct === 0
-                            ? 'bg-transparent'
-                            : item.pct < 70
-                            ? 'bg-amber-500/80 group-hover:bg-amber-400'
-                            : 'bg-blue-600 group-hover:bg-blue-500'
-                        }`}
-                      ></div>
-                    </div>
-                    <div className="text-[10px] text-slate-400 font-medium text-center leading-tight">
-                      <span className="block font-bold text-slate-300">{item.label}</span>
-                      <span className="block text-[9px] text-slate-500 uppercase">{item.dayName}</span>
-                    </div>
+            <div className="grid grid-cols-3 sm:grid-cols-5 md:grid-cols-8 lg:grid-cols-15 gap-2 pt-2">
+              {trend15Days.map((d, i) => (
+                <div key={i} className="bg-slate-950/70 border border-slate-800 rounded-xl p-2.5 text-center space-y-1.5 hover:border-slate-700 transition">
+                  <p className="text-[10px] text-slate-400 font-bold uppercase">{d.dayName}</p>
+                  <p className="text-[11px] font-mono text-slate-300 font-semibold">{d.label}</p>
+                  <div className="my-1">
+                    <span className="text-lg font-extrabold text-emerald-400 font-heading">{d.count}</span>
+                    <span className="text-[10px] text-slate-500 block">/ {totalEmployees}</span>
                   </div>
-                ))}
-              </div>
+                  <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${d.pct}%` }} />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* COMPONENT 2: Recent & Pending Leave Requests (Screenshot 2 - Interconnected Live DB) */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-slate-800">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
               <div>
                 <h2 className="text-lg font-extrabold text-white font-heading flex items-center space-x-2">
                   <FileCheck className="w-5 h-5 text-purple-400" />
-                  <span>Recent & Pending Leave Requests</span>
+                  <span>Recent Leave Requests & HR Approvals Desk</span>
                 </h2>
-                <p className="text-xs text-slate-400">Applications submitted by employees autofetched from central database</p>
+                <p className="text-xs text-slate-400">Review, approve, or reject employee leave applications directly from HR Command Center</p>
               </div>
-
-              <Link
-                href="/admin/leave-records"
-                className="px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-blue-400 hover:text-blue-300 rounded-xl text-xs font-semibold border border-slate-700 transition flex items-center space-x-1.5"
-              >
-                <span>View All Pending Approvals</span>
-                <ArrowRight className="w-3.5 h-3.5" />
+              <Link href="/admin/team-approvals" className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition flex items-center space-x-1.5 self-start sm:self-center">
+                <ClipboardCheck className="w-3.5 h-3.5" />
+                <span>Open Full HR Team Approvals Desk →</span>
               </Link>
             </div>
 
@@ -312,54 +333,60 @@ export default function AdminDashboardPage() {
                     <th className="py-3 px-4">DATES</th>
                     <th className="py-3 px-4">REASON</th>
                     <th className="py-3 px-4 text-center">MANAGER STATUS</th>
-                    <th className="py-3 px-4 text-center">HR STATUS</th>
-                    <th className="py-3 px-4 text-center">FINAL STATUS</th>
+                    <th className="py-3 px-4 text-center">HR FINAL STATUS</th>
+                    <th className="py-3 px-4 text-right">HR ACTION</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
-                  {recentLeaveRequests.length > 0 ? (
-                    recentLeaveRequests.map((req) => (
-                      <tr key={req.id} className="hover:bg-slate-800/40 transition">
-                        <td className="py-3.5 px-4 font-mono font-bold text-slate-300">{req.id}</td>
-                        <td className="py-3.5 px-4 font-bold text-white">{req.employee}</td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-300">{req.subject}</td>
-                        <td className="py-3.5 px-4 font-mono text-slate-400">{req.dates}</td>
-                        <td className="py-3.5 px-4 text-slate-400 truncate max-w-xs">{req.reason}</td>
-                        <td className="py-3.5 px-4 text-center">
-                          <span
-                            className={`px-2.5 py-1 rounded-full font-bold text-[10px] uppercase ${
-                              req.managerStatus === 'APPROVED'
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                            }`}
-                          >
-                            {req.managerStatus}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-center">
-                          <span
-                            className={`px-2.5 py-1 rounded-full font-bold text-[10px] uppercase ${
-                              req.hrStatus === 'APPROVED'
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                            }`}
-                          >
-                            {req.hrStatus}
-                          </span>
-                        </td>
-                        <td className="py-3.5 px-4 text-center">
-                          <span
-                            className={`px-2.5 py-1 rounded-full font-bold text-[10px] uppercase ${
-                              req.finalStatus === 'APPROVED'
-                                ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
-                            }`}
-                          >
-                            {req.finalStatus}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
+                  {leaves.length > 0 ? (
+                    leaves.slice(0, 6).map((l, index) => {
+                      const emp = employees.find((e) => e.id === l.employeeId || e.employeeId === l.employeeId || e.name === l.employeeId);
+                      const reqId = l.id && typeof l.id === 'string' ? `#${l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}` : `#${index + 1}`;
+                      const isReviewed = l.hrStatus === 'Approved' || l.hrStatus === 'Rejected' || l.status === 'APPROVED' || l.status === 'REJECTED';
+
+                      return (
+                        <tr key={l.id || index} className="hover:bg-slate-800/40 transition">
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-300">{reqId}</td>
+                          <td className="py-3.5 px-4 font-bold text-white">{emp ? emp.name : l.employeeId}</td>
+                          <td className="py-3.5 px-4 font-semibold text-purple-300">{l.leaveType}</td>
+                          <td className="py-3.5 px-4 font-mono text-slate-400">{l.startDate} to {l.endDate || l.startDate}</td>
+                          <td className="py-3.5 px-4 text-slate-400 truncate max-w-xs">{l.note || 'Leave application'}</td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] uppercase ${l.managerStatus === 'Approved' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                              {l.managerStatus || 'Pending'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-center">
+                            <span className={`px-2.5 py-1 rounded-full font-bold text-[10px] uppercase ${l.hrStatus === 'Approved' || l.status === 'APPROVED' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : l.hrStatus === 'Rejected' || l.status === 'REJECTED' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-amber-500/20 text-amber-400 border border-amber-500/30'}`}>
+                              {l.hrStatus === 'Approved' || l.status === 'APPROVED' ? 'Approved ✓' : l.hrStatus === 'Rejected' || l.status === 'REJECTED' ? 'Rejected ✗' : 'Pending HR'}
+                            </span>
+                          </td>
+                          <td className="py-3.5 px-4 text-right">
+                            {!isReviewed ? (
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <button onClick={() => handleHRReview(l.id, 'APPROVED')} className="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold rounded-lg transition shadow flex items-center space-x-1">
+                                  <CheckCircle2 className="w-3.5 h-3.5" />
+                                  <span>Approve</span>
+                                </button>
+                                <button onClick={() => handleHRReview(l.id, 'REJECTED')} className="px-2 py-1 bg-red-600/20 hover:bg-red-600/30 text-red-400 text-[11px] font-bold rounded-lg transition flex items-center space-x-1">
+                                  <XCircle className="w-3.5 h-3.5" />
+                                  <span>Reject</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${l.hrStatus === 'Approved' || l.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-300 border-emerald-500/30' : 'bg-red-500/10 text-red-300 border-red-500/30'}`}>
+                                  {l.hrStatus === 'Approved' || l.status === 'APPROVED' ? '✓ Approved' : '✗ Rejected'}
+                                </span>
+                                <button onClick={() => handleHRReview(l.id, l.hrStatus === 'Approved' || l.status === 'APPROVED' ? 'REJECTED' : 'APPROVED')} className="text-[10px] text-blue-400 hover:text-blue-300 font-bold underline ml-1">
+                                  Change
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={8} className="py-8 text-center text-slate-500 font-medium">
@@ -372,7 +399,6 @@ export default function AdminDashboardPage() {
             </div>
           </div>
 
-          {/* COMPONENT 3: Employees Current Month Overview (Screenshot 3 - Interconnected Live DB) */}
           <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-4">
             <div className="pb-3 border-b border-slate-800">
               <h2 className="text-lg font-extrabold text-white font-heading flex items-center space-x-2">

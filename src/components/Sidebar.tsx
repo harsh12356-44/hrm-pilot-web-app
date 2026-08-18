@@ -152,6 +152,17 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
   return (
     <aside className="w-68 bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between shrink-0 transition-all duration-200">
       <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
+        {/* Admin Quick Switch Back Banner if viewing Manager/Employee Portal */}
+        {(activeRole === 'ADMIN' || (typeof window !== 'undefined' && localStorage.getItem('hrm_active_employee_role') === 'ADMIN')) && effectiveRole !== 'ADMIN' && (
+          <Link
+            href="/admin"
+            className="flex items-center space-x-2 px-3.5 py-2.5 bg-blue-600/20 border border-blue-500/40 rounded-xl text-blue-300 hover:bg-blue-600/30 transition text-xs font-bold shadow-md mb-2"
+          >
+            <LayoutDashboard className="w-4 h-4 text-blue-400" />
+            <span>← Return to HR Admin Suite</span>
+          </Link>
+        )}
+
         {/* Brand Header for Portal View */}
         {effectiveRole !== 'ADMIN' && (
           <div className="px-3.5 py-2.5 border-b border-slate-800/80 mb-2">

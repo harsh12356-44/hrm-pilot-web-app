@@ -147,9 +147,16 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   };
 
   const setRoleCookie = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE') => {
-    document.cookie = `hrm_user_role=${role}; path=/`;
     if (typeof window !== 'undefined') {
-      localStorage.setItem('hrm_active_employee_role', role);
+      const activeId = localStorage.getItem('hrm_active_employee_id');
+      const isRavinaAdmin = activeId === 'emp-1' || localStorage.getItem('hrm_active_employee_role') === 'ADMIN';
+
+      if (isRavinaAdmin) {
+        document.cookie = `hrm_user_role=ADMIN; path=/; max-age=86400`;
+      } else {
+        document.cookie = `hrm_user_role=${role}; path=/; max-age=86400`;
+        localStorage.setItem('hrm_active_employee_role', role);
+      }
       window.dispatchEvent(new Event('roleChange'));
     }
   };
