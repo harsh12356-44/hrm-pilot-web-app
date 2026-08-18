@@ -442,6 +442,7 @@ export default function LeaveTrackerTab() {
               setQuarter(qKey);
               if (typeof window !== 'undefined') {
                 localStorage.setItem('hrm_leave_quarter', qKey);
+                window.scrollTo({ top: 120, behavior: 'smooth' });
               }
             }}
             className={`px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all ${

@@ -171,6 +171,11 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
                   <Link
                     key={item.id}
                     href={item.href}
+                    onClick={() => {
+                      if (typeof window !== 'undefined' && window.innerWidth < 768) {
+                        window.dispatchEvent(new CustomEvent('closeMobileSidebar'));
+                      }
+                    }}
                     className={`flex items-center space-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
                       isActive
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-extrabold text-sm'

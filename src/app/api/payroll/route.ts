@@ -18,10 +18,11 @@ export async function GET(request: Request) {
     if (existing) return existing;
 
     // Calculate default payroll values based on monthly salary (standard 160 required hours)
+    const effectiveSalary = emp.monthlySalary > 0 ? emp.monthlySalary : 60000;
     const requiredHours = 160;
     const creditedHours = 152; // 8 short hours mock
     const shortHours = Math.max(0, requiredHours - creditedHours);
-    const hourlyRate = Math.round((emp.monthlySalary / requiredHours) * 100) / 100;
+    const hourlyRate = Math.round((effectiveSalary / requiredHours) * 100) / 100;
     const estimatedDeduction = Math.round(hourlyRate * shortHours * 100) / 100;
     const missingPunches = emp.id === 'emp-3' ? 1 : 0;
 
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
       department: emp.department,
       month,
       year,
-      monthlySalary: emp.monthlySalary,
+      monthlySalary: effectiveSalary,
       requiredHours,
       creditedHours,
       shortHours,

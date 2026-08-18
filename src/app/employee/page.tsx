@@ -713,7 +713,16 @@ function EmployeePortalContent() {
                         <span>Calculated Leave Duration:</span>
                       </span>
                       <strong className="text-purple-300 font-extrabold text-xs bg-purple-500/20 px-3 py-1 rounded-full border border-purple-500/40">
-                        {calcDaysCount()} {calcDaysCount() === 1 ? 'Day' : 'Days'} {!toDate || fromDate === toDate ? `(${fromDate})` : `(${fromDate} to ${toDate})`}
+                        {(() => {
+                          const fmt = (dStr: string) => {
+                            if (!dStr) return '';
+                            const d = new Date(dStr + 'T00:00:00');
+                            return isNaN(d.getTime()) ? dStr : d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+                          };
+                          const count = calcDaysCount();
+                          const formattedRange = !toDate || fromDate === toDate ? `(${fmt(fromDate)})` : `(${fmt(fromDate)} to ${fmt(toDate)})`;
+                          return `${count} ${count === 1 ? 'Day' : 'Days'} ${formattedRange}`;
+                        })()}
                       </strong>
                     </div>
                   )}
