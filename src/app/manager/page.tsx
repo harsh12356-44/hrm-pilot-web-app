@@ -37,8 +37,27 @@ export default function ManagerPortalPage() {
   }, [fetchManagerData]);
 
   const handleManagerAction = async (id: string, action: 'APPROVED' | 'REJECTED') => {
+    // 1. Instant Optimistic UI Update (0ms latency response)
+    const newManagerStatus = action === 'APPROVED' ? 'Approved' : 'Rejected';
+    const newStatus = action === 'REJECTED' ? 'REJECTED' : undefined;
+
+    setLeaves(prev =>
+      prev.map(l => {
+        if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+          const isBothApproved = newManagerStatus === 'Approved' && l.hrStatus === 'Approved';
+          return {
+            ...l,
+            managerStatus: newManagerStatus,
+            status: isBothApproved ? 'APPROVED' : newStatus || l.status,
+          };
+        }
+        return l;
+      })
+    );
+
+    setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
+
     try {
-      setStatusMsg('Updating manager review decision...');
       const targetRecord = (leaves || []).find(l => l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, ''))));
       const res = await fetch('/api/leaves', {
         method: 'PUT',
@@ -52,19 +71,19 @@ export default function ManagerPortalPage() {
       });
 
       if (res.ok) {
-        setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
-        fetchManagerData();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('leaveDataUpdated'));
         }
       } else {
         const data = await res.json();
         setStatusMsg(`Failed: ${data.error || 'Could not update'}`);
+        fetchManagerData();
       }
       setTimeout(() => setStatusMsg(''), 4000);
     } catch (err) {
       console.error(err);
       setStatusMsg('Failed to process manager action.');
+      fetchManagerData();
     }
   };
 

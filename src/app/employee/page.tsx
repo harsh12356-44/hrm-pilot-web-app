@@ -338,9 +338,41 @@ function EmployeePortalContent() {
   );
 
   const handleManagerReview = async (id: string, action: 'APPROVED' | 'REJECTED') => {
+    // 1. Instant Optimistic UI Update (0ms latency response)
+    const newManagerStatus = action === 'APPROVED' ? 'Approved' : 'Rejected';
+    const newStatus = action === 'REJECTED' ? 'REJECTED' : undefined;
+
+    setAllLeaves(prev =>
+      prev.map(l => {
+        if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+          const isBothApproved = newManagerStatus === 'Approved' && l.hrStatus === 'Approved';
+          return {
+            ...l,
+            managerStatus: newManagerStatus,
+            status: isBothApproved ? 'APPROVED' : newStatus || l.status,
+          };
+        }
+        return l;
+      })
+    );
+
+    setLeaves(prev =>
+      prev.map(l => {
+        if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+          const isBothApproved = newManagerStatus === 'Approved' && l.hrStatus === 'Approved';
+          return {
+            ...l,
+            managerStatus: newManagerStatus,
+            status: isBothApproved ? 'APPROVED' : newStatus || l.status,
+          };
+        }
+        return l;
+      })
+    );
+
+    setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
+
     try {
-      setLoading(true);
-      setStatusMsg('Updating manager decision...');
       const targetRecord = (allLeaves || []).find(l => l.id === id) || (teamLeaves || []).find(l => l.id === id) || (leaves || []).find(l => l.id === id);
       const res = await fetch('/api/leaves', {
         method: 'PUT',
@@ -354,21 +386,19 @@ function EmployeePortalContent() {
       });
 
       if (res.ok) {
-        setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
-        fetchEmployeeDashboardData();
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('leaveDataUpdated'));
         }
       } else {
         const data = await res.json();
         setStatusMsg(`Failed: ${data.error || 'Could not update'}`);
+        fetchEmployeeDashboardData();
       }
       setTimeout(() => setStatusMsg(''), 4000);
     } catch (err) {
       console.error(err);
       setStatusMsg('Failed to process manager action.');
-    } finally {
-      setLoading(false);
+      fetchEmployeeDashboardData();
     }
   };
 
