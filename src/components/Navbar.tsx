@@ -28,8 +28,62 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
     }
   };
 
+  const [activeUser, setActiveUser] = useState<{
+    name: string;
+    designation: string;
+    initials: string;
+    employeeId: string;
+  }>({
+    name: 'Ravina Khimani',
+    designation: 'HR / COO',
+    initials: 'RK',
+    employeeId: 'RK001',
+  });
+
+  const loadActiveUser = async () => {
+    try {
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : null;
+      const res = await fetch(`/api/employees?t=${Date.now()}`);
+      const data = await res.json();
+      const employeesList: any[] = Array.isArray(data) ? data : data.employees || [];
+
+      let currentEmp: any = null;
+
+      if (storedId) {
+        currentEmp = employeesList.find((e: any) => e.id === storedId || e.employeeId === storedId);
+      }
+
+      if (!currentEmp) {
+        if (currentRole === 'ADMIN') {
+          currentEmp = employeesList.find((e: any) => e.role === 'ADMIN') || employeesList[0];
+        } else if (currentRole === 'MANAGER') {
+          currentEmp = employeesList.find((e: any) => e.role === 'MANAGER') || employeesList[1];
+        } else {
+          currentEmp = employeesList.find((e: any) => e.employeeId === 'SG012' || e.name.toLowerCase().includes('sonu')) || employeesList[0];
+        }
+      }
+
+      if (currentEmp) {
+        const nameParts = currentEmp.name.trim().split(' ');
+        const initials = nameParts.length > 1
+          ? (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase()
+          : currentEmp.name.slice(0, 2).toUpperCase();
+
+        setActiveUser({
+          name: currentEmp.name,
+          designation: currentEmp.designation || (currentEmp.role === 'ADMIN' ? 'HR / COO' : currentEmp.role === 'MANAGER' ? 'Senior Development Manager' : 'Employee'),
+          initials,
+          employeeId: currentEmp.employeeId || currentEmp.id,
+        });
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   useEffect(() => {
     fetchNotifications();
+    loadActiveUser();
     const savedTheme = (localStorage.getItem('hrm_theme') as 'light' | 'dark') || 'light';
     setTheme(savedTheme);
     if (savedTheme === 'light') {
@@ -37,7 +91,14 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
     } else {
       document.documentElement.classList.remove('light');
     }
-  }, []);
+
+    window.addEventListener('roleChange', loadActiveUser);
+    window.addEventListener('employeeChanged', loadActiveUser);
+    return () => {
+      window.removeEventListener('roleChange', loadActiveUser);
+      window.removeEventListener('employeeChanged', loadActiveUser);
+    };
+  }, [currentRole]);
 
   const toggleTheme = () => {
     const nextTheme = theme === 'light' ? 'dark' : 'light';
@@ -244,14 +305,14 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
 
         <div className="flex items-center space-x-3 pl-3 border-l border-slate-200">
           <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 flex items-center justify-center text-xs font-bold text-white shadow">
-            {currentRole === 'ADMIN' ? 'RK' : currentRole === 'MANAGER' ? 'NB' : 'SG'}
+            {activeUser.initials}
           </div>
           <div className="hidden md:block text-left">
             <p className="text-xs font-semibold text-slate-900">
-              {currentRole === 'ADMIN' ? 'Ravina Khimani' : currentRole === 'MANAGER' ? 'Naman Bangia' : 'Sonu Goswami'}
+              {activeUser.name}
             </p>
             <p className="text-[10px] text-slate-500">
-              {currentRole === 'ADMIN' ? 'HR / COO' : currentRole === 'MANAGER' ? 'Senior Development Manager' : 'Web Developer'}
+              {activeUser.designation}
             </p>
           </div>
           <button

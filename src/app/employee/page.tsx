@@ -430,9 +430,31 @@ function EmployeePortalContent() {
       <div className="flex flex-1">
         <Sidebar currentTab={activeTab} role="EMPLOYEE" />
         <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto space-y-6 overflow-y-auto">
-          {/* Top Date Header */}
-          <div className="flex items-center justify-between text-xs text-slate-400 border-b border-slate-800 pb-3">
+          {/* Top Date Header & Active View Switcher */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 border-b border-slate-800 pb-3">
             <span>Thursday, 06 August 2026 • Live HRM Portal</span>
+            <div className="flex items-center space-x-2">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Active Employee View:</span>
+              <select
+                value={employee?.id || 'emp-12'}
+                onChange={(e) => {
+                  const newId = e.target.value;
+                  setSelectedEmployeeId(newId);
+                  if (typeof window !== 'undefined') {
+                    localStorage.setItem('hrm_active_employee_id', newId);
+                    window.dispatchEvent(new Event('employeeChanged'));
+                    window.dispatchEvent(new Event('roleChange'));
+                  }
+                }}
+                className="bg-slate-900 border border-slate-700 text-white rounded-lg px-2.5 py-1 text-xs font-semibold focus:outline-none focus:border-blue-500"
+              >
+                {allEmployees.map((emp) => (
+                  <option key={emp.id} value={emp.id}>
+                    {emp.name} ({emp.employeeId})
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* TAB 1: DASHBOARD */}

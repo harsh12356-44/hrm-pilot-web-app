@@ -39,8 +39,8 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
   const activeTab = activeTabParam || currentTab || 'dashboard';
 
   const [activeRole, setActiveRole] = useState<string>('ADMIN');
-
   const [isManager, setIsManager] = useState<boolean>(false);
+  const [empCodeDisplay, setEmpCodeDisplay] = useState<string>('NB002');
 
   const getCookieRole = () => {
     if (typeof document === 'undefined') return 'ADMIN';
@@ -49,23 +49,40 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
   };
 
   useEffect(() => {
-    const updateRole = () => {
+    const updateSidebarData = async () => {
       const currentRole = role || getCookieRole();
       setActiveRole(currentRole);
 
       if (typeof window !== 'undefined') {
+        const storedId = localStorage.getItem('hrm_active_employee_id');
         const isMgr =
           localStorage.getItem('hrm_active_employee_is_manager') === 'true' ||
           localStorage.getItem('hrm_active_employee_role') === 'MANAGER' ||
           localStorage.getItem('hrm_active_employee_role') === 'ADMIN';
         setIsManager(isMgr);
+
+        try {
+          const res = await fetch(`/api/employees?t=${Date.now()}`);
+          const data = await res.json();
+          const employeesList: any[] = Array.isArray(data) ? data : data.employees || [];
+          const emp = employeesList.find((e: any) => e.id === storedId || e.employeeId === storedId);
+          if (emp) {
+            setEmpCodeDisplay(emp.employeeId || emp.id);
+          } else if (storedId) {
+            setEmpCodeDisplay(storedId);
+          }
+        } catch (e) {}
       }
     };
 
-    updateRole();
+    updateSidebarData();
 
-    window.addEventListener('roleChange', updateRole);
-    return () => window.removeEventListener('roleChange', updateRole);
+    window.addEventListener('roleChange', updateSidebarData);
+    window.addEventListener('employeeChanged', updateSidebarData);
+    return () => {
+      window.removeEventListener('roleChange', updateSidebarData);
+      window.removeEventListener('employeeChanged', updateSidebarData);
+    };
   }, [role, pathname]);
 
   // Determine effective role based on current path
@@ -196,7 +213,7 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
       <div className="pt-3 border-t border-slate-800/80">
         <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-1">
           <p className="text-xs font-black text-slate-400 uppercase tracking-wider">Employee ID</p>
-          <p className="text-sm font-mono font-bold text-white">123456</p>
+          <p className="text-sm font-mono font-bold text-white">{empCodeDisplay}</p>
         </div>
       </div>
     </aside>
