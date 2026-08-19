@@ -135,6 +135,7 @@ git push origin main
 12. **Attendance Grid Persistence & Dual-Key Lookup Resolution**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getDbData`) to prioritize `data/db.json` so saved attendance records never vanish from server storage, and enhanced [`working-hours/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) `logsMap` to index logs under both `emp.id` (`emp-1`) and `emp.employeeId` (`RK001`) with `{ cache: 'no-store' }` dynamic fetching.
 13. **GET Attendance Canonical Matching & Working Hours Sync**: Updated [`/api/attendance`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to canonicalize `employeeId` in enriched API responses and handle department Set lookups across IDs, employeeId strings, and names.
 14. **Removed Auto-Populate Hours Options**: Removed auto-populate action buttons and banner from [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) per user request to maintain clean manual/imported records.
+15. **Direct Import Working Hours Modal Integration**: Added a prominent **Import Working Hours** button and interactive modal dialog directly to [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx), enabling drag-and-drop spreadsheet uploads (`.csv`, `.xlsx`, `.xls`), target month selection, live row preview, and immediate grid auto-refresh.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -147,3 +148,4 @@ git push origin main
 - [x] **Item 8: Attendance Grid Persistence & Dual-Key Lookup Resolution**: Completed ✓
 - [x] **Item 9: GET Attendance Canonical Matching & Working Hours Sync**: Completed ✓
 - [x] **Item 10: Removed Auto-Populate Hours Options**: Completed ✓
+- [x] **Item 11: Direct Import Working Hours Modal Integration**: Completed ✓
