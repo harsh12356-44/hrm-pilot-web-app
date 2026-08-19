@@ -647,7 +647,9 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
 
       const recQuarter = l.quarter || getQuarterFromDateStr(l.startDate);
       const matchesQuarter = recQuarter === quarter;
-      const matchesStatus = l.status === 'APPROVED' || l.status === 'PENDING' || !l.status;
+      // Only count leave in Leave Tracker ONCE APPROVED by both Manager and HR
+      const isBothApproved = (l.managerStatus === 'Approved' || l.status === 'APPROVED') && (l.hrStatus === 'Approved' || l.status === 'APPROVED');
+      const matchesStatus = isBothApproved || l.status === 'APPROVED';
 
       return matchesEmp && matchesQuarter && matchesStatus;
     });
@@ -742,7 +744,9 @@ export function getEmployeeAllQuarters(employeeId: string) {
 
       const recQuarter = l.quarter || getQuarterFromDateStr(l.startDate);
       const matchesQuarter = recQuarter === q;
-      const matchesStatus = l.status === 'APPROVED' || l.status === 'PENDING' || !l.status;
+      // Only count leave in Leave Tracker ONCE APPROVED by both Manager and HR
+      const isBothApproved = (l.managerStatus === 'Approved' || l.status === 'APPROVED') && (l.hrStatus === 'Approved' || l.status === 'APPROVED');
+      const matchesStatus = isBothApproved || l.status === 'APPROVED';
 
       return matchesEmp && matchesQuarter && matchesStatus;
     });
