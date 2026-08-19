@@ -100,10 +100,10 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
         }
       }
 
-      if (Array.isArray(attData.logs) && attData.logs.length > 0) {
+      if (Array.isArray(data.logs) && data.logs.length > 0) {
         if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('hrm_attendance_backup', JSON.stringify(attData.logs));
+            localStorage.setItem('hrm_attendance_backup', JSON.stringify(data.logs));
           } catch (e) {}
         }
       } else if (typeof window !== 'undefined') {
