@@ -483,7 +483,26 @@ function ensureDataDir(): void {
 let memoryDb: InitialState | null = (globalThis as any)._inMemoryDbData || null;
 
 export function getDbData(): InitialState {
-  // 1. Read from persistent data/db.json file on disk
+  if (memoryDb) {
+    return memoryDb;
+  }
+
+  // 1. Try reading from writable /tmp directory if initialized (Vercel serverless lambda write path)
+  try {
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.employees) && data.employees.length > 0) {
+        memoryDb = data as InitialState;
+        (globalThis as any)._inMemoryDbData = memoryDb;
+        return memoryDb;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read from tmp db file:', e);
+  }
+
+  // 2. Read from bundled data/db.json (primary persistent data store)
   try {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -510,7 +529,7 @@ export function getDbData(): InitialState {
         };
         (globalThis as any)._inMemoryDbData = memoryDb;
 
-        // Sync /tmp/hrm_db.json for serverless lambdas
+        // Initialize /tmp/hrm_db.json for serverless lambdas
         try {
           fs.writeFileSync(TMP_DB_FILE, JSON.stringify(memoryDb, null, 2));
         } catch (e) {}
@@ -519,22 +538,7 @@ export function getDbData(): InitialState {
       }
     }
   } catch (e) {
-    console.warn('Error reading db.json, falling back to tmp store:', e);
-  }
-
-  // 2. Try reading from writable /tmp directory (Vercel serverless fallback)
-  try {
-    if (fs.existsSync(TMP_DB_FILE)) {
-      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
-      const data = JSON.parse(raw);
-      if (data && Array.isArray(data.employees) && data.employees.length > 0) {
-        memoryDb = data as InitialState;
-        (globalThis as any)._inMemoryDbData = memoryDb;
-        return memoryDb;
-      }
-    }
-  } catch (e) {
-    console.warn('Could not read from tmp db file:', e);
+    console.warn('Error reading db.json, falling back to default store:', e);
   }
 
   if (memoryDb) {
