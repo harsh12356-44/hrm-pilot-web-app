@@ -141,6 +141,7 @@ git push origin main
 18. **Monthly Punches Object Array Matrix Parsing Fix**: Updated [`biometricParser.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/biometricParser.ts) (`parseBiometricPunches`) to support object array matrices where day numbers `1` through `31` are key properties on row objects (e.g. `row["1"] = "10:54\n19:54"`), correctly populating biometric check-in/out, WO, HD, and absent records for uploaded sheets.
 19. **Vercel Seed Database & Read-Write Priority Resolution**: Committed all 5,000+ imported attendance records into [`data/db.json`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/data/db.json) so Vercel builds with the complete seed database. Re-ordered `getDbData()` in [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) to prioritize `memoryDb` and `/tmp/hrm_db.json` over Vercel's read-only filesystem layer.
 20. **Attendance Matrix Dual-Key Lookup Synchronization**: Updated [`AttendanceLogTab.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx) `logsMap` key indexing and matrix cell lookup to check both `emp.id` (`emp-1`) and `emp.employeeId` (`RK001`), bringing `/admin/attendance` into 100% feature parity with Working Hours and eliminating blank matrix cells.
+21. **Permanent Dual-Sync Cloud Auto-Recovery Architecture**: Added `action: 'sync_client_backup'` to [`/api/attendance`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) and integrated client-side `localStorage` backup auto-recovery into [`AttendanceLogTab.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx) and [`working-hours/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx). If a Vercel serverless lambda ever cold-starts with reset memory, the client automatically restores attendance logs to server memory seamlessly.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -159,3 +160,4 @@ git push origin main
 - [x] **Item 14: Monthly Punches Object Array Matrix Parsing Fix**: Completed ✓
 - [x] **Item 15: Vercel Seed Database & Read-Write Priority Resolution**: Completed ✓
 - [x] **Item 16: Attendance Matrix Dual-Key Lookup Synchronization**: Completed ✓
+- [x] **Item 17: Permanent Dual-Sync Cloud Auto-Recovery Architecture**: Completed ✓
