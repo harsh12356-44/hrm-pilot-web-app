@@ -111,7 +111,9 @@ export default function WorkingHoursPage() {
         fetchWorkingHours();
 
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('attendanceUpdated'));
+          window.dispatchEvent(new CustomEvent('attendanceUpdated', {
+            detail: { month: importMonth, year: importYear, monthYear }
+          }));
         }
 
         setTimeout(() => {
@@ -160,7 +162,22 @@ export default function WorkingHoursPage() {
   useEffect(() => {
     fetchWorkingHours();
 
-    const handleUpdate = () => fetchWorkingHours();
+    const handleUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (customEvt && customEvt.detail) {
+        const { month, year, monthYear } = customEvt.detail;
+        if (monthYear) {
+          const parts = monthYear.split('-');
+          if (parts[0]) setSelectedYear(parts[0]);
+          if (parts[1]) setSelectedMonth(String(Number(parts[1])));
+        } else {
+          if (month) setSelectedMonth(String(month));
+          if (year) setSelectedYear(String(year));
+        }
+      }
+      fetchWorkingHours();
+    };
+
     if (typeof window !== 'undefined') {
       window.addEventListener('attendanceUpdated', handleUpdate);
     }

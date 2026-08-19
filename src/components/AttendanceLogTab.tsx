@@ -143,6 +143,12 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
         setImportMessage(`Successfully imported ${count} biometric punch logs!`);
         setTimeout(() => setImportMessage(''), 5000);
         fetchAttendance();
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('attendanceUpdated', {
+            detail: { month: selectedMonth, year: selectedYear, monthYear: `${selectedYear}-${String(selectedMonth).padStart(2, '0')}` }
+          }));
+        }
       } catch (err) {
         console.error(err);
         alert('Failed to parse biometric Excel file. Please verify file format.');
@@ -172,6 +178,17 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
       if (data.success) {
         setEditLog(null);
         fetchAttendance();
+
+        if (typeof window !== 'undefined') {
+          const [editY, editM] = (editLog.date || '').split('-');
+          window.dispatchEvent(new CustomEvent('attendanceUpdated', {
+            detail: {
+              month: editM ? String(Number(editM)) : selectedMonth,
+              year: editY || selectedYear,
+              monthYear: editY && editM ? `${editY}-${editM}` : undefined
+            }
+          }));
+        }
       } else {
         alert(data.error || 'Failed to save edit');
       }

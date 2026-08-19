@@ -78,7 +78,9 @@ export default function AttendanceImportPage() {
         const emps = data.import?.totalEmployees || 0;
         setStatusMessage(`Successfully imported completed hours records across ${emps || count} employees for ${monthYear}! Working Hours updated.`);
         if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('attendanceUpdated'));
+          window.dispatchEvent(new CustomEvent('attendanceUpdated', {
+            detail: { month: selectedMonth, year: selectedYear, monthYear }
+          }));
         }
       } else {
         setStatusMessage(`Error: ${data.error || 'Failed to import file'}`);
