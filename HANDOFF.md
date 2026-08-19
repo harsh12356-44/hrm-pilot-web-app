@@ -130,6 +130,7 @@ git push origin main
 7. **Leave Tracker Quarter Switch Smooth Scroll (`/admin/leave-tracker`)**: Added smooth-scroll animation when switching between Q1, Q2, Q3, and Q4 quarter pills.
 8. **Full Live QA Audit**: Completed an end-to-end live testing audit across all 17 functional modules.
 9. **Leave Approval Status Persistence & Flicker Resolution**: Fixed leave request status updates across `/admin`, `/admin/leave-records`, `/admin/team-approvals`, `/manager`, and `/employee` by enhancing API matching, synchronizing `localStorage` entries, and resolving duplicate pending record overwrites.
+10. **Leave Tracker Real-Time Dual-Approval Integration**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getQuarterlyLeaveSummaries` and `getEmployeeAllQuarters`) so leaves update Leave Tracker counts (Casual Used, Planned Used, Remaining, Utilization %) **ONLY ONCE fully approved by both Manager and HR**.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -137,3 +138,4 @@ git push origin main
 - [x] **Item 3: Mobile Sidebar Drawer Auto-Close**: Completed ✓
 - [x] **Item 4: Leave Tracker Quarter Switch Smooth Scroll (`/admin/leave-tracker`)**: Completed ✓
 - [x] **Item 5: Leave Approval Status Persistence & Flicker Resolution**: Completed ✓
+- [x] **Item 6: Leave Tracker Dual-Approval Integration**: Completed ✓
