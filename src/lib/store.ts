@@ -487,7 +487,46 @@ export function getDbData(): InitialState {
     return memoryDb;
   }
 
-  // 1. Try reading from writable /tmp directory if initialized (Vercel lambda fallback)
+  // 1. Read from bundled data/db.json (primary persistent data store)
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf-8');
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.employees) && data.employees.length > 0) {
+        const employeesList = (data.employees || DEFAULT_EMPLOYEES).map((e: any) => ({
+          ...e,
+          casualAllowance: 2,
+          plannedAllowance: 4,
+          sickAllowance: 4,
+        }));
+
+        memoryDb = {
+          employees: employeesList,
+          leaveRecords: Array.isArray(data.leaveRecords) ? data.leaveRecords : [],
+          attendanceLogs: Array.isArray(data.attendanceLogs) ? data.attendanceLogs : DEFAULT_ATTENDANCE,
+          settings: data.settings || DEFAULT_SETTINGS,
+          payrollPreviews: data.payrollPreviews || [],
+          holidays: data.holidays || DEFAULT_HOLIDAYS,
+          auditLogs: data.auditLogs || DEFAULT_AUDIT_LOGS,
+          attendanceImports: data.attendanceImports || [],
+          notifications: data.notifications || DEFAULT_NOTIFICATIONS,
+          departments: data.departments || [],
+        };
+        (globalThis as any)._inMemoryDbData = memoryDb;
+
+        // Sync /tmp/hrm_db.json for serverless environments
+        try {
+          fs.writeFileSync(TMP_DB_FILE, JSON.stringify(memoryDb, null, 2));
+        } catch (e) {}
+
+        return memoryDb;
+      }
+    }
+  } catch (e) {
+    console.warn('Error reading db.json, falling back to tmp store:', e);
+  }
+
+  // 2. Try reading from writable /tmp directory if initialized (Vercel lambda fallback)
   try {
     if (fs.existsSync(TMP_DB_FILE)) {
       const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
@@ -500,43 +539,6 @@ export function getDbData(): InitialState {
     }
   } catch (e) {
     console.warn('Could not read from tmp db file:', e);
-  }
-
-  // 2. Read from bundled data/db.json
-  try {
-    if (fs.existsSync(DB_FILE)) {
-      const raw = fs.readFileSync(DB_FILE, 'utf-8');
-      const data = JSON.parse(raw);
-      const employeesList = (data.employees || DEFAULT_EMPLOYEES).map((e: any) => ({
-        ...e,
-        casualAllowance: 2,
-        plannedAllowance: 4,
-        sickAllowance: 4,
-      }));
-
-      memoryDb = {
-        employees: employeesList,
-        leaveRecords: Array.isArray(data.leaveRecords) ? data.leaveRecords : [],
-        attendanceLogs: data.attendanceLogs || DEFAULT_ATTENDANCE,
-        settings: data.settings || DEFAULT_SETTINGS,
-        payrollPreviews: data.payrollPreviews || [],
-        holidays: data.holidays || DEFAULT_HOLIDAYS,
-        auditLogs: data.auditLogs || DEFAULT_AUDIT_LOGS,
-        attendanceImports: data.attendanceImports || [],
-        notifications: data.notifications || DEFAULT_NOTIFICATIONS,
-        departments: data.departments || [],
-      };
-      (globalThis as any)._inMemoryDbData = memoryDb;
-
-      // Seed /tmp/hrm_db.json for serverless lambdas
-      try {
-        fs.writeFileSync(TMP_DB_FILE, JSON.stringify(memoryDb, null, 2));
-      } catch (e) {}
-
-      return memoryDb;
-    }
-  } catch (e) {
-    console.warn('Error reading db.json, falling back to in-memory store');
   }
 
   memoryDb = {

@@ -37,11 +37,11 @@ export default function WorkingHoursPage() {
   const fetchWorkingHours = async () => {
     setLoading(true);
     try {
-      const url = `/api/attendance?month=${selectedMonth}&year=${selectedYear}&department=${department}`;
+      const url = `/api/attendance?month=${selectedMonth}&year=${selectedYear}&department=${department}&t=${Date.now()}`;
       const [attRes, empRes, holRes] = await Promise.all([
-        fetch(url),
-        fetch(`/api/employees`),
-        fetch('/api/holidays'),
+        fetch(url, { cache: 'no-store' }),
+        fetch(`/api/employees?t=${Date.now()}`, { cache: 'no-store' }),
+        fetch(`/api/holidays?t=${Date.now()}`, { cache: 'no-store' }),
       ]);
 
       const attData = await attRes.json();
@@ -79,10 +79,21 @@ export default function WorkingHoursPage() {
   const totalDaysInMonth = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
   const daysArray = Array.from({ length: totalDaysInMonth }, (_, i) => i + 1);
 
-  // Map logs by key: employeeId_date
+  // Map logs by keys: employeeId_date and empId_date for robust matching
   const logsMap: { [key: string]: AttendanceLog } = {};
   logs.forEach(l => {
-    logsMap[`${l.employeeId}_${l.date}`] = l;
+    if (l && l.date) {
+      logsMap[`${l.employeeId}_${l.date}`] = l;
+      const emp = employees.find(
+        e => e.id === l.employeeId || e.employeeId === l.employeeId || (e.name && l.employeeId && e.name.toLowerCase() === l.employeeId.toLowerCase())
+      );
+      if (emp) {
+        logsMap[`${emp.id}_${l.date}`] = l;
+        if (emp.employeeId) {
+          logsMap[`${emp.employeeId}_${l.date}`] = l;
+        }
+      }
+    }
   });
 
   const totalWorkedMins = logs.reduce((sum, l) => sum + (l.workedMinutes || 0), 0);
@@ -277,7 +288,7 @@ export default function WorkingHoursPage() {
                       </tr>
                     ) : employees.map(emp => {
                       // Calculate employee total worked mins for the month
-                      const empLogs = logs.filter(l => l.employeeId === emp.id);
+                      const empLogs = logs.filter(l => l.employeeId === emp.id || l.employeeId === emp.employeeId || (l.employeeId && emp.name && l.employeeId.toLowerCase() === emp.name.toLowerCase()));
                       const empTotalMins = empLogs.reduce((sum, l) => sum + (l.workedMinutes || 0), 0);
 
                       return (
@@ -293,7 +304,7 @@ export default function WorkingHoursPage() {
                             const padDay = String(dayNum).padStart(2, '0');
                             const padMonth = String(selectedMonth).padStart(2, '0');
                             const dateStr = `${selectedYear}-${padMonth}-${padDay}`;
-                            const log = logsMap[`${emp.id}_${dateStr}`];
+                            const log = logsMap[`${emp.id}_${dateStr}`] || logsMap[`${emp.employeeId}_${dateStr}`];
 
                             const dateObj = new Date(dateStr);
                             const isSunday = dateObj.getDay() === 0;
