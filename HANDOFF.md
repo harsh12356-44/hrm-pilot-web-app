@@ -132,6 +132,7 @@ git push origin main
 9. **Leave Approval Status Persistence & Flicker Resolution**: Fixed leave request status updates across `/admin`, `/admin/leave-records`, `/admin/team-approvals`, `/manager`, and `/employee` by enhancing API matching, synchronizing `localStorage` entries, and resolving duplicate pending record overwrites.
 10. **Leave Tracker Real-Time Dual-Approval Integration**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getQuarterlyLeaveSummaries` and `getEmployeeAllQuarters`) so leaves update Leave Tracker counts (Casual Used, Planned Used, Remaining, Utilization %) **ONLY ONCE fully approved by both Manager and HR**.
 11. **Completed Hours Import & Real-Time Working Hours Sync**: Enhanced [`/api/attendance`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) with flexible column title detection (`Employee ID`, `Emp Code`, `Completed Hours`, `Worked Hours`, `Date`), added Target Month & Year selection on [`/admin/attendance/import`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/attendance/import/page.tsx), and connected `attendanceUpdated` event to auto-refresh [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx).
+12. **Attendance Grid Persistence & Dual-Key Lookup Resolution**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getDbData`) to prioritize `data/db.json` so saved attendance records never vanish from server storage, and enhanced [`working-hours/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) `logsMap` to index logs under both `emp.id` (`emp-1`) and `emp.employeeId` (`RK001`) with `{ cache: 'no-store' }` dynamic fetching.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -141,3 +142,4 @@ git push origin main
 - [x] **Item 5: Leave Approval Status Persistence & Flicker Resolution**: Completed ✓
 - [x] **Item 6: Leave Tracker Dual-Approval Integration**: Completed ✓
 - [x] **Item 7: Completed Hours Import & Real-Time Working Hours Sync**: Completed ✓
+- [x] **Item 8: Attendance Grid Persistence & Dual-Key Lookup Resolution**: Completed ✓
