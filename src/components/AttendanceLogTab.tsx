@@ -197,10 +197,21 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
     }
   };
 
-  // Helper map for fast lookup in matrix grid
+  // Helper map for fast lookup in matrix grid across emp.id and emp.employeeId
   const logsMap: { [key: string]: any } = {};
   logs.forEach(l => {
-    logsMap[`${l.employeeId}_${l.date}`] = l;
+    if (l && l.date) {
+      logsMap[`${l.employeeId}_${l.date}`] = l;
+      const emp = employees.find(
+        e => e.id === l.employeeId || e.employeeId === l.employeeId || (e.name && l.employeeId && e.name.toLowerCase() === l.employeeId.toLowerCase())
+      );
+      if (emp) {
+        logsMap[`${emp.id}_${l.date}`] = l;
+        if (emp.employeeId) {
+          logsMap[`${emp.employeeId}_${l.date}`] = l;
+        }
+      }
+    }
   });
 
   // Calculate days in selected month for matrix header
@@ -400,7 +411,7 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
                     const padDay = String(dayNum).padStart(2, '0');
                     const padMonth = String(selectedMonth).padStart(2, '0');
                     const dateStr = `${selectedYear}-${padMonth}-${padDay}`;
-                    const log = logsMap[`${emp.id}_${dateStr}`];
+                    const log = logsMap[`${emp.id}_${dateStr}`] || logsMap[`${emp.employeeId}_${dateStr}`];
 
                     const dateObj = new Date(dateStr);
                     const isSunday = dateObj.getDay() === 0;
