@@ -100,6 +100,28 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId 
         }
       }
 
+      if (Array.isArray(attData.logs) && attData.logs.length > 0) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('hrm_attendance_backup', JSON.stringify(attData.logs));
+          } catch (e) {}
+        }
+      } else if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem('hrm_attendance_backup');
+          if (cached) {
+            const parsedCached = JSON.parse(cached);
+            if (Array.isArray(parsedCached) && parsedCached.length > 0) {
+              fetch('/api/attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'sync_client_backup', logs: parsedCached }),
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
       setLogs(logsList);
       setEmployees(empsList);
       setHolidays(Array.isArray(holData) ? holData : []);

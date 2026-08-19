@@ -74,6 +74,27 @@ export async function POST(request: Request) {
     const body = await request.json();
     const db = getDbData();
 
+    // 0. Sync Client Backup Action (auto-recovery from browser backup on Vercel lambda cold starts)
+    if (body.action === 'sync_client_backup' && Array.isArray(body.logs) && body.logs.length > 0) {
+      let restoredCount = 0;
+      body.logs.forEach((clientLog: any) => {
+        if (clientLog && clientLog.employeeId && clientLog.date) {
+          const exists = db.attendanceLogs.some(
+            l => (l.employeeId === clientLog.employeeId || l.employeeId === clientLog.employeeId) && l.date === clientLog.date
+          );
+          if (!exists) {
+            db.attendanceLogs.push(clientLog);
+            restoredCount++;
+          }
+        }
+      });
+      if (restoredCount > 0) {
+        saveDbData(db);
+        logAudit('Sync Client Backup Attendance', 'AttendanceLog', 'backup', undefined, `Restored ${restoredCount} records from client backup`);
+      }
+      return NextResponse.json({ success: true, message: `Restored ${restoredCount} attendance logs from client backup`, logs: db.attendanceLogs });
+    }
+
     // 1. Monthly Punches Upload
     if (body.action === 'IMPORT' || body.action === 'IMPORT_MONTHLY_PUNCHES') {
       const rawRows = body.rows || [];

@@ -145,7 +145,30 @@ export default function WorkingHoursPage() {
       const empData = await empRes.json();
       const holData = await holRes.json();
 
-      setLogs(Array.isArray(attData.logs) ? attData.logs : []);
+      const fetchedLogs = Array.isArray(attData.logs) ? attData.logs : [];
+      if (fetchedLogs.length > 0) {
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('hrm_attendance_backup', JSON.stringify(fetchedLogs));
+          } catch (e) {}
+        }
+      } else if (typeof window !== 'undefined') {
+        try {
+          const cached = localStorage.getItem('hrm_attendance_backup');
+          if (cached) {
+            const parsedCached = JSON.parse(cached);
+            if (Array.isArray(parsedCached) && parsedCached.length > 0) {
+              fetch('/api/attendance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'sync_client_backup', logs: parsedCached }),
+              });
+            }
+          }
+        } catch (e) {}
+      }
+
+      setLogs(fetchedLogs);
       setHolidays(Array.isArray(holData) ? holData : []);
       let empList = Array.isArray(empData.employees) ? empData.employees : Array.isArray(empData) ? empData : [];
       if (department !== 'ALL') {
