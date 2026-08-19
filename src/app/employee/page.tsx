@@ -1082,8 +1082,8 @@ function EmployeePortalContent() {
           )}
 
           {/* OTHER TABS */}
-          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id} />}
-          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id} />}
+          {activeTab === 'attendance' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id} showHoursFormat={false} />}
+          {activeTab === 'working-hours' && <AttendanceLogTab hideImport={true} targetEmployeeId={employee?.id} showHoursFormat={true} />}
           {activeTab === 'holidays' && <HolidaysTab />}
 
           {/* TAB: MY PROFILE */}
