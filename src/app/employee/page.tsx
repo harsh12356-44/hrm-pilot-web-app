@@ -79,16 +79,26 @@ function EmployeePortalContent() {
         try {
           const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
           if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
-            localSubmitted.forEach(l => {
+            let updatedLocal = [...localSubmitted];
+            localSubmitted.forEach((l, lIdx) => {
               if (l && l.id) {
-                const srvIndex = leavesList.findIndex(srv => srv.id === l.id);
-                if (srvIndex === -1) {
-                  leavesList.unshift(l);
+                const cleanLId = String(l.id).replace(/[^0-9]/g, '');
+                const srvMatch = leavesList.find(srv => srv.id === l.id || (cleanLId.length >= 3 && typeof srv.id === 'string' && srv.id.replace(/[^0-9]/g, '').endsWith(cleanLId)));
+                if (srvMatch) {
+                  updatedLocal[lIdx] = { ...l, ...srvMatch };
+                  const srvIndex = leavesList.findIndex(srv => srv.id === l.id || (cleanLId.length >= 3 && typeof srv.id === 'string' && srv.id.replace(/[^0-9]/g, '').endsWith(cleanLId)));
+                  if (srvIndex !== -1) {
+                    leavesList[srvIndex] = { ...l, ...srvMatch };
+                  }
                 } else {
-                  leavesList[srvIndex] = { ...l, ...leavesList[srvIndex] };
+                  const srvIndex = leavesList.findIndex(srv => srv.id === l.id);
+                  if (srvIndex === -1) {
+                    leavesList.unshift(l);
+                  }
                 }
               }
             });
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedLocal));
           }
         } catch (e) {}
       }

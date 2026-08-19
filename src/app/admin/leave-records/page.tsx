@@ -65,15 +65,58 @@ export default function LeaveRecordsAdminPage() {
       comment = input;
     }
 
+    const newHrStatus = newStatus === 'APPROVED' ? 'Approved' : newStatus === 'REJECTED' ? 'Rejected' : 'More Info Requested';
+    const targetRecord = leaves.find(
+      l => l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))
+    );
+
+    const updatedTargetRecord = targetRecord
+      ? {
+          ...targetRecord,
+          hrStatus: newHrStatus,
+          managerStatus: newStatus === 'APPROVED' ? 'Approved' : targetRecord.managerStatus,
+          status: newStatus,
+        }
+      : undefined;
+
+    // Instant Optimistic UI Update (0ms table shift)
+    setLeaves((prev) =>
+      prev.map((l) => {
+        if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+          return {
+            ...l,
+            hrStatus: newHrStatus,
+            managerStatus: newStatus === 'APPROVED' ? 'Approved' : l.managerStatus,
+            status: newStatus,
+          };
+        }
+        return l;
+      })
+    );
+
+    if (typeof window !== 'undefined') {
+      try {
+        const local = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+        if (Array.isArray(local) && local.length > 0) {
+          const updatedLocal = local.map((l: any) => {
+            if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+              return { ...l, hrStatus: newHrStatus, managerStatus: newStatus === 'APPROVED' ? 'Approved' : l.managerStatus, status: newStatus };
+            }
+            return l;
+          });
+          localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedLocal));
+        }
+      } catch (e) {}
+    }
+
     try {
       setActionStatusMsg('Updating leave request status...');
-      const targetRecord = leaves.find(l => l.id === id);
       const res = await fetch('/api/leaves', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
-          record: targetRecord,
+          record: updatedTargetRecord,
           status: newStatus,
           approverRole: 'HR Final Approver',
           comment,
@@ -89,11 +132,13 @@ export default function LeaveRecordsAdminPage() {
       } else {
         const errData = await res.json();
         setActionStatusMsg(`Failed: ${errData.error || 'Could not update status'}`);
+        fetchLeavesAndEmployees();
       }
       setTimeout(() => setActionStatusMsg(''), 4000);
     } catch (err) {
       console.error('Error updating leave status:', err);
       setActionStatusMsg('Failed to update leave request status.');
+      fetchLeavesAndEmployees();
     }
   };
 

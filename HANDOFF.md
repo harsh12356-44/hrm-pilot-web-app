@@ -129,9 +129,11 @@ git push origin main
 6. **Mobile Sidebar Drawer Auto-Close**: Integrated responsive auto-close handler for mobile viewports (< 768px).
 7. **Leave Tracker Quarter Switch Smooth Scroll (`/admin/leave-tracker`)**: Added smooth-scroll animation when switching between Q1, Q2, Q3, and Q4 quarter pills.
 8. **Full Live QA Audit**: Completed an end-to-end live testing audit across all 17 functional modules.
+9. **Leave Approval Status Persistence & Flicker Resolution**: Fixed leave request status updates across `/admin`, `/admin/leave-records`, `/admin/team-approvals`, `/manager`, and `/employee` by enhancing API matching, synchronizing `localStorage` entries, and resolving duplicate pending record overwrites.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
 - [x] **Item 2: Payroll Default Base Salary Presets (`/admin/payroll`)**: Completed ✓
 - [x] **Item 3: Mobile Sidebar Drawer Auto-Close**: Completed ✓
 - [x] **Item 4: Leave Tracker Quarter Switch Smooth Scroll (`/admin/leave-tracker`)**: Completed ✓
+- [x] **Item 5: Leave Approval Status Persistence & Flicker Resolution**: Completed ✓

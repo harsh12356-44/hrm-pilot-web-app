@@ -360,52 +360,52 @@ export async function PUT(request: Request) {
     const { id, record, status, approverRole, startDate, endDate, daysCount } = body;
 
     const db = getDbData();
-    let index = db.leaveRecords.findIndex(l => l.id === id);
+    const cleanId = id ? String(id).replace(/[^0-9]/g, '') : '';
+    
+    // Find all matching indices (exact ID, numeric suffix, or record employee+date match)
+    let matchingIndices: number[] = [];
 
-    // 1. Fallback matching if ID has numeric formatting differences (e.g. #538 vs l-1786529461538)
-    if (index === -1 && id) {
-      const cleanId = String(id).replace(/[^0-9]/g, '');
-      if (cleanId.length >= 3) {
-        index = db.leaveRecords.findIndex(l => {
-          const lClean = l.id.replace(/[^0-9]/g, '');
-          return lClean.endsWith(cleanId) || cleanId.endsWith(lClean);
-        });
+    db.leaveRecords.forEach((l, idx) => {
+      const isExact = l.id === id;
+      const lClean = l.id.replace(/[^0-9]/g, '');
+      const isCleanMatch = cleanId.length >= 3 && (lClean.endsWith(cleanId) || cleanId.endsWith(lClean));
+      const isRecordMatch = record && (l.employeeId === record.employeeId || l.employeeId === record.employeeName) && l.startDate === record.startDate;
+      
+      if (isExact || isCleanMatch || isRecordMatch) {
+        matchingIndices.push(idx);
       }
-    }
+    });
 
-    // 2. Fallback matching by record fields if provided
-    if (index === -1 && record) {
-      index = db.leaveRecords.findIndex(l =>
-        (l.employeeId === record.employeeId || l.employeeId === record.employeeName) &&
-        l.startDate === record.startDate
-      );
-    }
-
-    // 3. Robust Auto-Recovery: Insert record if missing from server db
-    if (index === -1) {
-      const fallbackRecord: LeaveRecord = record || {
+    // 3. Robust Auto-Recovery: Insert record with target status if missing from server db
+    if (matchingIndices.length === 0) {
+      const newHrStatus = status === 'APPROVED' ? 'Approved' : status === 'REJECTED' ? 'Rejected' : 'Pending';
+      const newMgrStatus = approverRole === 'MANAGER' ? (status === 'APPROVED' ? 'Approved' : status === 'REJECTED' ? 'Rejected' : 'Pending') : (status === 'APPROVED' ? 'Approved' : 'Pending');
+      const fallbackRecord: LeaveRecord = {
         id: id || `l-${Date.now()}`,
-        employeeId: body.employeeId || 'emp-8',
-        leaveType: body.leaveType || 'Casual Leave',
-        dayType: 'full',
-        startDate: startDate || '2026-08-15',
-        endDate: endDate || startDate || '2026-08-15',
-        daysCount: daysCount || 1,
-        quarter: 'Q3',
+        employeeId: record?.employeeId || body.employeeId || 'emp-8',
+        leaveType: record?.leaveType || body.leaveType || 'Casual Leave',
+        dayType: record?.dayType || 'full',
+        startDate: startDate || record?.startDate || '2026-08-15',
+        endDate: endDate || record?.endDate || startDate || record?.startDate || '2026-08-15',
+        daysCount: daysCount || record?.daysCount || 1,
+        quarter: record?.quarter || 'Q3',
         year: 2026,
         status: status || 'APPROVED',
-        managerStatus: approverRole === 'MANAGER' ? 'Approved' : 'Pending',
-        hrStatus: approverRole === 'HR Final Approver' ? 'Approved' : 'Pending',
-        note: 'Leave application',
+        managerStatus: newMgrStatus,
+        hrStatus: newHrStatus,
+        note: record?.note || 'Leave application',
         createdAt: new Date().toISOString(),
       };
       db.leaveRecords.unshift(fallbackRecord);
-      index = 0;
+      matchingIndices = [0];
     }
 
-    if (index !== -1) {
-      const oldVal = JSON.stringify(db.leaveRecords[index]);
-      const current = db.leaveRecords[index];
+    // Update ALL matching records to ensure no duplicate pending entries remain
+    let updatedRecord: LeaveRecord = db.leaveRecords[matchingIndices[0]];
+    
+    matchingIndices.forEach((idx) => {
+      const oldVal = JSON.stringify(db.leaveRecords[idx]);
+      const current = db.leaveRecords[idx];
 
       if (startDate) current.startDate = startDate;
       if (endDate) current.endDate = endDate;
@@ -440,7 +440,7 @@ export async function PUT(request: Request) {
         }
       }
 
-      logAudit(`Leave Request ${current.status}`, 'LeaveRecord', id, oldVal, JSON.stringify(current));
+      logAudit(`Leave Request ${current.status}`, 'LeaveRecord', current.id, oldVal, JSON.stringify(current));
 
       const emp = db.employees.find(e => e.id === current.employeeId);
       if (emp) {
@@ -448,24 +448,23 @@ export async function PUT(request: Request) {
           emp.id,
           'leave_status_updated',
           `Leave Request ${current.status}`,
-          `Your leave request #${id} status is now ${current.status}. Manager: ${current.managerStatus || 'Pending'}, HR: ${current.hrStatus || 'Pending'}.`
+          `Your leave request #${current.id} status is now ${current.status}. Manager: ${current.managerStatus || 'Pending'}, HR: ${current.hrStatus || 'Pending'}.`
         );
       }
+      updatedRecord = current;
+    });
 
-      await saveDbData(db);
+    await saveDbData(db);
 
-      const targetQuarter = current.quarter || 'Q3';
-      const summaries = getQuarterlyLeaveSummaries(targetQuarter, 'ALL');
+    const targetQuarter = updatedRecord.quarter || 'Q3';
+    const summaries = getQuarterlyLeaveSummaries(targetQuarter, 'ALL');
 
-      return NextResponse.json({
-        success: true,
-        record: current,
-        records: db.leaveRecords,
-        summaries,
-      });
-    }
-
-    return NextResponse.json({ error: 'Leave record not found' }, { status: 404 });
+    return NextResponse.json({
+      success: true,
+      record: updatedRecord,
+      records: db.leaveRecords,
+      summaries,
+    });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }

@@ -41,6 +41,15 @@ export default function ManagerPortalPage() {
     const newManagerStatus = action === 'APPROVED' ? 'Approved' : 'Rejected';
     const newStatus = action === 'REJECTED' ? 'REJECTED' : undefined;
 
+    const targetRecord = (leaves || []).find(l => l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, ''))));
+    const updatedTargetRecord = targetRecord
+      ? {
+          ...targetRecord,
+          managerStatus: newManagerStatus,
+          status: (newManagerStatus === 'Approved' && targetRecord.hrStatus === 'Approved') ? 'APPROVED' : newStatus || targetRecord.status,
+        }
+      : undefined;
+
     setLeaves(prev =>
       prev.map(l => {
         if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
@@ -55,16 +64,30 @@ export default function ManagerPortalPage() {
       })
     );
 
+    if (typeof window !== 'undefined') {
+      try {
+        const local = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+        if (Array.isArray(local) && local.length > 0) {
+          const updatedLocal = local.map((l: any) => {
+            if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
+              return { ...l, managerStatus: newManagerStatus, status: (newManagerStatus === 'Approved' && l.hrStatus === 'Approved') ? 'APPROVED' : newStatus || l.status };
+            }
+            return l;
+          });
+          localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedLocal));
+        }
+      } catch (e) {}
+    }
+
     setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
 
     try {
-      const targetRecord = (leaves || []).find(l => l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, ''))));
       const res = await fetch('/api/leaves', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id,
-          record: targetRecord,
+          record: updatedTargetRecord,
           status: action,
           approverRole: 'MANAGER',
         }),
