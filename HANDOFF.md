@@ -133,7 +133,8 @@ git push origin main
 10. **Leave Tracker Real-Time Dual-Approval Integration**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getQuarterlyLeaveSummaries` and `getEmployeeAllQuarters`) so leaves update Leave Tracker counts (Casual Used, Planned Used, Remaining, Utilization %) **ONLY ONCE fully approved by both Manager and HR**.
 11. **Completed Hours Import & Real-Time Working Hours Sync**: Enhanced [`/api/attendance`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) with flexible column title detection (`Employee ID`, `Emp Code`, `Completed Hours`, `Worked Hours`, `Date`), added Target Month & Year selection on [`/admin/attendance/import`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/attendance/import/page.tsx), and connected `attendanceUpdated` event to auto-refresh [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx).
 12. **Attendance Grid Persistence & Dual-Key Lookup Resolution**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getDbData`) to prioritize `data/db.json` so saved attendance records never vanish from server storage, and enhanced [`working-hours/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) `logsMap` to index logs under both `emp.id` (`emp-1`) and `emp.employeeId` (`RK001`) with `{ cache: 'no-store' }` dynamic fetching.
-13. **GET Attendance Canonical Matching & Working Hours Auto-Population**: Updated [`/api/attendance`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to canonicalize `employeeId` in enriched API responses and handle department Set lookups across IDs, employeeId strings, and names. Added 1-click month switcher and auto-populate action banner on [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) so attendance grids always render seamlessly.
+13. **GET Attendance Canonical Matching & Working Hours Sync**: Updated [`/api/attendance`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to canonicalize `employeeId` in enriched API responses and handle department Set lookups across IDs, employeeId strings, and names.
+14. **Removed Auto-Populate Hours Options**: Removed auto-populate action buttons and banner from [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) per user request to maintain clean manual/imported records.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -144,4 +145,5 @@ git push origin main
 - [x] **Item 6: Leave Tracker Dual-Approval Integration**: Completed ✓
 - [x] **Item 7: Completed Hours Import & Real-Time Working Hours Sync**: Completed ✓
 - [x] **Item 8: Attendance Grid Persistence & Dual-Key Lookup Resolution**: Completed ✓
-- [x] **Item 9: GET Attendance Canonical Matching & Working Hours Auto-Population**: Completed ✓
+- [x] **Item 9: GET Attendance Canonical Matching & Working Hours Sync**: Completed ✓
+- [x] **Item 10: Removed Auto-Populate Hours Options**: Completed ✓
