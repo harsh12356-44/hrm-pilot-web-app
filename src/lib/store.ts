@@ -483,11 +483,7 @@ function ensureDataDir(): void {
 let memoryDb: InitialState | null = (globalThis as any)._inMemoryDbData || null;
 
 export function getDbData(): InitialState {
-  if (memoryDb) {
-    return memoryDb;
-  }
-
-  // 1. Read from bundled data/db.json (primary persistent data store)
+  // 1. Read from persistent data/db.json file on disk
   try {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
@@ -514,7 +510,7 @@ export function getDbData(): InitialState {
         };
         (globalThis as any)._inMemoryDbData = memoryDb;
 
-        // Sync /tmp/hrm_db.json for serverless environments
+        // Sync /tmp/hrm_db.json for serverless lambdas
         try {
           fs.writeFileSync(TMP_DB_FILE, JSON.stringify(memoryDb, null, 2));
         } catch (e) {}
@@ -526,7 +522,7 @@ export function getDbData(): InitialState {
     console.warn('Error reading db.json, falling back to tmp store:', e);
   }
 
-  // 2. Try reading from writable /tmp directory if initialized (Vercel lambda fallback)
+  // 2. Try reading from writable /tmp directory (Vercel serverless fallback)
   try {
     if (fs.existsSync(TMP_DB_FILE)) {
       const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
@@ -539,6 +535,10 @@ export function getDbData(): InitialState {
     }
   } catch (e) {
     console.warn('Could not read from tmp db file:', e);
+  }
+
+  if (memoryDb) {
+    return memoryDb;
   }
 
   memoryDb = {
