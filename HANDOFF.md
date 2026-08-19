@@ -139,6 +139,7 @@ git push origin main
 16. **Dynamic Working Hours Time Period Auto-Switching**: Configured `attendanceUpdated` `CustomEvent` payload passing across [`AttendanceLogTab.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx), [`attendance/import/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/attendance/import/page.tsx), and [`working-hours/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) so that Working Hours automatically updates its target month and year filters to match the exact updated time period and re-fetches grid data dynamically.
 17. **Disk Storage Enforcement & Anti-Flicker Resolution**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getDbData`) to re-sync directly from persistent disk JSON (`data/db.json`) on every call before falling back to memory snapshots. Added `export const dynamic = 'force-dynamic'` and `export const revalidate = 0` to API routes so serverless lambda instances and Next.js HMR modules never return stale cached state.
 18. **Monthly Punches Object Array Matrix Parsing Fix**: Updated [`biometricParser.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/biometricParser.ts) (`parseBiometricPunches`) to support object array matrices where day numbers `1` through `31` are key properties on row objects (e.g. `row["1"] = "10:54\n19:54"`), correctly populating biometric check-in/out, WO, HD, and absent records for uploaded sheets.
+19. **Vercel Seed Database & Read-Write Priority Resolution**: Committed all 5,000+ imported attendance records into [`data/db.json`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/data/db.json) so Vercel builds with the complete seed database. Re-ordered `getDbData()` in [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) to prioritize `memoryDb` and `/tmp/hrm_db.json` over Vercel's read-only filesystem layer.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -155,3 +156,4 @@ git push origin main
 - [x] **Item 12: Dynamic Working Hours Time Period Auto-Switching**: Completed ✓
 - [x] **Item 13: Disk Storage Enforcement & Anti-Flicker Resolution**: Completed ✓
 - [x] **Item 14: Monthly Punches Object Array Matrix Parsing Fix**: Completed ✓
+- [x] **Item 15: Vercel Seed Database & Read-Write Priority Resolution**: Completed ✓
