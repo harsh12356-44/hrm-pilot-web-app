@@ -149,13 +149,15 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   const setRoleCookie = (role: 'ADMIN' | 'MANAGER' | 'EMPLOYEE') => {
     if (typeof window !== 'undefined') {
       const activeId = localStorage.getItem('hrm_active_employee_id');
-      const isRavinaAdmin = activeId === 'emp-1' || localStorage.getItem('hrm_active_employee_role') === 'ADMIN';
+      const isRavinaAdmin = activeId === 'emp-1' || activeId === 'rk001';
 
       if (isRavinaAdmin) {
         document.cookie = `hrm_user_role=ADMIN; path=/; max-age=86400`;
+        localStorage.setItem('hrm_active_employee_role', 'ADMIN');
       } else {
-        document.cookie = `hrm_user_role=${role}; path=/; max-age=86400`;
-        localStorage.setItem('hrm_active_employee_role', role);
+        const safeRole = role === 'ADMIN' ? 'MANAGER' : role;
+        document.cookie = `hrm_user_role=${safeRole}; path=/; max-age=86400`;
+        localStorage.setItem('hrm_active_employee_role', safeRole);
       }
       window.dispatchEvent(new Event('roleChange'));
     }
@@ -168,10 +170,13 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
     router.push(targetUrl);
   };
 
+  const activeEmpId = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : null;
+  const isRavinaUser = activeEmpId === 'emp-1' || activeEmpId === 'rk001' || currentRole === 'ADMIN';
+
   return (
     <header className="bg-white border-b border-slate-200 text-slate-900 sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-sm transition-colors duration-300">
       <div className="flex items-center space-x-6">
-        <Link href="/admin" onClick={() => setRoleCookie('ADMIN')} className="flex items-center space-x-3">
+        <Link href={isRavinaUser ? "/admin" : "/employee"} onClick={() => setRoleCookie(isRavinaUser ? 'ADMIN' : 'EMPLOYEE')} className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-lg shadow-md text-white">
             H
           </div>
@@ -185,9 +190,9 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           </div>
         </Link>
 
-        {/* Dynamic Portal Switcher Links (Restricted for regular Employees) */}
-        {currentRole !== 'EMPLOYEE' && (
-          <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1">
+        {/* Dynamic Portal Switcher Links (Restricted for regular Employees; HR Admin Suite strictly for Ravina) */}
+        <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1">
+          {isRavinaUser && (
             <Link
               href="/admin"
               onClick={() => setRoleCookie('ADMIN')}
@@ -200,7 +205,9 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>HR Admin Suite</span>
             </Link>
+          )}
 
+          {currentRole !== 'EMPLOYEE' && (
             <Link
               href="/manager"
               onClick={() => setRoleCookie('MANAGER')}
@@ -213,21 +220,21 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
               <UserCheck2 className="w-3.5 h-3.5" />
               <span>Manager Desk</span>
             </Link>
+          )}
 
-            <Link
-              href="/employee"
-              onClick={() => setRoleCookie('EMPLOYEE')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-                pathname === '/employee'
-                  ? 'bg-emerald-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-              }`}
-            >
-              <User className="w-3.5 h-3.5" />
-              <span>Employee Portal</span>
-            </Link>
-          </div>
-        )}
+          <Link
+            href="/employee"
+            onClick={() => setRoleCookie('EMPLOYEE')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+              pathname === '/employee'
+                ? 'bg-emerald-600 text-white shadow-sm'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+            }`}
+          >
+            <User className="w-3.5 h-3.5" />
+            <span>Employee Portal</span>
+          </Link>
+        </div>
       </div>
 
       <div className="flex items-center space-x-3 sm:space-x-4">

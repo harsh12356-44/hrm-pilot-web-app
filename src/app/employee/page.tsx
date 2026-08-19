@@ -482,6 +482,16 @@ function EmployeePortalContent() {
                   setSelectedEmployeeId(newId);
                   if (typeof window !== 'undefined') {
                     localStorage.setItem('hrm_active_employee_id', newId);
+                    const selectedEmp = safeAllEmployees.find(emp => emp.id === newId || emp.employeeId === newId);
+                    const isRavina = newId === 'emp-1' || (selectedEmp && selectedEmp.employeeId === 'RK001');
+                    if (isRavina) {
+                      localStorage.setItem('hrm_active_employee_role', 'ADMIN');
+                      document.cookie = `hrm_user_role=ADMIN; path=/; max-age=86400`;
+                    } else {
+                      const empRole = (selectedEmp && selectedEmp.role) || 'EMPLOYEE';
+                      localStorage.setItem('hrm_active_employee_role', empRole);
+                      document.cookie = `hrm_user_role=${empRole}; path=/; max-age=86400`;
+                    }
                     window.dispatchEvent(new Event('employeeChanged'));
                     window.dispatchEvent(new Event('roleChange'));
                   }

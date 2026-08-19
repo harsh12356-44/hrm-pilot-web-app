@@ -82,14 +82,17 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
     };
   }, [role, pathname]);
 
-  // Determine effective role based on current path
-  const effectiveRole = pathname.startsWith('/employee')
-    ? 'EMPLOYEE'
+  // Determine effective role based on current path and active user identity
+  const storedEmpId = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : null;
+  const isRavinaKhimani = storedEmpId === 'emp-1' || storedEmpId === 'rk001';
+
+  const effectiveRole = isRavinaKhimani && pathname.startsWith('/admin')
+    ? 'ADMIN'
     : pathname.startsWith('/manager')
     ? 'MANAGER'
-    : activeRole;
+    : 'EMPLOYEE';
 
-  // 1. Admin Suite Sections
+  // 1. Admin Suite Sections (Strictly for Ravina Khimani)
   const adminSections = [
     {
       title: 'CORE MANAGEMENT',
@@ -129,7 +132,7 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
     },
   ];
 
-  // 2. Employee Portal Menu Options
+  // 2. Employee & Manager Portal Menu Options
   const employeeSections = [
     {
       title: '',
@@ -152,8 +155,8 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
   return (
     <aside className="w-68 bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between shrink-0 transition-all duration-200">
       <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
-        {/* Admin Quick Switch Back Banner if viewing Manager/Employee Portal */}
-        {(activeRole === 'ADMIN' || (typeof window !== 'undefined' && localStorage.getItem('hrm_active_employee_role') === 'ADMIN')) && effectiveRole !== 'ADMIN' && (
+        {/* Admin Quick Switch Back Banner (Strictly for Ravina Khimani when navigating outside Admin mode) */}
+        {isRavinaKhimani && effectiveRole !== 'ADMIN' && (
           <Link
             href="/admin"
             className="flex items-center space-x-2 px-3.5 py-2.5 bg-blue-600/20 border border-blue-500/40 rounded-xl text-blue-300 hover:bg-blue-600/30 transition text-xs font-bold shadow-md mb-2"
