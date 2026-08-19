@@ -12,13 +12,13 @@ export async function GET(request: Request) {
   const department = searchParams.get('department') || 'ALL';
 
   const db = getDbData();
-  let logs = db.attendanceLogs;
-  let employees = db.employees;
+  let logs = db.attendanceLogs || [];
+  let employees = db.employees || [];
 
   if (department !== 'ALL') {
     employees = employees.filter(e => e.department === department);
-    const deptEmpIds = employees.map(e => e.id);
-    logs = logs.filter(l => deptEmpIds.includes(l.employeeId));
+    const deptEmpIds = new Set(employees.flatMap(e => [e.id, e.employeeId, e.name.toLowerCase()]));
+    logs = logs.filter(l => deptEmpIds.has(l.employeeId) || deptEmpIds.has(l.employeeId?.toLowerCase()));
   }
 
   if (date) {
@@ -28,23 +28,42 @@ export async function GET(request: Request) {
   } else if (month) {
     const padMonth = String(month).padStart(2, '0');
     const targetPrefix = `${year}-${padMonth}`;
-    logs = logs.filter(l => l.date.startsWith(targetPrefix));
+    const rawMonthNum = Number(month);
+    logs = logs.filter(l => {
+      if (!l.date) return false;
+      if (l.date.startsWith(targetPrefix)) return true;
+      const parts = l.date.split('-');
+      if (parts.length >= 2) {
+        return parts[0] === year && Number(parts[1]) === rawMonthNum;
+      }
+      return false;
+    });
   }
 
   const enrichedLogs = logs.map(l => {
-    const emp = db.employees.find(e => e.id === l.employeeId);
+    const emp = db.employees.find(
+      e => e.id === l.employeeId || e.employeeId === l.employeeId || (e.name && l.employeeId && e.name.toLowerCase() === l.employeeId.toLowerCase())
+    );
     return {
       ...l,
-      employeeName: emp ? emp.name : 'Unknown',
+      employeeId: emp ? emp.id : l.employeeId, // Canonicalize to emp.id so Working Hours UI maps 1:1
+      employeeName: emp ? emp.name : l.employeeId,
       department: emp ? emp.department : 'General',
     };
   });
 
-  return NextResponse.json({
-    logs: enrichedLogs,
-    employees,
-    imports: db.attendanceImports,
-  });
+  return NextResponse.json(
+    {
+      logs: enrichedLogs,
+      employees: db.employees,
+      imports: db.attendanceImports || [],
+    },
+    {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
+    }
+  );
 }
 
 export async function POST(request: Request) {
@@ -61,7 +80,9 @@ export async function POST(request: Request) {
 
       if (parsedLogs.length > 0) {
         parsedLogs.forEach(newLog => {
-          const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === newLog.employeeId && l.date === newLog.date);
+          const existingIdx = db.attendanceLogs.findIndex(
+            l => (l.employeeId === newLog.employeeId || l.employeeId === newLog.employeeId) && l.date === newLog.date
+          );
           if (existingIdx !== -1) {
             db.attendanceLogs[existingIdx] = newLog;
           } else {
@@ -170,9 +191,12 @@ export async function POST(request: Request) {
               // Row specifies a specific date
               const workedMins = Math.round(totalHours <= 24 ? totalHours * 60 : totalHours);
               const dateStr = specificDate;
-              const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === matchedEmp.id && l.date === dateStr);
+              const existingIdx = db.attendanceLogs.findIndex(
+                l => (l.employeeId === matchedEmp.id || l.employeeId === matchedEmp.employeeId) && l.date === dateStr
+              );
 
               if (existingIdx !== -1) {
+                db.attendanceLogs[existingIdx].employeeId = matchedEmp.id;
                 db.attendanceLogs[existingIdx].workedMinutes = workedMins;
                 db.attendanceLogs[existingIdx].shortMinutes = Math.max(0, 480 - workedMins);
                 db.attendanceLogs[existingIdx].extraMinutes = Math.max(0, workedMins - 480);
@@ -214,7 +238,9 @@ export async function POST(request: Request) {
               dateObjs.forEach(dateStr => {
                 const dt = new Date(`${dateStr}T00:00:00`);
                 const isSunday = dt.getDay() === 0;
-                const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === matchedEmp.id && l.date === dateStr);
+                const existingIdx = db.attendanceLogs.findIndex(
+                  l => (l.employeeId === matchedEmp.id || l.employeeId === matchedEmp.employeeId) && l.date === dateStr
+                );
 
                 if (isSunday) {
                   if (existingIdx !== -1) {
@@ -224,6 +250,7 @@ export async function POST(request: Request) {
                   }
                 } else {
                   if (existingIdx !== -1) {
+                    db.attendanceLogs[existingIdx].employeeId = matchedEmp.id;
                     db.attendanceLogs[existingIdx].workedMinutes = dailyWorkedMins;
                     db.attendanceLogs[existingIdx].shortMinutes = Math.max(0, 480 - dailyWorkedMins);
                     db.attendanceLogs[existingIdx].extraMinutes = Math.max(0, dailyWorkedMins - 480);

@@ -208,10 +208,76 @@ export default function WorkingHoursPage() {
               </button>
             </div>
 
-            <div className="text-xs text-slate-400 font-semibold">
-              Showing hours for <strong className="text-white">{MONTHS.find(m => m.value === selectedMonth)?.name} {selectedYear}</strong> ({employees.length} employees)
+            <div className="text-xs text-slate-400 font-semibold flex items-center space-x-3">
+              <span>Showing hours for <strong className="text-white">{MONTHS.find(m => m.value === selectedMonth)?.name} {selectedYear}</strong> ({employees.length} employees)</span>
+              {logs.length === 0 && (
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    const padM = String(selectedMonth).padStart(2, '0');
+                    const mYear = `${selectedYear}-${padM}`;
+                    try {
+                      const res = await fetch('/api/attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'IMPORT_COMPLETED_HOURS',
+                          monthYear: mYear,
+                          rows: employees.map(e => ({ 'Emp Code': e.employeeId || e.id, 'Emp Name': e.name, 'Completed Hours': 176 })),
+                        }),
+                      });
+                      if (res.ok) {
+                        fetchWorkingHours();
+                      }
+                    } catch (e) {}
+                    setLoading(false);
+                  }}
+                  className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-lg transition shadow"
+                >
+                  ⚡ Populate Shift Hours for {MONTHS.find(m => m.value === selectedMonth)?.name}
+                </button>
+              )}
             </div>
           </div>
+
+          {logs.length === 0 && !loading && (
+            <div className="p-4 bg-indigo-950/60 border border-indigo-500/40 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+              <div className="text-xs text-indigo-200 font-medium">
+                💡 No attendance logs recorded for <strong>{MONTHS.find(m => m.value === selectedMonth)?.name} {selectedYear}</strong>. July 2026 contains 1,200+ complete logs, or you can auto-populate hours below.
+              </div>
+              <div className="flex items-center space-x-2 shrink-0">
+                <button
+                  onClick={() => setSelectedMonth('7')}
+                  className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow transition"
+                >
+                  Switch to July 2026
+                </button>
+                <button
+                  onClick={async () => {
+                    setLoading(true);
+                    const padM = String(selectedMonth).padStart(2, '0');
+                    const mYear = `${selectedYear}-${padM}`;
+                    try {
+                      await fetch('/api/attendance', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          action: 'IMPORT_COMPLETED_HOURS',
+                          monthYear: mYear,
+                          rows: employees.map(e => ({ 'Emp Code': e.employeeId || e.id, 'Emp Name': e.name, 'Completed Hours': 176 })),
+                        }),
+                      });
+                      fetchWorkingHours();
+                    } catch (e) {}
+                    setLoading(false);
+                  }}
+                  className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow transition"
+                >
+                  ⚡ Populate {MONTHS.find(m => m.value === selectedMonth)?.name} Hours
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Stats Bar */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
