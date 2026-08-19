@@ -137,6 +137,7 @@ git push origin main
 14. **Removed Auto-Populate Hours Options**: Removed auto-populate action buttons and banner from [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) per user request to maintain clean manual/imported records.
 15. **Direct Import Working Hours Modal Integration**: Added a prominent **Import Working Hours** button and interactive modal dialog directly to [`/admin/working-hours`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx), enabling drag-and-drop spreadsheet uploads (`.csv`, `.xlsx`, `.xls`), target month selection, live row preview, and immediate grid auto-refresh.
 16. **Dynamic Working Hours Time Period Auto-Switching**: Configured `attendanceUpdated` `CustomEvent` payload passing across [`AttendanceLogTab.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/AttendanceLogTab.tsx), [`attendance/import/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/attendance/import/page.tsx), and [`working-hours/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/admin/working-hours/page.tsx) so that Working Hours automatically updates its target month and year filters to match the exact updated time period and re-fetches grid data dynamically.
+17. **Disk Storage Enforcement & Anti-Flicker Resolution**: Updated [`store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) (`getDbData`) to re-sync directly from persistent disk JSON (`data/db.json`) on every call before falling back to memory snapshots. Added `export const dynamic = 'force-dynamic'` and `export const revalidate = 0` to API routes so serverless lambda instances and Next.js HMR modules never return stale cached state.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -151,3 +152,4 @@ git push origin main
 - [x] **Item 10: Removed Auto-Populate Hours Options**: Completed ✓
 - [x] **Item 11: Direct Import Working Hours Modal Integration**: Completed ✓
 - [x] **Item 12: Dynamic Working Hours Time Period Auto-Switching**: Completed ✓
+- [x] **Item 13: Disk Storage Enforcement & Anti-Flicker Resolution**: Completed ✓
