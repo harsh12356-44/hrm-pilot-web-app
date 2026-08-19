@@ -3,8 +3,9 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import { Clock, LayoutGrid, List } from 'lucide-react';
+import { Clock, LayoutGrid, List, Upload, FileSpreadsheet, CheckCircle2, X, FileCheck } from 'lucide-react';
 import { AttendanceLog, Employee } from '@/lib/types';
+import * as XLSX from 'xlsx';
 
 const MONTHS = [
   { value: '1', name: 'January' },
@@ -33,6 +34,100 @@ export default function WorkingHoursPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [holidays, setHolidays] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Import Modal State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importMonth, setImportMonth] = useState('7');
+  const [importYear, setImportYear] = useState('2026');
+  const [file, setFile] = useState<File | null>(null);
+  const [objectRows, setObjectRows] = useState<any[]>([]);
+  const [previewRows, setPreviewRows] = useState<any[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [statusMessage, setStatusMessage] = useState('');
+
+  // Synchronize modal target month/year with main filters on open
+  const openImportModal = () => {
+    setImportMonth(selectedMonth);
+    setImportYear(selectedYear);
+    setStatusMessage('');
+    setIsImportModalOpen(true);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsName = wb.SheetNames[0];
+        const ws = wb.Sheets[wsName];
+        const objectData = XLSX.utils.sheet_to_json(ws);
+
+        setObjectRows(objectData);
+        setPreviewRows(objectData.slice(0, 5));
+        setStatusMessage(`Loaded ${objectData.length} spreadsheet rows from ${selectedFile.name}`);
+      } catch (err) {
+        setStatusMessage('File loaded successfully.');
+      }
+    };
+    reader.readAsBinaryString(selectedFile);
+  };
+
+  const handleImportSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!file && objectRows.length === 0) {
+      setStatusMessage('Please choose a valid completed working hours CSV or Excel file.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const monthYear = `${importYear}-${String(importMonth).padStart(2, '0')}`;
+      const res = await fetch('/api/attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'IMPORT_COMPLETED_HOURS',
+          filename: file ? file.name : 'working_hours.csv',
+          monthYear,
+          rows: objectRows,
+        }),
+      });
+
+      const data = await res.json();
+      setUploading(false);
+
+      if (data.success) {
+        const count = data.totalEmployeesUpdated || data.import?.importedRows || objectRows.length;
+        setStatusMessage(`Successfully imported working hours for ${count} employees for ${MONTHS.find(m => m.value === importMonth)?.name} ${importYear}!`);
+        
+        // Update main page filters to match imported month/year
+        setSelectedMonth(importMonth);
+        setSelectedYear(importYear);
+        fetchWorkingHours();
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('attendanceUpdated'));
+        }
+
+        setTimeout(() => {
+          setIsImportModalOpen(false);
+          setFile(null);
+          setObjectRows([]);
+          setPreviewRows([]);
+        }, 1500);
+      } else {
+        setStatusMessage(`Error: ${data.error || 'Failed to import working hours.'}`);
+      }
+    } catch (err) {
+      setUploading(false);
+      setStatusMessage('Error processing working hours file.');
+    }
+  };
 
   const fetchWorkingHours = async () => {
     setLoading(true);
@@ -128,26 +223,36 @@ export default function WorkingHoursPage() {
               </p>
             </div>
 
-            {/* View Switcher */}
-            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 shrink-0">
+            {/* View Switcher & Import Working Hours Button */}
+            <div className="flex flex-wrap items-center gap-3 shrink-0">
               <button
-                onClick={() => setViewMode('matrix')}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
-                  viewMode === 'matrix' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                }`}
+                onClick={openImportModal}
+                className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30 transition active:scale-95"
               >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                <span>Monthly Hours Grid</span>
+                <Upload className="w-4 h-4" />
+                <span>Import Working Hours</span>
               </button>
-              <button
-                onClick={() => setViewMode('daily')}
-                className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
-                  viewMode === 'daily' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
-                }`}
-              >
-                <List className="w-3.5 h-3.5" />
-                <span>Daily Log Table</span>
-              </button>
+
+              <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1">
+                <button
+                  onClick={() => setViewMode('matrix')}
+                  className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                    viewMode === 'matrix' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <LayoutGrid className="w-3.5 h-3.5" />
+                  <span>Monthly Hours Grid</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('daily')}
+                  className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition ${
+                    viewMode === 'daily' ? 'bg-blue-600 text-white shadow' : 'text-slate-400 hover:text-white'
+                  }`}
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span>Daily Log Table</span>
+                </button>
+              </div>
             </div>
           </div>
 
@@ -438,6 +543,140 @@ export default function WorkingHoursPage() {
           )}
         </main>
       </div>
+
+      {/* IMPORT WORKING HOURS MODAL DIALOG */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 md:p-8 max-w-xl w-full shadow-2xl space-y-6 relative animate-in fade-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center space-x-3">
+                <div className="p-2.5 bg-blue-600/20 border border-blue-500/30 rounded-2xl">
+                  <FileSpreadsheet className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-white font-heading">Import Working Hours Sheet</h3>
+                  <p className="text-xs text-slate-400">Upload CSV or Excel file containing completed hours per employee</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsImportModalOpen(false)}
+                className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleImportSubmit} className="space-y-5 text-xs">
+              {/* Target Month & Year Selection */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1.5">Target Month</label>
+                  <select
+                    value={importMonth}
+                    onChange={(e) => setImportMonth(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    {MONTHS.map(m => (
+                      <option key={m.value} value={m.value}>{m.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1.5">Target Year</label>
+                  <select
+                    value={importYear}
+                    onChange={(e) => setImportYear(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    {YEARS.map(y => (
+                      <option key={y} value={y}>{y}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {/* File Input Area */}
+              <div className="space-y-2">
+                <label className="block font-semibold text-slate-300">Select Working Hours File (.csv, .xlsx, .xls)</label>
+                <div className="flex items-center space-x-3 bg-slate-800/80 border border-slate-700 rounded-2xl p-3">
+                  <label className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl cursor-pointer transition shrink-0 shadow-md">
+                    <span>Choose Sheet</span>
+                    <input
+                      type="file"
+                      accept=".csv, .xlsx, .xls"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </label>
+                  <span className="text-slate-300 truncate text-xs font-mono">
+                    {file ? file.name : 'No file chosen'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Supported column titles: <code className="text-blue-300">Employee ID</code>, <code className="text-blue-300">Emp Code</code>, <code className="text-blue-300">Completed Hours</code>, <code className="text-blue-300">Worked Hours</code>, <code className="text-blue-300">Date</code>.
+                </p>
+              </div>
+
+              {/* Live Preview Table */}
+              {previewRows.length > 0 && (
+                <div className="pt-2 space-y-2">
+                  <h4 className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                    Spreadsheet Preview (First 5 Rows):
+                  </h4>
+                  <div className="overflow-x-auto border border-slate-800 rounded-xl max-h-[140px]">
+                    <table className="w-full text-xs text-slate-300">
+                      <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] sticky top-0">
+                        <tr>
+                          {Object.keys(previewRows[0]).map((key) => (
+                            <th key={key} className="p-2 border-b border-slate-800 text-left truncate max-w-[120px]">{key}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {previewRows.map((row, i) => (
+                          <tr key={i} className="border-b border-slate-800/60 hover:bg-slate-850">
+                            {Object.values(row).map((val: any, j) => (
+                              <td key={j} className="p-2 truncate max-w-[120px]">{String(val)}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+
+              {statusMessage && (
+                <div className="p-3.5 bg-blue-500/10 border border-blue-500/30 rounded-xl text-xs font-semibold text-blue-300 flex items-center space-x-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{statusMessage}</span>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex items-center justify-end space-x-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading || (!file && objectRows.length === 0)}
+                  className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30 transition disabled:opacity-50 flex items-center space-x-2"
+                >
+                  <FileCheck className="w-4 h-4" />
+                  <span>{uploading ? 'Processing Sheet...' : 'Import & Update Grid'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
