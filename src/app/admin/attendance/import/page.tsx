@@ -8,11 +8,14 @@ import * as XLSX from 'xlsx';
 
 export default function AttendanceImportPage() {
   const [uploadType, setUploadType] = useState<'Monthly Punches Upload' | 'Completed Hours'>('Monthly Punches Upload');
+  const [selectedMonth, setSelectedMonth] = useState('8'); // August 2026 default
+  const [selectedYear, setSelectedYear] = useState('2026');
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [previewRows, setPreviewRows] = useState<any[]>([]);
   const [fullRawRows, setFullRawRows] = useState<any[]>([]);
+  const [objectRows, setObjectRows] = useState<any[]>([]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -29,9 +32,10 @@ export default function AttendanceImportPage() {
         const rawMatrix = XLSX.utils.sheet_to_json(ws, { header: 1 });
         const objectData = XLSX.utils.sheet_to_json(ws);
 
-        setFullRawRows(rawMatrix.length > 0 ? rawMatrix : objectData);
+        setFullRawRows(rawMatrix);
+        setObjectRows(objectData);
         setPreviewRows(objectData.slice(0, 5));
-        setStatusMessage(`Loaded ${rawMatrix.length || objectData.length} rows from ${selectedFile.name}`);
+        setStatusMessage(`Loaded ${objectData.length || rawMatrix.length} rows from ${selectedFile.name}`);
       } catch (err) {
         setStatusMessage('Loaded file ready for processing.');
         setPreviewRows([
@@ -45,7 +49,7 @@ export default function AttendanceImportPage() {
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file && fullRawRows.length === 0 && previewRows.length === 0) {
+    if (!file && objectRows.length === 0 && fullRawRows.length === 0 && previewRows.length === 0) {
       setStatusMessage('Please select a biometric punches or completed hours spreadsheet file.');
       return;
     }
@@ -53,23 +57,29 @@ export default function AttendanceImportPage() {
     setUploading(true);
     try {
       const action = uploadType === 'Monthly Punches Upload' ? 'IMPORT_MONTHLY_PUNCHES' : 'IMPORT_COMPLETED_HOURS';
+      const monthYear = `${selectedYear}-${String(selectedMonth).padStart(2, '0')}`;
+      const payloadRows = objectRows.length > 0 ? objectRows : fullRawRows.length > 0 ? fullRawRows : previewRows;
+
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           action,
           filename: file ? file.name : `${uploadType.toLowerCase().replace(/ /g, '_')}.csv`,
-          monthYear: '2026-07',
-          rows: fullRawRows.length > 0 ? fullRawRows : previewRows,
+          monthYear,
+          rows: payloadRows,
         }),
       });
 
       const data = await res.json();
       setUploading(false);
       if (data.success) {
-        const count = data.totalLogsParsed || data.import?.importedRows || 0;
+        const count = data.totalLogsParsed || data.totalEmployeesUpdated || data.import?.importedRows || 0;
         const emps = data.import?.totalEmployees || 0;
-        setStatusMessage(`Successfully imported ${count} biometric punch records across ${emps} employees! Attendance logs updated.`);
+        setStatusMessage(`Successfully imported completed hours records across ${emps || count} employees for ${monthYear}! Working Hours updated.`);
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('attendanceUpdated'));
+        }
       } else {
         setStatusMessage(`Error: ${data.error || 'Failed to import file'}`);
       }
@@ -112,6 +122,49 @@ export default function AttendanceImportPage() {
                   <option value="Monthly Punches Upload">Monthly Punches Upload</option>
                   <option value="Completed Hours">Completed Hours</option>
                 </select>
+              </div>
+
+              {/* Target Month & Year Selection */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1.5">
+                    Target Month
+                  </label>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="1">January</option>
+                    <option value="2">February</option>
+                    <option value="3">March</option>
+                    <option value="4">April</option>
+                    <option value="5">May</option>
+                    <option value="6">June</option>
+                    <option value="7">July</option>
+                    <option value="8">August</option>
+                    <option value="9">September</option>
+                    <option value="10">October</option>
+                    <option value="11">November</option>
+                    <option value="12">December</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block font-semibold text-slate-300 mb-1.5">
+                    Target Year
+                  </label>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium focus:border-blue-500 focus:outline-none"
+                  >
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026">2026</option>
+                    <option value="2027">2027</option>
+                  </select>
+                </div>
               </div>
 
               {/* File Input */}

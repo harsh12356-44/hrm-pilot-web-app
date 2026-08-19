@@ -64,6 +64,16 @@ export default function WorkingHoursPage() {
 
   useEffect(() => {
     fetchWorkingHours();
+
+    const handleUpdate = () => fetchWorkingHours();
+    if (typeof window !== 'undefined') {
+      window.addEventListener('attendanceUpdated', handleUpdate);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('attendanceUpdated', handleUpdate);
+      }
+    };
   }, [selectedMonth, selectedYear, department]);
 
   const totalDaysInMonth = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();

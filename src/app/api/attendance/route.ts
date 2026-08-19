@@ -94,21 +94,25 @@ export async function POST(request: Request) {
     // 2. Completed Hours Import
     if (body.action === 'IMPORT_COMPLETED_HOURS') {
       const rows = body.rows || [];
+      const monthYear = body.monthYear || '2026-08';
+      const [targetYear, targetMonth] = monthYear.split('-').map(Number);
+      const totalDaysInMonth = new Date(targetYear, targetMonth, 0).getDate();
       let importedCount = 0;
 
       if (Array.isArray(rows) && rows.length > 0) {
-        const is2D = Array.isArray(rows[0]);
-
         rows.forEach((row: any) => {
           if (!row) return;
 
           let rawEmpCode = '';
           let rawEmpName = '';
           let totalHours = 0;
+          let specificDate = '';
 
-          if (is2D) {
+          if (Array.isArray(row)) {
+            // 2D Array format: row = [Code/ID, Name, ..., Hours]
             rawEmpCode = String(row[0] || '').trim();
-            rawEmpName = String(row[2] || row[1] || '').trim();
+            rawEmpName = String(row[1] || row[2] || '').trim();
+
             for (let c = row.length - 1; c >= 0; c--) {
               const val = parseFloat(String(row[c]));
               if (!isNaN(val) && val > 0 && val < 500) {
@@ -117,39 +121,62 @@ export async function POST(request: Request) {
               }
             }
           } else {
-            rawEmpCode = String(row.employeeId || row.EmployeeID || row.empId || row['Emp Code'] || '').trim();
-            rawEmpName = String(row.employeeName || row.EmployeeName || row.name || row['Emp Name'] || '').trim();
-            totalHours = Number(row.completedHours || row.TotalHours || row.hours || row['Completed Hours'] || row['Total Hours'] || row['Worked Hours']) || 176;
+            // Object format: row = { "Emp Code": "HB001", "Emp Name": "Harsh", "Completed Hours": 180, ... }
+            const keys = Object.keys(row);
+            const findVal = (patterns: string[]) => {
+              const matchedKey = keys.find(k => patterns.some(p => k.toLowerCase().replace(/[^a-z0-9]/g, '').includes(p)));
+              return matchedKey ? String(row[matchedKey] || '').trim() : '';
+            };
+
+            rawEmpCode = findVal(['employeeid', 'empcode', 'code', 'empid', 'id']);
+            rawEmpName = findVal(['employeename', 'empname', 'name', 'fullname', 'staffname']);
+            specificDate = findVal(['date', 'workdate', 'attendancedate']);
+
+            const hoursValStr = findVal(['completedhours', 'totalhours', 'workedhours', 'hours', 'nethours', 'shifthours', 'completed', 'worked']);
+            if (hoursValStr) {
+              const numVal = parseFloat(hoursValStr);
+              if (!isNaN(numVal) && numVal > 0) {
+                totalHours = numVal;
+              }
+            }
           }
 
+          // Skip header row if rawEmpCode or rawEmpName looks like a column title
+          if (rawEmpCode.toLowerCase().includes('code') || rawEmpName.toLowerCase().includes('name') || rawEmpCode.toLowerCase().includes('employee')) return;
           if (!rawEmpName && !rawEmpCode) return;
 
           const matchedEmp = db.employees.find(e => {
-            if (rawEmpCode && (e.id === rawEmpCode || e.employeeId === rawEmpCode)) return true;
+            if (rawEmpCode && (
+              e.id.toLowerCase() === rawEmpCode.toLowerCase() || 
+              e.employeeId.toLowerCase() === rawEmpCode.toLowerCase() ||
+              (rawEmpCode.replace(/[^0-9]/g, '') && e.id.replace(/[^0-9]/g, '') === rawEmpCode.replace(/[^0-9]/g, ''))
+            )) return true;
+
             if (rawEmpName) {
               const sysName = e.name.toLowerCase().trim();
               const inputName = rawEmpName.toLowerCase().trim();
               if (sysName.includes(inputName) || inputName.includes(sysName)) return true;
-              if (sysName.split(' ')[0] === inputName.split(' ')[0] && inputName.split(' ')[0].length > 2) return true;
+              const inputFirst = inputName.split(' ')[0];
+              const sysFirst = sysName.split(' ')[0];
+              if (inputFirst.length >= 3 && sysFirst === inputFirst) return true;
             }
             return false;
           });
 
           if (matchedEmp) {
             importedCount++;
-            const monthYear = body.monthYear || '2026-07';
-            const totalDaysInMonth = new Date(2026, 7, 0).getDate();
-            const avgMinsPerDay = Math.round((totalHours * 60) / totalDaysInMonth);
 
-            for (let day = 1; day <= totalDaysInMonth; day++) {
-              const dayStr = String(day).padStart(2, '0');
-              const dateStr = `${monthYear}-${dayStr}`;
+            if (specificDate && specificDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              // Row specifies a specific date
+              const workedMins = Math.round(totalHours <= 24 ? totalHours * 60 : totalHours);
+              const dateStr = specificDate;
               const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === matchedEmp.id && l.date === dateStr);
 
               if (existingIdx !== -1) {
-                db.attendanceLogs[existingIdx].workedMinutes = avgMinsPerDay;
-                db.attendanceLogs[existingIdx].shortMinutes = Math.max(0, 480 - avgMinsPerDay);
-                db.attendanceLogs[existingIdx].extraMinutes = Math.max(0, avgMinsPerDay - 480);
+                db.attendanceLogs[existingIdx].workedMinutes = workedMins;
+                db.attendanceLogs[existingIdx].shortMinutes = Math.max(0, 480 - workedMins);
+                db.attendanceLogs[existingIdx].extraMinutes = Math.max(0, workedMins - 480);
+                db.attendanceLogs[existingIdx].attendanceCode = workedMins > 0 ? 'P' : 'A';
               } else {
                 db.attendanceLogs.push({
                   id: `att-${matchedEmp.id}-${dateStr}`,
@@ -157,15 +184,68 @@ export async function POST(request: Request) {
                   date: dateStr,
                   checkIn: '09:00',
                   checkOut: '18:00',
-                  workedMinutes: avgMinsPerDay,
+                  workedMinutes: workedMins,
                   requiredMinutes: 480,
-                  shortMinutes: Math.max(0, 480 - avgMinsPerDay),
-                  extraMinutes: Math.max(0, avgMinsPerDay - 480),
-                  attendanceCode: 'P',
+                  shortMinutes: Math.max(0, 480 - workedMins),
+                  extraMinutes: Math.max(0, workedMins - 480),
+                  attendanceCode: workedMins > 0 ? 'P' : 'A',
                   sundayWorkedMinutes: 0,
                   isManual: false,
                 });
               }
+            } else {
+              // Monthly total completed hours spread across working days
+              const totalMins = totalHours > 500 ? totalHours : Math.round(totalHours * 60);
+
+              let workingDaysCount = 0;
+              const dateObjs: string[] = [];
+              for (let d = 1; d <= totalDaysInMonth; d++) {
+                const dayStr = String(d).padStart(2, '0');
+                const dateStr = `${monthYear}-${dayStr}`;
+                const dt = new Date(`${dateStr}T00:00:00`);
+                if (dt.getDay() !== 0) {
+                  workingDaysCount++;
+                }
+                dateObjs.push(dateStr);
+              }
+
+              const dailyWorkedMins = workingDaysCount > 0 ? Math.round(totalMins / workingDaysCount) : Math.round(totalMins / totalDaysInMonth);
+
+              dateObjs.forEach(dateStr => {
+                const dt = new Date(`${dateStr}T00:00:00`);
+                const isSunday = dt.getDay() === 0;
+                const existingIdx = db.attendanceLogs.findIndex(l => l.employeeId === matchedEmp.id && l.date === dateStr);
+
+                if (isSunday) {
+                  if (existingIdx !== -1) {
+                    if (db.attendanceLogs[existingIdx].workedMinutes === 0) {
+                      db.attendanceLogs[existingIdx].attendanceCode = 'WO';
+                    }
+                  }
+                } else {
+                  if (existingIdx !== -1) {
+                    db.attendanceLogs[existingIdx].workedMinutes = dailyWorkedMins;
+                    db.attendanceLogs[existingIdx].shortMinutes = Math.max(0, 480 - dailyWorkedMins);
+                    db.attendanceLogs[existingIdx].extraMinutes = Math.max(0, dailyWorkedMins - 480);
+                    db.attendanceLogs[existingIdx].attendanceCode = dailyWorkedMins > 0 ? 'P' : 'A';
+                  } else {
+                    db.attendanceLogs.push({
+                      id: `att-${matchedEmp.id}-${dateStr}`,
+                      employeeId: matchedEmp.id,
+                      date: dateStr,
+                      checkIn: '09:00',
+                      checkOut: '18:00',
+                      workedMinutes: dailyWorkedMins,
+                      requiredMinutes: 480,
+                      shortMinutes: Math.max(0, 480 - dailyWorkedMins),
+                      extraMinutes: Math.max(0, dailyWorkedMins - 480),
+                      attendanceCode: dailyWorkedMins > 0 ? 'P' : 'A',
+                      sundayWorkedMinutes: 0,
+                      isManual: false,
+                    });
+                  }
+                }
+              });
             }
           }
         });
