@@ -156,6 +156,7 @@ git push origin main
     - **Late Arrivals**: Counted late arrivals (`checkIn > 09:15:00`) for current month from attendance grid.
     - **Leave Balance**: Connected directly to Leave Tracker remaining balance for current quarter (Q3 2026).
 32. **Test Leave Histories Purge & Newest First Sorting Enforcement**: Cleared all test leave records from `data/db.json` and `DEFAULT_LEAVES`. Enforced descending chronological sorting (`newest on top`) across `mergeLeavesNonRegressive`, `GET /api/leaves`, Employee Portal, Manager Portal, HR Team Approvals, and Leave Records Admin tables.
+33. **Leave Submission Employee Matching & Instant UI Rendering Fix**: Fixed employee ID lookup in `handleApplyLeaveSubmit` and `POST /api/leaves` so newly applied leave requests are explicitly tagged with the active employee's ID (`emp.id` / `emp.employeeId`) and name. Performs an instant `0ms` optimistic local state update (`setLeaves([newRecord, ...prev])`) and saves to `localStorage` (`hrm_user_submitted_leaves`) so fresh leave applications appear immediately at the top of **Leave History**.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -186,3 +187,4 @@ git push origin main
 - [x] **Item 26: Complete Removal of Active Employee View Dropdown for Non-HR Accounts**: Completed ✓
 - [x] **Item 27: Employee Dashboard Analytics & Full Name Greeting Synchronization**: Completed ✓
 - [x] **Item 28: Test Leave Histories Purge & Newest First Sorting Enforcement**: Completed ✓
+- [x] **Item 29: Leave Submission Employee Matching & Instant UI Rendering Fix**: Completed ✓
