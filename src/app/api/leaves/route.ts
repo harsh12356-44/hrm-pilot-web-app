@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarters, addNotification, logAudit, ensureCloudSync } from '@/lib/store';
-import { LeaveRecord, Employee } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive } from '@/lib/types';
 
 export async function GET(request: Request) {
   await ensureCloudSync();
@@ -48,17 +48,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true, message: 'All leave records have been cleared!', summaries });
     }
 
-    // 0b. Sync Client Backup Action (restore from localStorage backup if server store is empty)
+    // 0b. Sync Client Backup Action (restore/merge non-regressively from client backup)
     if (body.action === 'sync_client_backup' && Array.isArray(body.records) && body.records.length > 0) {
       const db = getDbData();
-      if (!db.leaveRecords || db.leaveRecords.length === 0) {
-        db.leaveRecords = body.records;
-        saveDbData(db);
-        logAudit('Sync Client Backup Leaves', 'LeaveRecord', 'backup', undefined, `Restored ${body.records.length} records from client backup`);
-      }
+      db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], body.records);
+      saveDbData(db);
+      logAudit('Sync Client Backup Leaves', 'LeaveRecord', 'backup', undefined, `Synced ${body.records.length} records from client backup`);
       const targetQ = body.quarter || 'Q3';
       const summaries = getQuarterlyLeaveSummaries(targetQ, 'ALL');
-      return NextResponse.json({ success: true, message: 'Restored leave records from client backup', summaries, records: db.leaveRecords });
+      return NextResponse.json({ success: true, message: 'Synced leave records from client backup', summaries, records: db.leaveRecords });
     }
 
     // 1. Manual Numerical Override Action (from EditTrackerModal)

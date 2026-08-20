@@ -30,6 +30,12 @@ export default function ManagerPortalPage() {
           if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
             leavesList = mergeLeavesNonRegressive(leavesList, localSubmitted);
             localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(leavesList));
+
+            fetch('/api/leaves', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'sync_client_backup', records: leavesList }),
+            }).catch(() => {});
           }
         } catch (e) {}
       }

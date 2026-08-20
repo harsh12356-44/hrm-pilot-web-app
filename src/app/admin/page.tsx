@@ -52,6 +52,12 @@ export default function AdminDashboardPage() {
           if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
             recs = mergeLeavesNonRegressive(recs, localSubmitted);
             localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(recs));
+
+            fetch('/api/leaves', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'sync_client_backup', records: recs }),
+            }).catch(() => {});
           }
         } catch (e) {}
       }
