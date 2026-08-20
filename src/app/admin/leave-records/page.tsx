@@ -217,7 +217,11 @@ export default function LeaveRecordsAdminPage() {
   // Pending Leave Requests requiring action (Table 1: Only non-finalized requests)
   const pendingApprovals = leaves.filter(
     l => l.status !== 'APPROVED' && l.status !== 'REJECTED' && l.managerStatus !== 'Rejected' && l.hrStatus !== 'Rejected'
-  );
+  ).sort((a, b) => {
+    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+    return timeB - timeA;
+  });
 
   // Historical Leaves Register (Table 2: Only finalized requests - Approved or Rejected)
   const historicalLeaves = leaves.filter(
@@ -253,6 +257,10 @@ export default function LeaveRecordsAdminPage() {
     else if (statusFilter === 'MORE_INFO') matchesStatus = l.status === 'MORE_INFO_REQUIRED';
 
     return matchesSearch && matchesDept && matchesStatus;
+  }).sort((a, b) => {
+    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+    return timeB - timeA;
   });
 
   return (

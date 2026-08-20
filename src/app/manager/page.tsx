@@ -40,7 +40,13 @@ export default function ManagerPortalPage() {
         } catch (e) {}
       }
 
-      setLeaves(leavesList);
+      const sortedLeavesList = [...leavesList].sort((a, b) => {
+        const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+        const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+        return timeB - timeA;
+      });
+
+      setLeaves(sortedLeavesList);
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
     } catch (err) {
       console.error(err);

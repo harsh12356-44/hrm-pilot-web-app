@@ -215,9 +215,11 @@ export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryLi
   };
 
   primaryList.forEach(processRecord);
-  secondaryList.forEach(processRecord);
-
-  return Array.from(map.values());
+  return Array.from(map.values()).sort((a, b) => {
+    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+    return timeB - timeA;
+  });
 }
 
 export function calculateWorkingDaysCount(startDateStr: string, endDateStr?: string, dayType?: string): number {

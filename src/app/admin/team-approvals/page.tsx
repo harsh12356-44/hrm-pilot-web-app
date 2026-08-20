@@ -161,6 +161,10 @@ export default function HRTeamApprovalsPage() {
     if (filterStatus === 'APPROVED') return l.hrStatus === 'Approved' || l.status === 'APPROVED';
     if (filterStatus === 'REJECTED') return l.hrStatus === 'Rejected' || l.status === 'REJECTED';
     return true;
+  }).sort((a, b) => {
+    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+    return timeB - timeA;
   });
 
   const pendingCount = leaves.filter((l) => l.hrStatus === 'Pending' || (!l.hrStatus && l.status === 'PENDING')).length;

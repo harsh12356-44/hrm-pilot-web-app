@@ -158,6 +158,10 @@ function EmployeePortalContent() {
             (empNameStr.length > 2 && target.includes(empNameStr)) ||
             (empNameStr.length > 2 && empNameStr.includes(target))
           );
+        }).sort((a, b) => {
+          const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+          const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+          return timeB - timeA;
         });
         setLeaves(empLeaves);
       }
