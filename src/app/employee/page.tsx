@@ -548,7 +548,7 @@ function EmployeePortalContent() {
       <Navbar currentRole="EMPLOYEE" />
       <div className="flex flex-1">
         <Sidebar currentTab={activeTab} role="EMPLOYEE" />
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto space-y-6 overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 w-full space-y-6 overflow-y-auto overflow-x-hidden">
           {/* Top Date Header & Active View Indicator (Strictly restricted dropdown for HR Admin Ravina Khimani) */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-400 border-b border-slate-800 pb-3">
             <span>Thursday, 06 August 2026 • Live HRM Portal</span>

@@ -8,7 +8,7 @@ export default function LeaveTrackerPage() {
       <Navbar currentRole="ADMIN" />
       <div className="flex flex-1">
         <Sidebar currentTab="leave-tracker" />
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto">
+        <main className="flex-1 p-4 md:p-8 w-full overflow-y-auto overflow-x-hidden">
           <LeaveTrackerTab />
         </main>
       </div>

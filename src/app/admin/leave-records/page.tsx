@@ -304,7 +304,7 @@ export default function LeaveRecordsAdminPage() {
       <Navbar currentRole="ADMIN" />
       <div className="flex flex-1">
         <Sidebar currentTab="leave-records" />
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto space-y-6">
+        <main className="flex-1 p-4 md:p-8 w-full space-y-6 overflow-y-auto overflow-x-hidden">
           {/* Header Banner */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
             <div>

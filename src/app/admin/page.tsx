@@ -240,7 +240,7 @@ export default function AdminDashboardPage() {
       <Navbar currentRole="ADMIN" />
       <div className="flex flex-1">
         <Sidebar currentTab="dashboard" />
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto space-y-8">
+        <main className="flex-1 p-4 md:p-8 w-full space-y-8 overflow-y-auto overflow-x-hidden">
           {/* Top Banner */}
           <div className="rounded-2xl bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-800 p-6 md:p-8 text-white shadow-2xl relative overflow-hidden">
             <div className="absolute right-0 top-0 opacity-10 w-96 h-96 bg-white rounded-full blur-3xl pointer-events-none"></div>

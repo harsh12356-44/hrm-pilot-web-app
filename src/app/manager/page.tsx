@@ -150,27 +150,27 @@ export default function ManagerPortalPage() {
   const getFinalBadge = (l: LeaveRecord) => {
     if (l.status === 'APPROVED' || (l.managerStatus === 'Approved' && l.hrStatus === 'Approved')) {
       return (
-        <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+        <span className="px-3 py-1.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider whitespace-nowrap inline-flex items-center shadow-sm">
           HR AND MANAGER HAVE APPROVED ✓
         </span>
       );
     }
     if (l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected') {
       return (
-        <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+        <span className="px-3 py-1.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider whitespace-nowrap inline-flex items-center shadow-sm">
           REJECTED ✗
         </span>
       );
     }
     if (l.managerStatus === 'Approved') {
       return (
-        <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+        <span className="px-3 py-1.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider whitespace-nowrap inline-flex items-center shadow-sm">
           APPROVED BY MANAGER (AWAITING HR)
         </span>
       );
     }
     return (
-      <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
+      <span className="px-3 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 font-extrabold text-[10px] uppercase tracking-wider whitespace-nowrap inline-flex items-center shadow-sm">
         PENDING MANAGER REVIEW
       </span>
     );
@@ -181,7 +181,7 @@ export default function ManagerPortalPage() {
       <Navbar currentRole="MANAGER" />
       <div className="flex flex-1">
         <Sidebar currentTab="manager-desk" role="MANAGER" />
-        <main className="flex-1 p-6 md:p-8 max-w-6xl mx-auto space-y-6">
+        <main className="flex-1 p-4 md:p-8 w-full space-y-6 overflow-y-auto overflow-x-hidden">
           <div className="flex items-center justify-between border-b border-slate-800 pb-4">
             <div>
               <h2 className="text-xl font-extrabold text-white flex items-center space-x-2.5">
@@ -214,14 +214,14 @@ export default function ManagerPortalPage() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="border-b border-slate-800 bg-slate-950/60 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th className="py-3 px-4">Request ID</th>
-                    <th className="py-3 px-4">Subordinate</th>
-                    <th className="py-3 px-4">Dates & Leave Type</th>
-                    <th className="py-3 px-4">Reason / Details</th>
-                    <th className="py-3 px-4 text-center">Your Manager Status</th>
-                    <th className="py-3 px-4 text-center">HR / Admin Status</th>
-                    <th className="py-3 px-4 text-center">Final Status</th>
-                    <th className="py-3 px-4 text-right">Manager Action</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Request ID</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Subordinate</th>
+                    <th className="py-3.5 px-4 whitespace-nowrap">Dates & Leave Type</th>
+                    <th className="py-3.5 px-4">Reason / Details</th>
+                    <th className="py-3.5 px-4 text-center whitespace-nowrap">Your Manager Status</th>
+                    <th className="py-3.5 px-4 text-center whitespace-nowrap">HR / Admin Status</th>
+                    <th className="py-3.5 px-4 text-center whitespace-nowrap">Final Status</th>
+                    <th className="py-3.5 px-4 text-right whitespace-nowrap">Manager Action</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-800/60">
@@ -245,32 +245,32 @@ export default function ManagerPortalPage() {
 
                       return (
                         <tr key={l.id} className="hover:bg-slate-850 transition">
-                          <td className="py-3 px-4 font-mono font-bold text-slate-400">
+                          <td className="py-3.5 px-4 font-mono font-bold text-slate-400 whitespace-nowrap">
                             #{l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)}
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3.5 px-4 whitespace-nowrap">
                             <strong className="text-white block font-bold">{emp ? emp.name : l.employeeId}</strong>
-                            <span className="text-[10px] text-slate-400">ID: {emp?.employeeId || l.employeeId}</span>
+                            <span className="text-[10px] text-slate-400 font-mono">ID: {emp?.employeeId || l.employeeId}</span>
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3.5 px-4 whitespace-nowrap">
                             <div className="font-bold text-purple-300">{l.leaveType}</div>
                             <div className="text-[11px] text-slate-400 font-mono">
-                              {l.startDate} to {l.endDate || l.startDate} ({l.daysCount} days)
+                              {l.startDate === l.endDate || !l.endDate ? l.startDate : `${l.startDate} to ${l.endDate}`} ({l.daysCount || 1} {l.daysCount === 1 ? 'day' : 'days'})
                             </div>
                           </td>
-                          <td className="py-3 px-4 max-w-xs text-slate-300 truncate">
+                          <td className="py-3.5 px-4 text-slate-300 min-w-[150px]">
                             {l.note || 'Leave application'}
                           </td>
-                          <td className="py-3 px-4 text-center font-semibold text-slate-300">
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300 whitespace-nowrap">
                             {l.managerStatus || (l.status === 'APPROVED' ? 'Approved' : 'Pending')}
                           </td>
-                          <td className="py-3 px-4 text-center font-semibold text-slate-300">
+                          <td className="py-3.5 px-4 text-center font-semibold text-slate-300 whitespace-nowrap">
                             {getAdminStatusText(l)}
                           </td>
-                          <td className="py-3 px-4 text-center">
+                          <td className="py-3.5 px-4 text-center whitespace-nowrap">
                             {getFinalBadge(l)}
                           </td>
-                          <td className="py-3 px-4 text-right">
+                          <td className="py-3.5 px-4 text-right whitespace-nowrap">
                             {l.managerStatus !== 'Approved' && l.managerStatus !== 'Rejected' && l.status !== 'APPROVED' && l.status !== 'REJECTED' ? (
                               <div className="flex items-center justify-end space-x-1.5">
                                 <button

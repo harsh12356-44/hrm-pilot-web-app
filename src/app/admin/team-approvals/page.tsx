@@ -177,7 +177,7 @@ export default function HRTeamApprovalsPage() {
       <Navbar currentRole="ADMIN" />
       <div className="flex flex-1">
         <Sidebar currentTab="team-approvals" role="ADMIN" />
-        <main className="flex-1 p-6 md:p-8 max-w-7xl mx-auto overflow-y-auto space-y-6">
+        <main className="flex-1 p-4 md:p-8 w-full space-y-6 overflow-y-auto overflow-x-hidden">
           {/* Header */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
             <div>
