@@ -158,6 +158,7 @@ git push origin main
 32. **Test Leave Histories Purge & Newest First Sorting Enforcement**: Cleared all test leave records from `data/db.json` and `DEFAULT_LEAVES`. Enforced descending chronological sorting (`newest on top`) across `mergeLeavesNonRegressive`, `GET /api/leaves`, Employee Portal, Manager Portal, HR Team Approvals, and Leave Records Admin tables.
 33. **Leave Submission Employee Matching & Instant UI Rendering Fix**: Fixed employee ID lookup in `handleApplyLeaveSubmit` and `POST /api/leaves` so newly applied leave requests are explicitly tagged with the active employee's ID (`emp.id` / `emp.employeeId`) and name. Performs an instant `0ms` optimistic local state update (`setLeaves([newRecord, ...prev])`) and saves to `localStorage` (`hrm_user_submitted_leaves`) so fresh leave applications appear immediately at the top of **Leave History**.
 34. **Real-Time Persistent Cloud Store Integration Across Vercel Containers**: Enabled real-time cloud JSON storage synchronization in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts). Whenever any employee submits or updates a leave, `saveDbData` persists the change to `https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e`. On cold start lambda requests, `ensureCloudSync` non-regressively merges cloud leave records with server memory, guaranteeing HR Admin and Manager portals receive real-time leave applications instantly across containers without flickering.
+35. **GET /api/leaves Robust Error Handling & Live Endpoint Verification**: Fixed `GET /api/leaves` route handler in [`src/app/api/leaves/route.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/leaves/route.ts) to define `const db = getDbData()` explicitly and wrapped execution in a try...catch fallback block, verifying live production returns HTTP 200 with all real-time leave records.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -190,3 +191,4 @@ git push origin main
 - [x] **Item 28: Test Leave Histories Purge & Newest First Sorting Enforcement**: Completed ✓
 - [x] **Item 29: Leave Submission Employee Matching & Instant UI Rendering Fix**: Completed ✓
 - [x] **Item 30: Real-Time Persistent Cloud Store Integration Across Vercel Containers**: Completed ✓
+- [x] **Item 31: GET /api/leaves Robust Error Handling & Live Endpoint Verification**: Completed ✓
