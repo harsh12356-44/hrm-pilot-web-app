@@ -9,6 +9,7 @@ import {
   AuditLogEntry,
   AttendanceImport,
   NotificationItem,
+  mergeLeavesNonRegressive,
 } from './types';
 import fs from 'fs';
 import path from 'path';
@@ -561,13 +562,39 @@ export function getDbData(): InitialState {
   return memoryDb;
 }
 
+const PERSISTENT_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e';
+
 export async function ensureCloudSync() {
-  // Cloud sync overwrite disabled to prevent stale jsonblob data from wiping real-time leave submissions
-  return;
+  try {
+    const db = getDbData();
+    const res = await fetch(PERSISTENT_CLOUD_URL, { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      const cloudLeaves = json?.data?.leaveRecords;
+      if (Array.isArray(cloudLeaves) && cloudLeaves.length > 0) {
+        db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], cloudLeaves);
+        memoryDb = db;
+        (globalThis as any)._inMemoryDbData = db;
+      }
+    }
+  } catch (e) {
+    console.warn('Cloud sync read skipped:', e);
+  }
 }
 
 async function syncCloudStorageAsync(data: InitialState) {
-  return;
+  try {
+    fetch(PERSISTENT_CLOUD_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'hrm_pilot_leaves',
+        data: {
+          leaveRecords: data.leaveRecords || [],
+        },
+      }),
+    }).catch(err => console.warn('Cloud sync write error:', err));
+  } catch (e) {}
 }
 
 export function saveDbData(data: InitialState): void {
@@ -586,6 +613,8 @@ export function saveDbData(data: InitialState): void {
   } catch (err) {
     console.warn('Could not write to tmp db file:', err);
   }
+
+  syncCloudStorageAsync(data);
 }
 
 export function addNotification(employeeId: string, type: string, title: string, message: string) {
