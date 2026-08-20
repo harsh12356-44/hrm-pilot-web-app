@@ -142,25 +142,18 @@ export default function LeaveRecordsAdminPage() {
     }
   };
 
-  // Helper formatting functions matching screenshot
+  // Helper formatting functions matching workflow
   const getManagerStatusLabel = (l: LeaveRecord, emp?: Employee) => {
-    if (!emp?.reportingManager && emp?.role !== 'EMPLOYEE') return 'N/A';
-    if (l.managerStatus === 'Approved') {
-      if (l.hrStatus === 'Approved' && (!l.managerStatus || l.managerStatus === 'Approved')) {
-        return 'Approved (HR Override)';
-      }
-      return 'Approved';
-    }
-    if (l.managerStatus === 'Rejected') return 'Rejected';
-    if (l.status === 'APPROVED') return 'Approved (HR Override)';
+    if (l.managerStatus === 'Approved' || l.status === 'APPROVED') return 'Approved ✓';
+    if (l.managerStatus === 'Rejected') return 'Rejected ✗';
     return 'Pending';
   };
 
   const getAdminStatusLabel = (l: LeaveRecord) => {
-    if (l.hrStatus === 'Approved' || l.status === 'APPROVED') return 'Approved';
-    if (l.hrStatus === 'Rejected' || l.status === 'REJECTED') return 'Rejected';
+    if (l.hrStatus === 'Approved' || l.status === 'APPROVED') return 'Approved ✓';
+    if (l.hrStatus === 'Rejected' || l.status === 'REJECTED') return 'Rejected ✗';
     if (l.status === 'MORE_INFO_REQUIRED') return 'More Info Requested';
-    return 'Pending';
+    return 'Pending HR';
   };
 
   const getFinalStatusBadge = (l: LeaveRecord) => {
@@ -168,14 +161,14 @@ export default function LeaveRecordsAdminPage() {
     if (isBothApproved || l.status === 'APPROVED') {
       return (
         <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
-          HR AND MANAGER HAVE APPROVED
+          HR AND MANAGER HAVE APPROVED ✓
         </span>
       );
     }
     if (l.status === 'REJECTED' || l.hrStatus === 'Rejected' || l.managerStatus === 'Rejected') {
       return (
         <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
-          REJECTED
+          REJECTED ✗
         </span>
       );
     }
@@ -189,7 +182,7 @@ export default function LeaveRecordsAdminPage() {
     if (l.managerStatus === 'Approved') {
       return (
         <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider block text-center shadow-sm">
-          PENDING HR APPROVAL
+          APPROVED BY MANAGER (PENDING HR)
         </span>
       );
     }

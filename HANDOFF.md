@@ -36,24 +36,24 @@
 
 ---
 
-### 🔄 Rule 3: Single-Entry & Real-Time Table Shift Workflow
-1. **Table 1: System Pending Leave Approvals (`/admin/leave-records`)**:
-   - When a leave application is submitted, it appears **ONLY** in Table 1 (`pendingApprovals`).
-   - Displays **`Approve (HR Final)`** and **`Reject`** buttons.
-   - It is strictly excluded from Table 2 while pending (no duplicate entries).
-2. **Action & Table Shift Execution**:
-   - When HR Admin clicks **Approve** or **Reject**, the system synchronously sets:
-     - `status = 'APPROVED'` (or `'REJECTED'`)
-     - `managerStatus = 'Approved'` (or `'Rejected'`)
-     - `hrStatus = 'Approved'` (or `'Rejected'`)
-   - The request is **immediately removed / shifted OUT of Table 1** and moves permanently into **Table 2 (`Historical Leave Requests Register`)**.
-3. **Table 2: Historical Leave Requests Register**:
-   - Displays finalized decisions showing audit badges:
+### 🔄 Rule 3: 2-Tier Leave Request & Approval Workflow
+1. **Leave Application & Dual Dispatch**:
+   - Employee submits leave request. Initial state: `status = 'PENDING'`, `managerStatus = 'Pending'`, `hrStatus = 'Pending'`.
+   - Sent simultaneously to both **Manager Desk (`/manager` & `/employee?tab=team-approvals`)** and **HR Desk (`/admin/leave-records` & `/admin/team-approvals`)**.
+2. **Intermediate State (Manager Approves First)**:
+   - When Manager approves, system sets `managerStatus = 'Approved'`, keeping `hrStatus = 'Pending'` and `status = 'PENDING'`.
+   - Live status across Employee Leave History, Manager Team Approvals, and HR Pending Requests updates immediately to:
+     - 🔵 **`APPROVED BY MANAGER (AWAITING HR)`**
+     - Manager Status Column: `Approved ✓`
+     - HR Status Column: `Pending HR`
+3. **Final Approval (HR Approves Second or HR Approves First / Direct HR Approval)**:
+   - When HR approves:
+     - System synchronously sets `hrStatus = 'Approved'`, `managerStatus = 'Approved'`, and `status = 'APPROVED'`.
+     - If HR approves first while pending (or if the employee has no assigned reporting manager), HR's decision marks leave as approved by **both Manager and HR**.
+   - Live status across all portals updates immediately to:
      - 🟢 **`HR AND MANAGER HAVE APPROVED ✓`**
-     - 🔴 **`REJECTED ✗`**
-4. **Real-Time Live Sync Across Portals**:
-   - **Employee Portal (`/employee?tab=leave-history`)**: Auto-polls every 3 seconds and updates status live to `HR AND MANAGER HAVE APPROVED ✓` (Green Badge) or `REJECTED ✗` (Red Badge).
-   - **Leave Tracker (`/admin/leave-tracker`)**: Recalculates Casual Used, Planned Used, Remaining, Utilization %, and Unpaid LOP Deductions automatically.
+4. **Leave Tracker Integration (`/admin/leave-tracker`)**:
+   - In both cases (Manager then HR, or HR first / HR direct), once fully approved by HR (`status = 'APPROVED'`), the leave record is automatically added to the **Leave Tracker**, deducting from Casual/Planned allowances and updating balance metrics in real time.
 
 ---
 

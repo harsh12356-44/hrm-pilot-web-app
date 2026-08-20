@@ -178,9 +178,9 @@ export default function AdminDashboardPage() {
   const recentLeaveRequests = leaves.slice(0, 5).map((l) => {
     const emp = employees.find((e) => e.id === l.employeeId || e.employeeId === l.employeeId || e.name === l.employeeId);
     
-    let mgrStatus = l.managerStatus || (l.status === 'APPROVED' ? 'APPROVED' : 'PENDING');
-    let hrStat = l.hrStatus || (l.status === 'APPROVED' ? 'APPROVED' : l.status);
-    let finalStat = l.status;
+    let mgrStatus = (l.managerStatus === 'Approved' || l.status === 'APPROVED') ? 'APPROVED ✓' : (l.managerStatus === 'Rejected' ? 'REJECTED ✗' : 'PENDING');
+    let hrStat = (l.hrStatus === 'Approved' || l.status === 'APPROVED') ? 'APPROVED ✓' : (l.hrStatus === 'Rejected' ? 'REJECTED ✗' : 'PENDING HR');
+    let finalStat = l.status === 'APPROVED' ? 'HR AND MANAGER HAVE APPROVED ✓' : l.managerStatus === 'Approved' ? 'APPROVED BY MANAGER (PENDING HR)' : l.status;
 
     return {
       id: '#' + (l.id.replace(/[^0-9]/g, '').slice(-3) || l.id.slice(-3)),
@@ -188,9 +188,9 @@ export default function AdminDashboardPage() {
       subject: `${l.leaveType}`,
       dates: `${l.startDate} ${l.endDate && l.endDate !== l.startDate ? 'to ' + l.endDate : ''}`,
       reason: l.note || 'Leave application',
-      managerStatus: mgrStatus.toUpperCase(),
-      hrStatus: hrStat.toUpperCase(),
-      finalStatus: finalStat === 'APPROVED' ? 'HR AND MANAGER APPROVED' : finalStat.toUpperCase(),
+      managerStatus: mgrStatus,
+      hrStatus: hrStat,
+      finalStatus: finalStat,
     };
   });
 

@@ -446,14 +446,14 @@ function EmployeePortalContent() {
     if (l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected') {
       return (
         <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
-          REJECTED
+          REJECTED ✗
         </span>
       );
     }
     if (l.managerStatus === 'Approved') {
       return (
         <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
-          AWAITING HR FINAL APPROVAL
+          APPROVED BY MANAGER (AWAITING HR)
         </span>
       );
     }
@@ -884,11 +884,8 @@ function EmployeePortalContent() {
                         const endStr = l.endDate || startStr;
                         const daysNum = l.daysCount || 1;
                         const noteStr = l.note || 'Leave application';
-                        const isApproved = l.status === 'APPROVED' || (l.managerStatus === 'Approved' && l.hrStatus === 'Approved');
-                        const isRejected = l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected';
-
-                        const mgrStat = isApproved ? 'Approved' : isRejected ? 'Rejected' : (l.managerStatus || 'Pending');
-                        const hrStat = isApproved ? 'Approved' : isRejected ? 'Rejected' : (l.hrStatus || 'Pending');
+                        const mgrStat = l.status === 'APPROVED' || l.managerStatus === 'Approved' ? 'Approved ✓' : l.managerStatus === 'Rejected' ? 'Rejected ✗' : 'Pending';
+                        const hrStat = l.status === 'APPROVED' || l.hrStatus === 'Approved' ? 'Approved ✓' : l.hrStatus === 'Rejected' ? 'Rejected ✗' : 'Pending HR';
 
                         let dateStr = '06 Aug 2026';
                         try {

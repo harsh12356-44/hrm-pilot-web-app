@@ -111,13 +111,13 @@ export default function ManagerPortalPage() {
   };
 
   const getAdminStatusText = (l: LeaveRecord) => {
-    if (l.hrStatus === 'Approved' || l.status === 'APPROVED') return 'Approved';
-    if (l.hrStatus === 'Rejected' || l.status === 'REJECTED') return 'Rejected';
+    if (l.hrStatus === 'Approved' || l.status === 'APPROVED') return 'Approved ✓';
+    if (l.hrStatus === 'Rejected' || l.status === 'REJECTED') return 'Rejected ✗';
     return 'Pending HR Action';
   };
 
   const getFinalBadge = (l: LeaveRecord) => {
-    if (l.status === 'APPROVED') {
+    if (l.status === 'APPROVED' || (l.managerStatus === 'Approved' && l.hrStatus === 'Approved')) {
       return (
         <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
           HR AND MANAGER HAVE APPROVED ✓
@@ -127,14 +127,14 @@ export default function ManagerPortalPage() {
     if (l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected') {
       return (
         <span className="px-3 py-1 rounded-full bg-red-500/20 text-red-300 border border-red-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
-          REJECTED
+          REJECTED ✗
         </span>
       );
     }
     if (l.managerStatus === 'Approved') {
       return (
         <span className="px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 border border-blue-500/40 font-extrabold text-[10px] uppercase tracking-wider inline-block">
-          AWAITING HR FINAL APPROVAL
+          APPROVED BY MANAGER (AWAITING HR)
         </span>
       );
     }
