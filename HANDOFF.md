@@ -160,6 +160,7 @@ git push origin main
 34. **Real-Time Persistent Cloud Store Integration Across Vercel Containers**: Enabled real-time cloud JSON storage synchronization in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts). Whenever any employee submits or updates a leave, `saveDbData` persists the change to `https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e`. On cold start lambda requests, `ensureCloudSync` non-regressively merges cloud leave records with server memory, guaranteeing HR Admin and Manager portals receive real-time leave applications instantly across containers without flickering.
 35. **GET /api/leaves Robust Error Handling & Live Endpoint Verification**: Fixed `GET /api/leaves` route handler in [`src/app/api/leaves/route.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/leaves/route.ts) to define `const db = getDbData()` explicitly and wrapped execution in a try...catch fallback block, verifying live production returns HTTP 200 with all real-time leave records.
 36. **Real-Time Cross-Portal Dual Approval Synchronizer**: Configured 3-second automatic polling and `getLiveStatusBadge` rendering across Employee (`/employee`), Manager (`/manager`), and HR Admin (`/admin/team-approvals` & `/admin/leave-records`) portals. When HR or Manager approves or rejects a leave request, status updates persist to the Cloud JSON Store and automatically update on all connected Employee, Manager, and HR accounts without requiring page refresh.
+37. **Universal Newest-First Leave Request Ordering Engine**: Implemented `getLeaveTimestamp` in [`src/lib/types.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/types.ts) parsing `createdAt`, ID timestamp regex (`l-1787...`), and `startDate`. Enforced `(a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a)` across `mergeLeavesNonRegressive`, `GET /api/leaves`, Employee Portal, Manager Portal, HR Team Approvals, and Leave Records Admin tables so the latest leave requests **always display at the very top**.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -194,3 +195,4 @@ git push origin main
 - [x] **Item 30: Real-Time Persistent Cloud Store Integration Across Vercel Containers**: Completed ✓
 - [x] **Item 31: GET /api/leaves Robust Error Handling & Live Endpoint Verification**: Completed ✓
 - [x] **Item 32: Real-Time Cross-Portal Dual Approval Synchronizer**: Completed ✓
+- [x] **Item 33: Universal Newest-First Leave Request Ordering Engine**: Completed ✓
