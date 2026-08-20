@@ -167,6 +167,7 @@ git push origin main
     - **Full-Day Leave Policy Enforcement**: Removed half-day leave options from the Apply Leave form (`/employee?tab=apply-leave`) and enforced whole working days calculation strictly.
 39. **Universal Collapsible Sidebar Navigation Engine**: Added `PanelLeftClose` and `PanelLeftOpen` toggle icon button at the top header of [`src/components/Sidebar.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/Sidebar.tsx). Shrinks sidebar width from `w-68` to `w-20` with smooth CSS transition animations (`transition-all duration-300 ease-in-out`), tooltips on hover, and persistent `localStorage` preference (`hrm_sidebar_collapsed`) across all Admin, Manager, and Employee accounts.
 40. **Full-Width Screen Layout Optimization & Single-Line Table Formatting**: Removed restrictive `max-w-7xl` / `max-w-6xl` containers across Manager Desk (`/manager`), Employee Portal (`/employee`), HR Leave Requests (`/admin/leave-records`), HR Team Approvals (`/admin/team-approvals`), Admin Dashboard (`/admin`), and Leave Tracker (`/admin/leave-tracker`). Replaced with `w-full overflow-x-hidden` edge-to-edge layout and added `whitespace-nowrap` styling to table columns and status badges so dates and status badges render on clean single lines without vertical wrapping or empty side margins.
+41. **Leave Tracker Synchronous Cloud Wipe & Multi-Key Storage Clear**: Fixed "Clear All Leaves" button under Leave Tracker ([`/admin/leave-tracker`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/LeaveTrackerTab.tsx)). Updated `handleClearLeaves` to remove `hrm_user_submitted_leaves`, `hrm_leave_records_backup`, and `hrm_leave_quarter_overrides`, send `action: 'clear_all'`, and synchronously execute a `PUT` request to `https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e` to wipe cloud storage so records are purged permanently across all portals.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -205,3 +206,4 @@ git push origin main
 - [x] **Item 34: HR Leave History Clear Button, Employee Quarterly Register, & Full-Day Leave Policy**: Completed ✓
 - [x] **Item 35: Universal Collapsible Sidebar Navigation Engine**: Completed ✓
 - [x] **Item 36: Full-Width Screen Layout Optimization & Single-Line Table Formatting**: Completed ✓
+- [x] **Item 37: Leave Tracker Synchronous Cloud Wipe & Multi-Key Storage Clear**: Completed ✓
