@@ -155,6 +155,7 @@ git push origin main
     - **Total Hours**: Calculated total completed working hours & minutes for current month (`152h 30m`).
     - **Late Arrivals**: Counted late arrivals (`checkIn > 09:15:00`) for current month from attendance grid.
     - **Leave Balance**: Connected directly to Leave Tracker remaining balance for current quarter (Q3 2026).
+32. **Test Leave Histories Purge & Newest First Sorting Enforcement**: Cleared all test leave records from `data/db.json` and `DEFAULT_LEAVES`. Enforced descending chronological sorting (`newest on top`) across `mergeLeavesNonRegressive`, `GET /api/leaves`, Employee Portal, Manager Portal, HR Team Approvals, and Leave Records Admin tables.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -184,3 +185,4 @@ git push origin main
 - [x] **Item 25: HR-Only Holiday Import/Add/Delete Restrictions**: Completed ✓
 - [x] **Item 26: Complete Removal of Active Employee View Dropdown for Non-HR Accounts**: Completed ✓
 - [x] **Item 27: Employee Dashboard Analytics & Full Name Greeting Synchronization**: Completed ✓
+- [x] **Item 28: Test Leave Histories Purge & Newest First Sorting Enforcement**: Completed ✓
