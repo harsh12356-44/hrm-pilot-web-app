@@ -52,14 +52,14 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // 0. Clear All Leaves Action (for testing & reset)
-    if (body.action === 'clear') {
+    if (body.action === 'clear' || body.action === 'clear_all') {
       const db = getDbData();
       const targetQ = body.quarter || 'Q3';
       db.leaveRecords = [];
       saveDbData(db);
-      logAudit('Clear All Leaves', 'LeaveRecord', 'all', undefined, 'All leave records cleared for testing');
+      logAudit('Clear All Leaves', 'LeaveRecord', 'all', undefined, 'All leave records cleared by HR');
       const summaries = getQuarterlyLeaveSummaries(targetQ, 'ALL');
-      return NextResponse.json({ success: true, message: 'All leave records have been cleared!', summaries });
+      return NextResponse.json({ success: true, message: 'All leave records have been cleared!', summaries, records: [] });
     }
 
     // 0b. Sync Client Backup Action (restore/merge non-regressively from client backup)
@@ -479,6 +479,18 @@ export async function PUT(request: Request) {
       records: db.leaveRecords,
       summaries,
     });
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const db = getDbData();
+    db.leaveRecords = [];
+    await saveDbData(db);
+    logAudit('Clear All Leaves History', 'LeaveRecord', 'all', undefined, 'All leave records cleared by HR');
+    return NextResponse.json({ success: true, message: 'All leave history records cleared successfully', records: [] });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
   }

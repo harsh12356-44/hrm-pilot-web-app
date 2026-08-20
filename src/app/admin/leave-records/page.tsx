@@ -16,6 +16,7 @@ import {
   HelpCircle,
   User,
   Paperclip,
+  Trash2,
 } from 'lucide-react';
 import { LeaveRecord, Employee, mergeLeavesNonRegressive, getLeaveTimestamp } from '@/lib/types';
 
@@ -222,6 +223,37 @@ export default function LeaveRecordsAdminPage() {
     );
   };
 
+  const handleClearLeaveHistory = async () => {
+    if (!confirm('Are you sure you want to clear all leave histories? This action cannot be undone.')) {
+      return;
+    }
+    setLoading(true);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('hrm_user_submitted_leaves');
+      }
+      const res = await fetch('/api/leaves', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'clear_all' }),
+      });
+      if (res.ok) {
+        setLeaves([]);
+        setActionStatusMsg('Leave history has been cleared successfully across all portals.');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('leaveDataUpdated'));
+        }
+      } else {
+        setActionStatusMsg('Failed to clear leave history.');
+      }
+    } catch (e) {
+      console.error(e);
+      setActionStatusMsg('Error clearing leave history.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Extract Departments for Filter
   const departmentsList = Array.from(new Set(employees.map(e => e.department).filter(Boolean)));
 
@@ -286,6 +318,15 @@ export default function LeaveRecordsAdminPage() {
             </div>
 
             <div className="flex items-center space-x-3">
+              <button
+                onClick={handleClearLeaveHistory}
+                className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-rose-950/80 border border-slate-700/80 hover:border-rose-500/50 text-slate-300 hover:text-rose-300 font-bold text-xs shadow-md transition flex items-center space-x-1.5"
+                title="Clear all leave records from history"
+              >
+                <Trash2 className="w-4 h-4 text-rose-400" />
+                <span>Clear Leave History</span>
+              </button>
+
               <button
                 onClick={() => setIsRecordModalOpen(true)}
                 className="px-4 py-2 rounded-xl bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-500 hover:to-pink-500 text-white font-bold text-xs shadow-lg shadow-rose-600/20 flex items-center space-x-2 transition"

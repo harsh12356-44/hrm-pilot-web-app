@@ -87,9 +87,9 @@ function EmployeePortalContent() {
   const [duration, setDuration] = useState('00:00:00');
   const [punchMsg, setPunchMsg] = useState('');
 
-  // Apply Leave Form state
+  // Dashboard & Apply Leave state
   const [leaveType, setLeaveType] = useState('Casual Leave');
-  const [leaveDuration, setLeaveDuration] = useState('Full Day');
+  const [dashboardQuarterFilter, setDashboardQuarterFilter] = useState<'ALL' | 'Q1' | 'Q2' | 'Q3' | 'Q4'>('ALL');
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [reason, setReason] = useState('');
@@ -277,8 +277,7 @@ function EmployeePortalContent() {
 
   const calcDaysCount = () => {
     if (!fromDate) return 1;
-    const dayTypeStr = leaveDuration.includes('Half Day') ? 'first_half' : 'full';
-    return calculateWorkingDaysCount(fromDate, toDate || fromDate, dayTypeStr);
+    return calculateWorkingDaysCount(fromDate, toDate || fromDate, 'full');
   };
 
   const handleApplyLeaveSubmit = async (e: React.FormEvent) => {
@@ -297,7 +296,7 @@ function EmployeePortalContent() {
           employeeId: activeEmpId,
           employeeName: activeEmpName,
           leaveType,
-          dayType: leaveDuration.includes('Half Day') ? 'half' : 'full',
+          dayType: 'full',
           startDate: fromDate,
           endDate: toDate || fromDate,
           daysCount: computedDays,
@@ -798,6 +797,153 @@ function EmployeePortalContent() {
                   </div>
                 </div>
               </div>
+
+              {/* Quarterly Approved & Applied Leaves Register Table Card */}
+              {(() => {
+                const getQuarterFromDate = (dStr?: string) => {
+                  if (!dStr) return 'Q3';
+                  const month = new Date(dStr).getMonth() + 1;
+                  if (month >= 1 && month <= 3) return 'Q1';
+                  if (month >= 4 && month <= 6) return 'Q2';
+                  if (month >= 7 && month <= 9) return 'Q3';
+                  return 'Q4';
+                };
+
+                const filteredDashboardLeaves = safeLeaves.filter(
+                  l => dashboardQuarterFilter === 'ALL' || (l.quarter || getQuarterFromDate(l.startDate)) === dashboardQuarterFilter
+                );
+
+                const totalAppliedCount = filteredDashboardLeaves.length;
+                const totalApprovedDays = filteredDashboardLeaves
+                  .filter(l => l.status === 'APPROVED' || l.hrStatus === 'Approved')
+                  .reduce((acc, l) => acc + (l.daysCount || 1), 0);
+                const pendingDashboardCount = filteredDashboardLeaves.filter(
+                  l => l.status === 'PENDING' && l.hrStatus !== 'Approved' && l.hrStatus !== 'Rejected' && l.managerStatus !== 'Rejected'
+                ).length;
+                const rejectedDashboardCount = filteredDashboardLeaves.filter(
+                  l => l.status === 'REJECTED' || l.hrStatus === 'Rejected' || l.managerStatus === 'Rejected'
+                ).length;
+
+                return (
+                  <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-800 pb-4">
+                      <div>
+                        <h2 className="text-base font-extrabold text-white font-heading flex items-center space-x-2">
+                          <FileText className="w-5 h-5 text-purple-400" />
+                          <span>My Leave Register & Quarterly Breakdown</span>
+                        </h2>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          Track all applied, approved, and rejected leaves categorized by quarter with total days count.
+                        </p>
+                      </div>
+
+                      {/* Quarter Filter Pills */}
+                      <div className="flex items-center space-x-1.5 bg-slate-950 p-1 rounded-xl border border-slate-800 self-start sm:self-auto">
+                        {(['ALL', 'Q1', 'Q2', 'Q3', 'Q4'] as const).map(q => (
+                          <button
+                            key={q}
+                            type="button"
+                            onClick={() => setDashboardQuarterFilter(q)}
+                            className={`px-3 py-1 rounded-lg text-xs font-bold transition ${
+                              dashboardQuarterFilter === q
+                                ? 'bg-purple-600 text-white shadow-md'
+                                : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                            }`}
+                          >
+                            {q}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Summary Badges Header */}
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <div className="p-3 bg-slate-800/60 rounded-xl border border-slate-700/60 flex items-center justify-between">
+                        <span className="text-slate-400 font-medium">Total Applied</span>
+                        <strong className="text-white font-extrabold text-sm">{totalAppliedCount} {totalAppliedCount === 1 ? 'Leave' : 'Leaves'}</strong>
+                      </div>
+                      <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex items-center justify-between">
+                        <span className="text-emerald-300 font-medium">Approved Duration</span>
+                        <strong className="text-emerald-400 font-extrabold text-sm">{totalApprovedDays} {totalApprovedDays === 1 ? 'Day' : 'Days'}</strong>
+                      </div>
+                      <div className="p-3 bg-amber-500/10 rounded-xl border border-amber-500/20 flex items-center justify-between">
+                        <span className="text-amber-300 font-medium">Pending Review</span>
+                        <strong className="text-amber-400 font-extrabold text-sm">{pendingDashboardCount} {pendingDashboardCount === 1 ? 'Leave' : 'Leaves'}</strong>
+                      </div>
+                      <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20 flex items-center justify-between">
+                        <span className="text-rose-300 font-medium">Rejected</span>
+                        <strong className="text-rose-400 font-extrabold text-sm">{rejectedDashboardCount} {rejectedDashboardCount === 1 ? 'Leave' : 'Leaves'}</strong>
+                      </div>
+                    </div>
+
+                    {/* Table */}
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-left text-xs border-collapse">
+                        <thead>
+                          <tr className="bg-slate-950/60 text-slate-400 uppercase tracking-wider font-semibold border-b border-slate-800">
+                            <th className="py-3.5 px-4">Date Range</th>
+                            <th className="py-3.5 px-4">Leave Type</th>
+                            <th className="py-3.5 px-4 text-center">Quarter</th>
+                            <th className="py-3.5 px-4 text-center">Approved Duration</th>
+                            <th className="py-3.5 px-4 text-center">Live Status</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-800/60">
+                          {filteredDashboardLeaves.length > 0 ? (
+                            filteredDashboardLeaves.map((l, index) => {
+                              const isApproved = l.status === 'APPROVED' || l.hrStatus === 'Approved';
+                              const reqQuarter = l.quarter || getQuarterFromDate(l.startDate);
+                              const startStr = l.startDate || '2026-08-01';
+                              const endStr = l.endDate || startStr;
+                              const daysNum = l.daysCount || 1;
+                              
+                              return (
+                                <tr key={l.id || index} className="hover:bg-slate-850 transition">
+                                  <td className="py-3.5 px-4 font-mono font-medium text-slate-200">
+                                    {startStr === endStr ? startStr : `${startStr} to ${endStr}`}
+                                  </td>
+                                  <td className="py-3.5 px-4 font-bold text-purple-300">
+                                    {l.leaveType || 'Casual Leave'}
+                                  </td>
+                                  <td className="py-3.5 px-4 text-center">
+                                    <span className="px-2.5 py-1 rounded-full bg-slate-800 text-purple-300 border border-slate-700 font-bold font-mono text-[11px]">
+                                      {reqQuarter}
+                                    </span>
+                                  </td>
+                                  <td className="py-3.5 px-4 text-center font-bold">
+                                    {isApproved ? (
+                                      <span className="text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                                        {daysNum} {daysNum === 1 ? 'Day' : 'Days'} Approved
+                                      </span>
+                                    ) : l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected' ? (
+                                      <span className="text-rose-400 bg-rose-500/10 px-2.5 py-1 rounded-full border border-rose-500/20">
+                                        0 Days (Rejected)
+                                      </span>
+                                    ) : (
+                                      <span className="text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">
+                                        {daysNum} {daysNum === 1 ? 'Day' : 'Days'} (Pending)
+                                      </span>
+                                    )}
+                                  </td>
+                                  <td className="py-3.5 px-4 text-center">
+                                    {getLiveStatusBadge(l)}
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          ) : (
+                            <tr>
+                              <td colSpan={5} className="py-8 text-center text-slate-500">
+                                No leave records found for {dashboardQuarterFilter === 'ALL' ? 'any quarter' : dashboardQuarterFilter}.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           )}
 
@@ -832,16 +978,13 @@ function EmployeePortalContent() {
                     </div>
 
                     <div>
-                      <label className="block text-slate-300 font-semibold mb-1">Duration</label>
-                      <select
-                        value={leaveDuration}
-                        onChange={e => setLeaveDuration(e.target.value)}
-                        className="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white font-medium"
-                      >
-                        <option value="Full Day">Full Day</option>
-                        <option value="Half Day (Morning)">Half Day (Morning)</option>
-                        <option value="Half Day (Afternoon)">Half Day (Afternoon)</option>
-                      </select>
+                      <label className="block text-slate-300 font-semibold mb-1">Leave Duration Type</label>
+                      <input
+                        type="text"
+                        readOnly
+                        value="Full Day Leave"
+                        className="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-3.5 py-2.5 text-slate-300 font-semibold cursor-not-allowed"
+                      />
                     </div>
                   </div>
 
