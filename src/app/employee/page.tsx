@@ -95,14 +95,18 @@ function EmployeePortalContent() {
       setAllEmployees(employeesList);
       setAllLeaves(leavesList);
 
-      // Resolve target active employee ID (respecting storedRole and storedId)
-      let activeTargetId = 'emp-2';
+      // Resolve target active employee ID (respecting storedRole, storedEmail and storedId)
+      let activeTargetId = 'emp-12';
       if (typeof window !== 'undefined') {
         const storedId = localStorage.getItem('hrm_active_employee_id');
+        const storedEmail = localStorage.getItem('hrm_active_employee_email');
         const storedRole = localStorage.getItem('hrm_active_employee_role');
 
         if (storedId && employeesList.some(e => e.id === storedId || e.employeeId === storedId)) {
           activeTargetId = storedId;
+        } else if (storedEmail && employeesList.some(e => e.email && e.email.toLowerCase() === storedEmail.toLowerCase())) {
+          const matchEmail = employeesList.find(e => e.email && e.email.toLowerCase() === storedEmail.toLowerCase());
+          if (matchEmail) activeTargetId = matchEmail.id;
         } else if (storedRole === 'ADMIN') {
           activeTargetId = 'emp-1';
         } else if (storedRole === 'MANAGER') {
@@ -149,12 +153,14 @@ function EmployeePortalContent() {
         const empNameStr = String(currentEmp.name || '').trim().toLowerCase();
 
         const empLeaves = leavesList.filter(l => {
-          if (!l || !l.employeeId) return false;
-          const target = String(l.employeeId).trim().toLowerCase();
+          if (!l) return false;
+          const target = String(l.employeeId || '').trim().toLowerCase();
+          const targetName = String(l.employeeName || '').trim().toLowerCase();
           return (
             target === empIdStr ||
             target === empCodeStr ||
             target === empNameStr ||
+            (targetName && targetName === empNameStr) ||
             (empNameStr.length > 2 && target.includes(empNameStr)) ||
             (empNameStr.length > 2 && empNameStr.includes(target))
           );
@@ -225,11 +231,12 @@ function EmployeePortalContent() {
         setPunchedIn(false);
         setPunchTime(null);
         setDuration('00:00:00');
-        setPunchMsg('Successfully punched out!');
+        setPunchMsg('Successfully punched out. Have a great evening!');
       }
       fetchEmployeeDashboardData();
     } catch (err) {
       console.error(err);
+      setPunchMsg('Failed to process punch.');
     } finally {
       setLoading(false);
     }
@@ -246,12 +253,16 @@ function EmployeePortalContent() {
     setLoading(true);
     setFormMsg('');
     try {
+      const activeEmpId = employee?.id || employee?.employeeId || selectedEmployeeId || (typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : '') || 'emp-12';
+      const activeEmpName = employee?.name || '';
       const computedDays = calcDaysCount();
+
       const res = await fetch('/api/leaves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          employeeId: employee?.id || selectedEmployeeId || 'emp-2',
+          employeeId: activeEmpId,
+          employeeName: activeEmpName,
           leaveType,
           dayType: leaveDuration.includes('Half Day') ? 'half' : 'full',
           startDate: fromDate,
@@ -266,18 +277,27 @@ function EmployeePortalContent() {
 
       if (res.ok) {
         const resData = await res.json();
-        if (resData && resData.record && typeof window !== 'undefined') {
-          try {
-            const existing = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
-            const updatedList = Array.isArray(existing) ? [resData.record, ...existing] : [resData.record];
-            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedList));
-          } catch (e) {}
+        const newRecord = resData.record;
+
+        if (newRecord) {
+          // Instant 0ms local state update so new leave shows at top of table immediately
+          setLeaves(prev => mergeLeavesNonRegressive([newRecord], prev));
+          setAllLeaves(prev => mergeLeavesNonRegressive([newRecord], prev));
+
+          if (typeof window !== 'undefined') {
+            try {
+              const existing = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+              const updatedList = Array.isArray(existing) ? mergeLeavesNonRegressive([newRecord], existing) : [newRecord];
+              localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedList));
+            } catch (e) {}
+          }
         }
+
         setFormMsg(`Leave application (${computedDays} ${computedDays === 1 ? 'day' : 'days'}) submitted successfully! Check live status under Leave History tab.`);
         setFromDate('');
         setToDate('');
         setReason('');
-        fetchEmployeeDashboardData();
+        fetchEmployeeDashboardData(true);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('leaveDataUpdated'));
         }

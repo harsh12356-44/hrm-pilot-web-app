@@ -268,7 +268,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Regular Leave Submission / Record Leave Period
-    const employeeId = body.employeeId || 'emp-1';
+    const employeeId = body.employeeId || 'emp-12';
     const { leaveType, dayType, startDate, endDate, note, handoverNote, emergencyContact, reason } = body;
 
     if (!startDate) {
@@ -276,7 +276,13 @@ export async function POST(request: Request) {
     }
 
     const db = getDbData();
-    const emp = db.employees.find(e => e.id === employeeId || e.name === body.employeeName || e.employeeId === employeeId) || db.employees[0];
+    const emp = db.employees.find(e =>
+      e.id === employeeId ||
+      e.employeeId === employeeId ||
+      (body.employeeName && e.name.toLowerCase().trim() === String(body.employeeName).toLowerCase().trim()) ||
+      (employeeId && String(e.id).toLowerCase() === String(employeeId).toLowerCase()) ||
+      (employeeId && String(e.employeeId).toLowerCase() === String(employeeId).toLowerCase())
+    ) || db.employees[0];
 
     const start = new Date(startDate);
     const end = endDate ? new Date(endDate) : start;
