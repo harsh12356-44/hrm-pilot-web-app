@@ -45,23 +45,7 @@ export default function AdminDashboardPage() {
 
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
       setAttendance(Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || []);
-      let recs: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
-      if (typeof window !== 'undefined') {
-        try {
-          const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
-          if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
-            recs = mergeLeavesNonRegressive(recs, localSubmitted);
-            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(recs));
-
-            fetch('/api/leaves', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'sync_client_backup', records: recs }),
-            }).catch(() => {});
-          }
-        } catch (e) {}
-      }
-
+      const recs: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
       setLeaves(recs);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);

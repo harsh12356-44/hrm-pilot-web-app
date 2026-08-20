@@ -110,24 +110,7 @@ function EmployeePortalContent() {
 
       const employeesList: Employee[] = Array.isArray(empData) ? empData : empData.employees || [];
       const logsList: AttendanceLog[] = Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || [];
-      let leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
-
-      if (typeof window !== 'undefined') {
-        try {
-          const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
-          if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
-            leavesList = mergeLeavesNonRegressive(leavesList, localSubmitted);
-            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(leavesList));
-
-            // Background sync server lambda with client's non-regressive leave state
-            fetch('/api/leaves', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'sync_client_backup', records: leavesList }),
-            }).catch(() => {});
-          }
-        } catch (e) {}
-      }
+      const leavesList: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
 
       setAllEmployees(employeesList);
       setAllLeaves(leavesList);

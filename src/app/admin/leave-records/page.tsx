@@ -45,23 +45,7 @@ export default function LeaveRecordsAdminPage() {
       const leaveData = await leaveRes.json();
       const empData = await empRes.json();
 
-      let leavesList: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
-      if (typeof window !== 'undefined') {
-        try {
-          const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
-          if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
-            leavesList = mergeLeavesNonRegressive(leavesList, localSubmitted);
-            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(leavesList));
-
-            fetch('/api/leaves', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ action: 'sync_client_backup', records: leavesList }),
-            }).catch(() => {});
-          }
-        } catch (e) {}
-      }
-
+      const leavesList: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
       setLeaves(leavesList);
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
     } catch (err) {
@@ -231,6 +215,8 @@ export default function LeaveRecordsAdminPage() {
     try {
       if (typeof window !== 'undefined') {
         localStorage.removeItem('hrm_user_submitted_leaves');
+        localStorage.removeItem('hrm_leave_records_backup');
+        localStorage.removeItem('hrm_leave_quarter_overrides');
       }
       const res = await fetch('/api/leaves', {
         method: 'POST',
