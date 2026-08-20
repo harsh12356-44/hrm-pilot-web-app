@@ -29,6 +29,7 @@ import {
 import AttendanceLogTab from '@/components/AttendanceLogTab';
 import HolidaysTab from '@/components/HolidaysTab';
 import LeaveTrackerTab from '@/components/LeaveTrackerTab';
+import { Employee, AttendanceLog, LeaveRecord, mergeLeavesNonRegressive, calculateWorkingDaysCount, getLeaveTimestamp } from '@/lib/types';
 function getLiveStatusBadge(l: LeaveRecord) {
   if (!l) return null;
   const isMgrApp = l.managerStatus === 'Approved';
@@ -200,11 +201,7 @@ function EmployeePortalContent() {
             (empNameStr.length > 2 && target.includes(empNameStr)) ||
             (empNameStr.length > 2 && empNameStr.includes(target))
           );
-        }).sort((a, b) => {
-          const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-          const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-          return timeB - timeA;
-        });
+        }).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
         setLeaves(empLeaves);
       }
     } catch (err) {

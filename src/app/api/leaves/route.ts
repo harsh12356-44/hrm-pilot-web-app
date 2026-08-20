@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarters, addNotification, logAudit, ensureCloudSync } from '@/lib/store';
-import { LeaveRecord, Employee, mergeLeavesNonRegressive, calculateWorkingDaysCount } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive, calculateWorkingDaysCount, getLeaveTimestamp } from '@/lib/types';
 
 export async function GET(request: Request) {
   try {
@@ -23,11 +23,7 @@ export async function GET(request: Request) {
 
     const summaries = getQuarterlyLeaveSummaries(quarter, department);
     const db = getDbData();
-    const sortedRecords = [...(db.leaveRecords || [])].sort((a, b) => {
-      const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-      const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-      return timeB - timeA;
-    });
+    const sortedRecords = [...(db.leaveRecords || [])].sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 
     return NextResponse.json({
       quarter,

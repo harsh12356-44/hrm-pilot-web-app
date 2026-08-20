@@ -17,7 +17,7 @@ import {
   User,
   Paperclip,
 } from 'lucide-react';
-import { LeaveRecord, Employee, mergeLeavesNonRegressive } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive, getLeaveTimestamp } from '@/lib/types';
 
 export default function LeaveRecordsAdminPage() {
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -229,11 +229,7 @@ export default function LeaveRecordsAdminPage() {
   // Pending Leave Requests requiring action (Table 1: Only non-finalized requests)
   const pendingApprovals = leaves.filter(
     l => l.status !== 'APPROVED' && l.status !== 'REJECTED' && l.managerStatus !== 'Rejected' && l.hrStatus !== 'Rejected'
-  ).sort((a, b) => {
-    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-    return timeB - timeA;
-  });
+  ).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 
   // Historical Leaves Register (Table 2: Only finalized requests - Approved or Rejected)
   const historicalLeaves = leaves.filter(
@@ -269,11 +265,7 @@ export default function LeaveRecordsAdminPage() {
     else if (statusFilter === 'MORE_INFO') matchesStatus = l.status === 'MORE_INFO_REQUIRED';
 
     return matchesSearch && matchesDept && matchesStatus;
-  }).sort((a, b) => {
-    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-    return timeB - timeA;
-  });
+  }).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans antialiased text-slate-100 flex flex-col">

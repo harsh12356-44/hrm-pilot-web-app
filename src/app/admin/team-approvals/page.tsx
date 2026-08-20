@@ -11,7 +11,7 @@ import {
   Filter,
   ShieldCheck,
 } from 'lucide-react';
-import { LeaveRecord, Employee, mergeLeavesNonRegressive } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive, getLeaveTimestamp } from '@/lib/types';
 
 export default function HRTeamApprovalsPage() {
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -166,11 +166,7 @@ export default function HRTeamApprovalsPage() {
     if (filterStatus === 'APPROVED') return l.hrStatus === 'Approved' || l.status === 'APPROVED';
     if (filterStatus === 'REJECTED') return l.hrStatus === 'Rejected' || l.status === 'REJECTED';
     return true;
-  }).sort((a, b) => {
-    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-    return timeB - timeA;
-  });
+  }).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 
   const pendingCount = leaves.filter((l) => l.hrStatus === 'Pending' || (!l.hrStatus && l.status === 'PENDING')).length;
   const approvedCount = leaves.filter((l) => l.hrStatus === 'Approved' || l.status === 'APPROVED').length;

@@ -160,13 +160,34 @@ export interface NotificationItem {
   createdAt: string;
 }
 
-export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryList: LeaveRecord[]): LeaveRecord[] {
-  if (!Array.isArray(primaryList)) primaryList = [];
-  if (!Array.isArray(secondaryList)) secondaryList = [];
+export function getLeaveTimestamp(l: Partial<LeaveRecord> | undefined | null): number {
+  if (!l) return 0;
+  
+  if (l.createdAt) {
+    const t = new Date(l.createdAt).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
 
+  if (l.id && typeof l.id === 'string') {
+    const match = l.id.match(/\d{10,13}/);
+    if (match) {
+      const num = Number(match[0]);
+      if (!isNaN(num) && num > 1000000000) return num;
+    }
+  }
+
+  if (l.startDate) {
+    const t = new Date(l.startDate).getTime();
+    if (!isNaN(t) && t > 0) return t;
+  }
+
+  return 0;
+}
+
+export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryList: LeaveRecord[] = []): LeaveRecord[] {
   const map = new Map<string, LeaveRecord>();
 
-  const getCleanKey = (l: LeaveRecord): string => {
+  const getCleanKey = (l: LeaveRecord) => {
     if (!l) return '';
     if (l.id) return String(l.id).replace(/[^0-9a-zA-Z_-]/g, '').toLowerCase();
     return `${String(l.employeeId).toLowerCase()}_${l.startDate}_${l.leaveType}`.toLowerCase();
@@ -215,11 +236,8 @@ export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryLi
   };
 
   primaryList.forEach(processRecord);
-  return Array.from(map.values()).sort((a, b) => {
-    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-    return timeB - timeA;
-  });
+  secondaryList.forEach(processRecord);
+  return Array.from(map.values()).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 }
 
 export function calculateWorkingDaysCount(startDateStr: string, endDateStr?: string, dayType?: string): number {

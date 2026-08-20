@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
 import { Users, CheckCircle2, XCircle, Clock, ShieldCheck } from 'lucide-react';
-import { LeaveRecord, Employee, mergeLeavesNonRegressive } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive, getLeaveTimestamp } from '@/lib/types';
 
 export default function ManagerPortalPage() {
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -40,11 +40,7 @@ export default function ManagerPortalPage() {
         } catch (e) {}
       }
 
-      const sortedLeavesList = [...leavesList].sort((a, b) => {
-        const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-        const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-        return timeB - timeA;
-      });
+      const sortedLeavesList = [...leavesList].sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 
       setLeaves(sortedLeavesList);
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
