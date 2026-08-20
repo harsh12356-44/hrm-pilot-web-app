@@ -571,10 +571,17 @@ export async function ensureCloudSync() {
     if (res.ok) {
       const json = await res.json();
       const cloudLeaves = json?.data?.leaveRecords;
-      if (Array.isArray(cloudLeaves) && cloudLeaves.length > 0) {
-        db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], cloudLeaves);
+      if (Array.isArray(cloudLeaves)) {
+        if (cloudLeaves.length === 0) {
+          db.leaveRecords = [];
+        } else {
+          db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], cloudLeaves);
+        }
         memoryDb = db;
         (globalThis as any)._inMemoryDbData = db;
+        try {
+          fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2));
+        } catch (e) {}
       }
     }
   } catch (e) {
