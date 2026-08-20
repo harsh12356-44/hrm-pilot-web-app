@@ -161,6 +161,10 @@ git push origin main
 35. **GET /api/leaves Robust Error Handling & Live Endpoint Verification**: Fixed `GET /api/leaves` route handler in [`src/app/api/leaves/route.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/leaves/route.ts) to define `const db = getDbData()` explicitly and wrapped execution in a try...catch fallback block, verifying live production returns HTTP 200 with all real-time leave records.
 36. **Real-Time Cross-Portal Dual Approval Synchronizer**: Configured 3-second automatic polling and `getLiveStatusBadge` rendering across Employee (`/employee`), Manager (`/manager`), and HR Admin (`/admin/team-approvals` & `/admin/leave-records`) portals. When HR or Manager approves or rejects a leave request, status updates persist to the Cloud JSON Store and automatically update on all connected Employee, Manager, and HR accounts without requiring page refresh.
 37. **Universal Newest-First Leave Request Ordering Engine**: Implemented `getLeaveTimestamp` in [`src/lib/types.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/types.ts) parsing `createdAt`, ID timestamp regex (`l-1787...`), and `startDate`. Enforced `(a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a)` across `mergeLeavesNonRegressive`, `GET /api/leaves`, Employee Portal, Manager Portal, HR Team Approvals, and Leave Records Admin tables so the latest leave requests **always display at the very top**.
+38. **HR Leave History Clear Button, Employee Quarterly Register, & Full-Day Leave Policy**:
+    - **HR Leave History Clear**: Added "Clear Leave History" button in HR Desk (`/admin/leave-records`) with confirmation modal and API handlers (`POST /api/leaves` `{ action: 'clear_all' }` & `DELETE /api/leaves`) to wipe test leave histories from disk, memory, and Cloud JSON Store.
+    - **Employee Quarterly Leave Register**: Built "My Leave Register & Quarterly Breakdown" table on Employee Dashboard (`/employee`) with interactive quarter filters (ALL, Q1, Q2, Q3, Q4), live approval status badges, and total applied/approved days counts.
+    - **Full-Day Leave Policy Enforcement**: Removed half-day leave options from the Apply Leave form (`/employee?tab=apply-leave`) and enforced whole working days calculation strictly.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -196,3 +200,4 @@ git push origin main
 - [x] **Item 31: GET /api/leaves Robust Error Handling & Live Endpoint Verification**: Completed ✓
 - [x] **Item 32: Real-Time Cross-Portal Dual Approval Synchronizer**: Completed ✓
 - [x] **Item 33: Universal Newest-First Leave Request Ordering Engine**: Completed ✓
+- [x] **Item 34: HR Leave History Clear Button, Employee Quarterly Register, & Full-Day Leave Policy**: Completed ✓
