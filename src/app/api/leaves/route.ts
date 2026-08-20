@@ -6,35 +6,48 @@ import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarte
 import { LeaveRecord, Employee, mergeLeavesNonRegressive, calculateWorkingDaysCount } from '@/lib/types';
 
 export async function GET(request: Request) {
-  await ensureCloudSync();
-  const { searchParams } = new URL(request.url);
-  const quarter = searchParams.get('quarter') || 'Q3';
-  const department = searchParams.get('department') || 'ALL';
-  const employeeDetails = searchParams.get('employeeDetails');
+  try {
+    await ensureCloudSync();
+    const { searchParams } = new URL(request.url);
+    const quarter = searchParams.get('quarter') || 'Q3';
+    const department = searchParams.get('department') || 'ALL';
+    const employeeDetails = searchParams.get('employeeDetails');
 
-  if (employeeDetails) {
-    const detail = getEmployeeAllQuarters(employeeDetails);
-    if (!detail) {
-      return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+    if (employeeDetails) {
+      const detail = getEmployeeAllQuarters(employeeDetails);
+      if (!detail) {
+        return NextResponse.json({ error: 'Employee not found' }, { status: 404 });
+      }
+      return NextResponse.json({ success: true, detail });
     }
-    return NextResponse.json({ success: true, detail });
+
+    const summaries = getQuarterlyLeaveSummaries(quarter, department);
+    const db = getDbData();
+    const sortedRecords = [...(db.leaveRecords || [])].sort((a, b) => {
+      const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
+      const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
+      return timeB - timeA;
+    });
+
+    return NextResponse.json({
+      quarter,
+      department,
+      summaries,
+      records: sortedRecords,
+      employees: db.employees || [],
+    });
+  } catch (err: any) {
+    console.error('Error in GET /api/leaves:', err);
+    const db = getDbData();
+    return NextResponse.json({
+      quarter: 'Q3',
+      department: 'ALL',
+      summaries: [],
+      records: db.leaveRecords || [],
+      employees: db.employees || [],
+      error: err.message || 'Internal server error',
+    });
   }
-
-  const summaries = getQuarterlyLeaveSummaries(quarter, department);
-  const db = getDbData();
-  const sortedRecords = [...(db.leaveRecords || [])].sort((a, b) => {
-    const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
-    const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
-    return timeB - timeA;
-  });
-
-  return NextResponse.json({
-    quarter,
-    department,
-    summaries,
-    records: sortedRecords,
-    employees: db.employees,
-  });
 }
 
 export async function POST(request: Request) {
