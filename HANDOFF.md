@@ -150,6 +150,11 @@ git push origin main
 28. **Employee Dashboard Light Mode Removal**: Forced dark theme on Employee and Manager portals and restricted theme toggle in [`Navbar.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/Navbar.tsx) strictly to HR Admin.
 29. **HR-Only Holiday Import/Add/Delete Restrictions**: Updated [`HolidaysTab.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/HolidaysTab.tsx) so regular employees can only view the company holiday calendar. Hid the **Add Holiday** button, **Import Holidays List** card, and **Delete Holiday** controls for non-HR logins.
 30. **Complete Removal of Active Employee View Dropdown for Non-HR Accounts**: Updated [`src/app/employee/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/employee/page.tsx) so the `Active Employee View:` `<select>` dropdown is hidden for non-HR employees, displaying only a static read-only badge of their logged-in identity.
+31. **Employee Dashboard Analytics & Full Name Greeting Synchronization**: Updated [`src/app/employee/page.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/employee/page.tsx) to change hero greeting to `Hello, {Full Name}` and synchronized metric cards:
+    - **Present Days**: Filtered for current month (August 2026) from attendance grid.
+    - **Total Hours**: Calculated total completed working hours & minutes for current month (`152h 30m`).
+    - **Late Arrivals**: Counted late arrivals (`checkIn > 09:15:00`) for current month from attendance grid.
+    - **Leave Balance**: Connected directly to Leave Tracker remaining balance for current quarter (Q3 2026).
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -178,3 +183,4 @@ git push origin main
 - [x] **Item 24: Employee Dashboard Light Mode Removal**: Completed ✓
 - [x] **Item 25: HR-Only Holiday Import/Add/Delete Restrictions**: Completed ✓
 - [x] **Item 26: Complete Removal of Active Employee View Dropdown for Non-HR Accounts**: Completed ✓
+- [x] **Item 27: Employee Dashboard Analytics & Full Name Greeting Synchronization**: Completed ✓
