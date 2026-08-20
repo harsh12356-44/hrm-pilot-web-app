@@ -29,7 +29,43 @@ import {
 import AttendanceLogTab from '@/components/AttendanceLogTab';
 import HolidaysTab from '@/components/HolidaysTab';
 import LeaveTrackerTab from '@/components/LeaveTrackerTab';
-import { Employee, AttendanceLog, LeaveRecord, mergeLeavesNonRegressive, calculateWorkingDaysCount } from '@/lib/types';
+function getLiveStatusBadge(l: LeaveRecord) {
+  if (!l) return null;
+  const isMgrApp = l.managerStatus === 'Approved';
+  const isHrApp = l.hrStatus === 'Approved' || l.status === 'APPROVED';
+  const isRejected = l.status === 'REJECTED' || l.managerStatus === 'Rejected' || l.hrStatus === 'Rejected';
+
+  if (isRejected) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-500/10 text-rose-400 border border-rose-500/20 whitespace-nowrap">
+        <XCircle className="w-3.5 h-3.5 mr-1" />
+        REJECTED ✗
+      </span>
+    );
+  }
+  if (isHrApp || (isMgrApp && isHrApp)) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
+        <CheckCircle className="w-3.5 h-3.5 mr-1" />
+        HR AND MANAGER HAVE APPROVED ✓
+      </span>
+    );
+  }
+  if (isMgrApp) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-blue-500/10 text-blue-400 border border-blue-500/20 whitespace-nowrap">
+        <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+        MANAGER APPROVED (PENDING HR) ✓
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 whitespace-nowrap">
+      <Clock className="w-3.5 h-3.5 mr-1" />
+      PENDING APPROVAL
+    </span>
+  );
+}
 
 function EmployeePortalContent() {
   const searchParams = useSearchParams();

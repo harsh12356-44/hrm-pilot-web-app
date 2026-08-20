@@ -64,8 +64,13 @@ export default function HRTeamApprovalsPage() {
     const handleUpdate = () => fetchLeavesAndEmployees(true);
     window.addEventListener('leaveDataUpdated', handleUpdate);
 
+    const interval = setInterval(() => {
+      fetchLeavesAndEmployees(true);
+    }, 3000);
+
     return () => {
       window.removeEventListener('leaveDataUpdated', handleUpdate);
+      clearInterval(interval);
     };
   }, [fetchLeavesAndEmployees]);
 

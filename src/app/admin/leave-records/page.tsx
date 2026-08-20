@@ -33,9 +33,9 @@ export default function LeaveRecordsAdminPage() {
   const [isRecordModalOpen, setIsRecordModalOpen] = useState(false);
   const [actionStatusMsg, setActionStatusMsg] = useState('');
 
-  const fetchLeavesAndEmployees = useCallback(async () => {
+  const fetchLeavesAndEmployees = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [leaveRes, empRes] = await Promise.all([
         fetch(`/api/leaves?t=${Date.now()}`, { cache: 'no-store' }),
         fetch(`/api/employees?t=${Date.now()}`, { cache: 'no-store' }),
@@ -66,12 +66,24 @@ export default function LeaveRecordsAdminPage() {
     } catch (err) {
       console.error('Error fetching leave requests data:', err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchLeavesAndEmployees();
+    fetchLeavesAndEmployees(false);
+
+    const handleUpdate = () => fetchLeavesAndEmployees(true);
+    window.addEventListener('leaveDataUpdated', handleUpdate);
+
+    const interval = setInterval(() => {
+      fetchLeavesAndEmployees(true);
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('leaveDataUpdated', handleUpdate);
+      clearInterval(interval);
+    };
   }, [fetchLeavesAndEmployees]);
 
   const handleUpdateStatus = async (id: string, newStatus: 'APPROVED' | 'REJECTED' | 'MORE_INFO_REQUIRED') => {

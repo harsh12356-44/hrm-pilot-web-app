@@ -12,9 +12,9 @@ export default function ManagerPortalPage() {
   const [loading, setLoading] = useState(true);
   const [statusMsg, setStatusMsg] = useState('');
 
-  const fetchManagerData = useCallback(async () => {
+  const fetchManagerData = useCallback(async (isSilent = false) => {
     try {
-      setLoading(true);
+      if (!isSilent) setLoading(true);
       const [leaveRes, empRes] = await Promise.all([
         fetch(`/api/leaves?t=${Date.now()}`, { cache: 'no-store' }),
         fetch(`/api/employees?t=${Date.now()}`, { cache: 'no-store' }),
@@ -51,12 +51,24 @@ export default function ManagerPortalPage() {
     } catch (err) {
       console.error(err);
     } finally {
-      setLoading(false);
+      if (!isSilent) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchManagerData();
+    fetchManagerData(false);
+
+    const handleUpdate = () => fetchManagerData(true);
+    window.addEventListener('leaveDataUpdated', handleUpdate);
+
+    const interval = setInterval(() => {
+      fetchManagerData(true);
+    }, 3000);
+
+    return () => {
+      window.removeEventListener('leaveDataUpdated', handleUpdate);
+      clearInterval(interval);
+    };
   }, [fetchManagerData]);
 
   const handleManagerAction = async (id: string, action: 'APPROVED' | 'REJECTED') => {
