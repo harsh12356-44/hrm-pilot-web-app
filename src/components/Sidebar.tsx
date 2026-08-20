@@ -25,6 +25,8 @@ import {
   FileText,
   ClipboardCheck,
   Bell,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -41,6 +43,26 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
   const [activeRole, setActiveRole] = useState<string>('ADMIN');
   const [isManager, setIsManager] = useState<boolean>(false);
   const [empCodeDisplay, setEmpCodeDisplay] = useState<string>('NB002');
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('hrm_sidebar_collapsed');
+      if (stored === 'true') {
+        setIsCollapsed(true);
+      }
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    setIsCollapsed(prev => {
+      const nextState = !prev;
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('hrm_sidebar_collapsed', String(nextState));
+      }
+      return nextState;
+    });
+  };
 
   const getCookieRole = () => {
     if (typeof document === 'undefined') return 'ADMIN';
@@ -153,37 +175,60 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
   const sections = effectiveRole === 'ADMIN' ? adminSections : employeeSections;
 
   return (
-    <aside className="w-68 bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-4 flex flex-col justify-between shrink-0 transition-all duration-200">
-      <div className="space-y-5 overflow-y-auto max-h-[calc(100vh-140px)] pr-1">
+    <aside
+      className={`${
+        isCollapsed ? 'w-20' : 'w-68'
+      } bg-[#0f172a] border-r border-slate-800 text-slate-300 min-h-[calc(100vh-65px)] p-3.5 flex flex-col justify-between shrink-0 transition-all duration-300 ease-in-out relative group`}
+    >
+      <div className="space-y-4 overflow-y-auto max-h-[calc(100vh-140px)] pr-0.5 scrollbar-none">
+        {/* Toggle Collapse Button Header Row */}
+        <div className={`flex items-center ${isCollapsed ? 'justify-center pb-2 border-b border-slate-800/80' : 'justify-between pb-3 border-b border-slate-800/80'} transition-all`}>
+          {!isCollapsed && (
+            <span className="text-xs font-black text-slate-400 uppercase tracking-wider px-2">
+              Menu Navigation
+            </span>
+          )}
+          <button
+            onClick={toggleSidebar}
+            className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-blue-600/30 text-slate-400 hover:text-white border border-slate-700/60 transition shadow-sm"
+            title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
+          >
+            {isCollapsed ? <PanelLeftOpen className="w-5 h-5 text-blue-400" /> : <PanelLeftClose className="w-5 h-5 text-slate-400" />}
+          </button>
+        </div>
+
         {/* Admin Quick Switch Back Banner (Strictly for Ravina Khimani when navigating outside Admin mode) */}
         {isRavinaKhimani && effectiveRole !== 'ADMIN' && (
           <Link
             href="/admin"
-            className="flex items-center space-x-2 px-3.5 py-2.5 bg-blue-600/20 border border-blue-500/40 rounded-xl text-blue-300 hover:bg-blue-600/30 transition text-xs font-bold shadow-md mb-2"
+            title={isCollapsed ? 'Return to HR Admin Suite' : undefined}
+            className={`flex items-center ${isCollapsed ? 'justify-center p-2.5' : 'space-x-2 px-3.5 py-2.5'} bg-blue-600/20 border border-blue-500/40 rounded-xl text-blue-300 hover:bg-blue-600/30 transition text-xs font-bold shadow-md mb-2`}
           >
-            <LayoutDashboard className="w-4 h-4 text-blue-400" />
-            <span>← Return to HR Admin Suite</span>
+            <LayoutDashboard className="w-4 h-4 text-blue-400 shrink-0" />
+            {!isCollapsed && <span>← Return to HR Admin Suite</span>}
           </Link>
         )}
 
         {/* Brand Header for Portal View */}
         {effectiveRole !== 'ADMIN' && (
-          <div className="px-3.5 py-2.5 border-b border-slate-800/80 mb-2">
-            <p className="text-base font-black text-white tracking-tight font-heading">PeopleFlow HRM</p>
-            <p className="text-xs text-slate-400 uppercase tracking-wider font-bold">Employee Portal</p>
+          <div className={`px-2 py-1 border-b border-slate-800/80 mb-2 ${isCollapsed ? 'text-center' : ''}`}>
+            <p className="text-sm font-black text-white tracking-tight font-heading">
+              {isCollapsed ? 'HRM' : 'PeopleFlow HRM'}
+            </p>
+            {!isCollapsed && <p className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Employee Portal</p>}
           </div>
         )}
 
         {sections.map((sec, idx) => (
-          <div key={idx} className="space-y-2">
-            {sec.title && (
-              <div className="px-3.5 pt-2">
-                <p className="text-xs font-black tracking-wider text-slate-400 uppercase">
+          <div key={idx} className="space-y-1.5">
+            {sec.title && !isCollapsed && (
+              <div className="px-3 pt-2">
+                <p className="text-[11px] font-black tracking-wider text-slate-400 uppercase">
                   {sec.title}
                 </p>
               </div>
             )}
-            <nav className="space-y-1.5">
+            <nav className="space-y-1">
               {sec.items.map((item) => {
                 const Icon = item.icon;
                 const cleanHref = item.href.split('?')[0];
@@ -199,19 +244,22 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
                   <Link
                     key={item.id}
                     href={item.href}
+                    title={isCollapsed ? item.label : undefined}
                     onClick={() => {
                       if (typeof window !== 'undefined' && window.innerWidth < 768) {
                         window.dispatchEvent(new CustomEvent('closeMobileSidebar'));
                       }
                     }}
-                    className={`flex items-center space-x-3.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                    className={`flex items-center ${
+                      isCollapsed ? 'justify-center px-0 py-3' : 'space-x-3.5 px-3.5 py-2.5'
+                    } rounded-xl text-xs font-semibold transition-all ${
                       isActive
-                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-extrabold text-sm'
+                        ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30 font-extrabold'
                         : 'text-slate-300 hover:text-white hover:bg-slate-800/80 font-medium'
                     }`}
                   >
                     <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
-                    <span className="truncate text-sm">{item.label}</span>
+                    {!isCollapsed && <span className="truncate text-xs">{item.label}</span>}
                   </Link>
                 );
               })}
@@ -220,12 +268,21 @@ function SidebarContent({ currentTab, role }: SidebarProps) {
         ))}
       </div>
 
-      {/* Footer Employee ID Info Box (Matching Screenshot 1) */}
+      {/* Footer Employee ID Info Box */}
       <div className="pt-3 border-t border-slate-800/80">
-        <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-1">
-          <p className="text-xs font-black text-slate-400 uppercase tracking-wider">Employee ID</p>
-          <p className="text-sm font-mono font-bold text-white">{empCodeDisplay}</p>
-        </div>
+        {isCollapsed ? (
+          <div
+            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 flex justify-center items-center text-slate-400 hover:text-white transition"
+            title={`Employee ID: ${empCodeDisplay}`}
+          >
+            <User className="w-5 h-5 text-blue-400" />
+          </div>
+        ) : (
+          <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-left space-y-1">
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Employee ID</p>
+            <p className="text-xs font-mono font-bold text-white">{empCodeDisplay}</p>
+          </div>
+        )}
       </div>
     </aside>
   );
