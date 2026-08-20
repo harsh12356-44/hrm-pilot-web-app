@@ -388,18 +388,59 @@ function EmployeePortalContent() {
     }
   };
 
-  // Stats
-  const presentDaysCount = safeAttendance.filter(a => a.attendanceCode === 'P').length || 0;
-  const workingDaysSoFar = 6;
-  const totalWorkedMins = safeAttendance.reduce((sum, a) => sum + (a.workedMinutes || 0), 0);
-  const totalHours = Math.round(totalWorkedMins / 60);
-  const avgDailyHours = presentDaysCount > 0 ? (totalHours / presentDaysCount).toFixed(1) : '0';
-  const lateArrivalsCount = safeAttendance.filter(a => (a.checkIn && a.checkIn > '09:15:00')).length || 0;
-  
-  // Approved leaves used in Q3
-  const approvedLeaves = safeLeaves.filter(l => l.status === 'APPROVED');
-  const leavesUsedCount = approvedLeaves.reduce((sum, l) => sum + (l.daysCount || 1), 0);
-  const leaveBalance = (6 - leavesUsedCount).toFixed(1);
+  // Filter current month (August 2026 / 2026-08) attendance for exact employee metrics
+  const currentMonthPrefix = '2026-08';
+  const currentMonthLogs = safeAttendance.filter(a => a && a.date && a.date.startsWith(currentMonthPrefix));
+
+  // Present Days Count for current month
+  const presentDaysCount = currentMonthLogs.reduce((sum, a) => {
+    if (a.attendanceCode === 'P' || a.attendanceCode === 'PRESENT' || (a.checkIn && !a.attendanceCode)) return sum + 1;
+    if (a.attendanceCode === 'HD' || a.attendanceCode === 'HALF_DAY') return sum + 0.5;
+    return sum;
+  }, 0);
+
+  // Total Hours completed for current month
+  const totalWorkedMins = currentMonthLogs.reduce((sum, a) => sum + (a.workedMinutes || 0), 0);
+  const totalHoursNum = Math.floor(totalWorkedMins / 60);
+  const totalMinsNum = totalWorkedMins % 60;
+  const totalHoursDisplay = totalMinsNum > 0 ? `${totalHoursNum}h ${totalMinsNum}m` : `${totalHoursNum}h`;
+  const avgDailyHours = presentDaysCount > 0 ? (totalWorkedMins / 60 / presentDaysCount).toFixed(1) : '0';
+
+  // Late Arrivals for current month (checkIn > 09:15:00)
+  const lateArrivalsCount = currentMonthLogs.filter(a => (a.checkIn && a.checkIn > '09:15:00') || a.isLate).length || 0;
+
+  // Leave Balance for current quarter (Q3 - July/August/September 2026) fetched from Leave Tracker rules
+  const currentEmpId = employee?.id || selectedEmployeeId || 'emp-12';
+  const currentEmpCode = employee?.employeeId || 'SG012';
+  const currentEmpName = (employee?.name || '').toLowerCase().trim();
+
+  const q3Leaves = safeLeaves.filter(l => {
+    if (!l) return false;
+    const targetEmp = String(l.employeeId || '').toLowerCase().trim();
+    const matchesEmp =
+      targetEmp === String(currentEmpId).toLowerCase().trim() ||
+      targetEmp === String(currentEmpCode).toLowerCase().trim() ||
+      targetEmp === currentEmpName ||
+      (currentEmpName.length >= 3 && targetEmp.includes(currentEmpName)) ||
+      (targetEmp.length >= 3 && currentEmpName.includes(targetEmp));
+
+    const isBothApproved = (l.managerStatus === 'Approved' || l.status === 'APPROVED') && (l.hrStatus === 'Approved' || l.status === 'APPROVED');
+    const isApproved = isBothApproved || l.status === 'APPROVED';
+    const recQuarter = l.quarter || (l.startDate ? (new Date(l.startDate).getMonth() >= 6 && new Date(l.startDate).getMonth() <= 8 ? 'Q3' : 'Q3') : 'Q3');
+
+    return matchesEmp && isApproved && (recQuarter === 'Q3' || !l.quarter);
+  });
+
+  const casualUsedQ3 = q3Leaves
+    .filter(l => l.leaveType === 'Casual Leave')
+    .reduce((sum, l) => sum + (l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : (l.daysCount || 1)), 0);
+
+  const plannedUsedQ3 = q3Leaves
+    .filter(l => l.leaveType === 'Planned Leave' || l.leaveType === 'Sick Leave')
+    .reduce((sum, l) => sum + (l.dayType === 'first_half' || l.dayType === 'second_half' ? 0.5 : (l.daysCount || 1)), 0);
+
+  const totalUsedQ3 = casualUsedQ3 + plannedUsedQ3;
+  const leaveBalance = Math.max(0, 6 - totalUsedQ3).toFixed(1);
 
   // August 2026 Bar Chart Data (31 days)
   const augustDays = Array.from({ length: 31 }, (_, i) => {
@@ -506,7 +547,7 @@ function EmployeePortalContent() {
               <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 md:p-7 text-white shadow-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight font-heading flex items-center space-x-2">
-                    <span>Good morning, {empName}</span>
+                    <span>Hello, {employee ? employee.name : 'Employee'}</span>
                     <span className="animate-bounce inline-block">👋</span>
                   </h1>
                   <p className="text-xs md:text-sm text-blue-100 opacity-90">
@@ -531,7 +572,7 @@ function EmployeePortalContent() {
                   </div>
                   <div>
                     <p className="text-3xl font-extrabold text-white font-heading">{presentDaysCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Out of {workingDaysSoFar} working days so far</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Recorded in August 2026</p>
                   </div>
                 </div>
 
@@ -543,7 +584,7 @@ function EmployeePortalContent() {
                     </div>
                   </div>
                   <div>
-                    <p className="text-3xl font-extrabold text-white font-heading">{totalHours}h</p>
+                    <p className="text-3xl font-extrabold text-white font-heading">{totalHoursDisplay}</p>
                     <p className="text-[11px] text-slate-400 mt-0.5">{avgDailyHours}h avg daily</p>
                   </div>
                 </div>
@@ -557,7 +598,7 @@ function EmployeePortalContent() {
                   </div>
                   <div>
                     <p className="text-3xl font-extrabold text-white font-heading">{lateArrivalsCount}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Recorded this month</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Recorded in August 2026</p>
                   </div>
                 </div>
 
@@ -570,7 +611,7 @@ function EmployeePortalContent() {
                   </div>
                   <div>
                     <p className="text-3xl font-extrabold text-white font-heading">{leaveBalance}</p>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Days left in Q3 2026</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Days left in Q3 2026 (Leave Tracker)</p>
                   </div>
                 </div>
               </div>
