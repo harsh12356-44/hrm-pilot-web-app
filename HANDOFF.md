@@ -165,6 +165,7 @@ git push origin main
     - **HR Leave History Clear**: Added "Clear Leave History" button in HR Desk (`/admin/leave-records`) with confirmation modal and API handlers (`POST /api/leaves` `{ action: 'clear_all' }` & `DELETE /api/leaves`) to wipe test leave histories from disk, memory, and Cloud JSON Store.
     - **Employee Quarterly Leave Register**: Built "My Leave Register & Quarterly Breakdown" table on Employee Dashboard (`/employee`) with interactive quarter filters (ALL, Q1, Q2, Q3, Q4), live approval status badges, and total applied/approved days counts.
     - **Full-Day Leave Policy Enforcement**: Removed half-day leave options from the Apply Leave form (`/employee?tab=apply-leave`) and enforced whole working days calculation strictly.
+39. **Universal Collapsible Sidebar Navigation Engine**: Added `PanelLeftClose` and `PanelLeftOpen` toggle icon button at the top header of [`src/components/Sidebar.tsx`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/Sidebar.tsx). Shrinks sidebar width from `w-68` to `w-20` with smooth CSS transition animations (`transition-all duration-300 ease-in-out`), tooltips on hover, and persistent `localStorage` preference (`hrm_sidebar_collapsed`) across all Admin, Manager, and Employee accounts.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -201,3 +202,4 @@ git push origin main
 - [x] **Item 32: Real-Time Cross-Portal Dual Approval Synchronizer**: Completed ✓
 - [x] **Item 33: Universal Newest-First Leave Request Ordering Engine**: Completed ✓
 - [x] **Item 34: HR Leave History Clear Button, Employee Quarterly Register, & Full-Day Leave Policy**: Completed ✓
+- [x] **Item 35: Universal Collapsible Sidebar Navigation Engine**: Completed ✓
