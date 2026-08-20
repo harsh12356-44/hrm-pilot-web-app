@@ -269,21 +269,26 @@ export default function LeaveTrackerTab() {
   };
 
   const handleClearLeaves = async () => {
-    if (!confirm('Are you sure you want to clear all leave records for testing? This will reset all leave counts to 0.')) return;
+    if (!confirm('Are you sure you want to clear all leave records? This will reset all leave counts to 0 across all portals.')) return;
 
     try {
       if (typeof window !== 'undefined') {
+        localStorage.removeItem('hrm_user_submitted_leaves');
         localStorage.removeItem('hrm_leave_records_backup');
+        localStorage.removeItem('hrm_leave_quarter_overrides');
       }
       setImportStatus('Clearing all leave records...');
       const res = await fetch('/api/leaves', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'clear', quarter }),
+        body: JSON.stringify({ action: 'clear_all', quarter }),
       });
       const data = await res.json();
       if (res.ok) {
         setImportStatus('All leave records cleared successfully!');
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('leaveDataUpdated'));
+        }
         fetchLeaveData();
       } else {
         setImportStatus(data.error || 'Failed to clear leaves');
