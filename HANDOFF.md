@@ -169,6 +169,7 @@ git push origin main
 40. **Full-Width Screen Layout Optimization & Single-Line Table Formatting**: Removed restrictive `max-w-7xl` / `max-w-6xl` containers across Manager Desk (`/manager`), Employee Portal (`/employee`), HR Leave Requests (`/admin/leave-records`), HR Team Approvals (`/admin/team-approvals`), Admin Dashboard (`/admin`), and Leave Tracker (`/admin/leave-tracker`). Replaced with `w-full overflow-x-hidden` edge-to-edge layout and added `whitespace-nowrap` styling to table columns and status badges so dates and status badges render on clean single lines without vertical wrapping or empty side margins.
 41. **Leave Tracker Synchronous Cloud Wipe & Multi-Key Storage Clear**: Fixed "Clear All Leaves" button under Leave Tracker ([`/admin/leave-tracker`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/components/LeaveTrackerTab.tsx)). Updated `handleClearLeaves` to remove `hrm_user_submitted_leaves`, `hrm_leave_records_backup`, and `hrm_leave_quarter_overrides`, send `action: 'clear_all'`, and synchronously execute a `PUT` request to `https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e` to wipe cloud storage so records are purged permanently across all portals.
 42. **ensureCloudSync Zero-Length Cloud Array Handler Resolution**: Fixed `ensureCloudSync()` in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) to evaluate `if (cloudLeaves.length === 0) db.leaveRecords = []`. Prevents cold-start Vercel serverless containers from skipping the clear state when `json?.data?.leaveRecords` is empty.
+43. **Elimination of Automatic Client Backup Re-Upload Resurrection Loops**: Removed automatic `sync_client_backup` loops from `src/app/admin/page.tsx`, `src/app/admin/leave-records/page.tsx`, `src/app/admin/team-approvals/page.tsx`, `src/app/manager/page.tsx`, and `src/app/employee/page.tsx`. Prevents client browser tabs from auto-merging stale `localStorage` arrays back into server memory during background polling.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -209,3 +210,4 @@ git push origin main
 - [x] **Item 36: Full-Width Screen Layout Optimization & Single-Line Table Formatting**: Completed ✓
 - [x] **Item 37: Leave Tracker Synchronous Cloud Wipe & Multi-Key Storage Clear**: Completed ✓
 - [x] **Item 38: ensureCloudSync Zero-Length Cloud Array Handler Resolution**: Completed ✓
+- [x] **Item 39: Elimination of Automatic Client Backup Re-Upload Resurrection Loops**: Completed ✓
