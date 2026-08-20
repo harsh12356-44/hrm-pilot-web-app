@@ -645,11 +645,18 @@ export function getQuarterlyLeaveSummaries(quarter: string = 'Q3', departmentFil
 
   return employees.map(emp => {
     const empLeaves = db.leaveRecords.filter(l => {
+      const targetEmp = String(l.employeeId || '').toLowerCase().trim();
+      const empIdStr = String(emp.id || '').toLowerCase().trim();
+      const empCodeStr = String(emp.employeeId || '').toLowerCase().trim();
+      const empNameStr = String(emp.name || '').toLowerCase().trim();
+
       const matchesEmp =
-        l.employeeId === emp.id ||
-        l.employeeId === emp.employeeId ||
-        (l.employeeId && l.employeeId.toLowerCase().trim() === emp.name.toLowerCase().trim()) ||
-        (l.employeeId && emp.name.toLowerCase().includes(l.employeeId.toLowerCase().trim()));
+        targetEmp === empIdStr ||
+        targetEmp === empCodeStr ||
+        targetEmp === empNameStr ||
+        (targetEmp.length >= 3 && empNameStr.includes(targetEmp)) ||
+        (empNameStr.length >= 3 && targetEmp.includes(empNameStr)) ||
+        (targetEmp.length >= 3 && empCodeStr.includes(targetEmp));
 
       const recQuarter = l.quarter || getQuarterFromDateStr(l.startDate);
       const matchesQuarter = recQuarter === quarter;
@@ -742,11 +749,18 @@ export function getEmployeeAllQuarters(employeeId: string) {
 
   quarters.forEach(q => {
     const qLeaves = db.leaveRecords.filter(l => {
+      const targetEmp = String(l.employeeId || '').toLowerCase().trim();
+      const empIdStr = String(emp.id || '').toLowerCase().trim();
+      const empCodeStr = String(emp.employeeId || '').toLowerCase().trim();
+      const empNameStr = String(emp.name || '').toLowerCase().trim();
+
       const matchesEmp =
-        l.employeeId === emp.id ||
-        l.employeeId === emp.employeeId ||
-        (l.employeeId && l.employeeId.toLowerCase().trim() === emp.name.toLowerCase().trim()) ||
-        (l.employeeId && emp.name.toLowerCase().includes(l.employeeId.toLowerCase().trim()));
+        targetEmp === empIdStr ||
+        targetEmp === empCodeStr ||
+        targetEmp === empNameStr ||
+        (targetEmp.length >= 3 && empNameStr.includes(targetEmp)) ||
+        (empNameStr.length >= 3 && targetEmp.includes(empNameStr)) ||
+        (targetEmp.length >= 3 && empCodeStr.includes(targetEmp));
 
       const recQuarter = l.quarter || getQuarterFromDateStr(l.startDate);
       const matchesQuarter = recQuarter === q;
