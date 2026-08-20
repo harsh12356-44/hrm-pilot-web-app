@@ -21,6 +21,7 @@ export async function GET(request: Request) {
   }
 
   const summaries = getQuarterlyLeaveSummaries(quarter, department);
+  const db = getDbData();
   const sortedRecords = [...(db.leaveRecords || [])].sort((a, b) => {
     const timeA = new Date(a.createdAt || a.startDate || 0).getTime();
     const timeB = new Date(b.createdAt || b.startDate || 0).getTime();
