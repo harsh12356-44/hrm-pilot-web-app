@@ -29,7 +29,7 @@ import {
 import AttendanceLogTab from '@/components/AttendanceLogTab';
 import HolidaysTab from '@/components/HolidaysTab';
 import LeaveTrackerTab from '@/components/LeaveTrackerTab';
-import { Employee, AttendanceLog, LeaveRecord } from '@/lib/types';
+import { Employee, AttendanceLog, LeaveRecord, mergeLeavesNonRegressive } from '@/lib/types';
 
 function EmployeePortalContent() {
   const searchParams = useSearchParams();
@@ -79,26 +79,8 @@ function EmployeePortalContent() {
         try {
           const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
           if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
-            let updatedLocal = [...localSubmitted];
-            localSubmitted.forEach((l, lIdx) => {
-              if (l && l.id) {
-                const cleanLId = String(l.id).replace(/[^0-9]/g, '');
-                const srvMatch = leavesList.find(srv => srv.id === l.id || (cleanLId.length >= 3 && typeof srv.id === 'string' && srv.id.replace(/[^0-9]/g, '').endsWith(cleanLId)));
-                if (srvMatch) {
-                  updatedLocal[lIdx] = { ...l, ...srvMatch };
-                  const srvIndex = leavesList.findIndex(srv => srv.id === l.id || (cleanLId.length >= 3 && typeof srv.id === 'string' && srv.id.replace(/[^0-9]/g, '').endsWith(cleanLId)));
-                  if (srvIndex !== -1) {
-                    leavesList[srvIndex] = { ...l, ...srvMatch };
-                  }
-                } else {
-                  const srvIndex = leavesList.findIndex(srv => srv.id === l.id);
-                  if (srvIndex === -1) {
-                    leavesList.unshift(l);
-                  }
-                }
-              }
-            });
-            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedLocal));
+            leavesList = mergeLeavesNonRegressive(leavesList, localSubmitted);
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(leavesList));
           }
         } catch (e) {}
       }
@@ -346,8 +328,8 @@ function EmployeePortalContent() {
     const newManagerStatus = action === 'APPROVED' ? 'Approved' : 'Rejected';
     const newStatus = action === 'REJECTED' ? 'REJECTED' : undefined;
 
-    setAllLeaves(prev =>
-      prev.map(l => {
+    const updater = (prevList: LeaveRecord[]) =>
+      prevList.map(l => {
         if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
           const isBothApproved = newManagerStatus === 'Approved' && l.hrStatus === 'Approved';
           return {
@@ -357,22 +339,20 @@ function EmployeePortalContent() {
           };
         }
         return l;
-      })
-    );
+      });
 
-    setLeaves(prev =>
-      prev.map(l => {
-        if (l.id === id || (typeof l.id === 'string' && l.id.endsWith(id.replace(/[^0-9]/g, '')))) {
-          const isBothApproved = newManagerStatus === 'Approved' && l.hrStatus === 'Approved';
-          return {
-            ...l,
-            managerStatus: newManagerStatus,
-            status: isBothApproved ? 'APPROVED' : newStatus || l.status,
-          };
+    setAllLeaves(updater);
+    setLeaves(updater);
+
+    if (typeof window !== 'undefined') {
+      try {
+        const local = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+        if (Array.isArray(local) && local.length > 0) {
+          const updatedLocal = updater(local);
+          localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedLocal));
         }
-        return l;
-      })
-    );
+      } catch (e) {}
+    }
 
     setStatusMsg(`Manager decision recorded: ${action}! ${action === 'APPROVED' ? 'Awaiting HR final approval.' : 'Request rejected.'}`);
 

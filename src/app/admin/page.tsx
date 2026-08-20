@@ -22,7 +22,7 @@ import {
   ShieldCheck,
   BarChart2,
 } from 'lucide-react';
-import { Employee, AttendanceLog, LeaveRecord } from '@/lib/types';
+import { Employee, AttendanceLog, LeaveRecord, mergeLeavesNonRegressive } from '@/lib/types';
 
 export default function AdminDashboardPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -45,7 +45,17 @@ export default function AdminDashboardPage() {
 
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
       setAttendance(Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || []);
-      const recs = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
+      let recs: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
+      if (typeof window !== 'undefined') {
+        try {
+          const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+          if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
+            recs = mergeLeavesNonRegressive(recs, localSubmitted);
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(recs));
+          }
+        } catch (e) {}
+      }
+
       setLeaves(recs);
     } catch (err) {
       console.error('Error fetching dashboard data:', err);

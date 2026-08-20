@@ -11,7 +11,7 @@ import {
   Filter,
   ShieldCheck,
 } from 'lucide-react';
-import { LeaveRecord, Employee } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive } from '@/lib/types';
 
 export default function HRTeamApprovalsPage() {
   const [leaves, setLeaves] = useState<LeaveRecord[]>([]);
@@ -32,7 +32,18 @@ export default function HRTeamApprovalsPage() {
       const leaveData = await leaveRes.json();
       const empData = await empRes.json();
 
-      setLeaves(Array.isArray(leaveData) ? leaveData : leaveData.records || []);
+      let leavesList: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
+      if (typeof window !== 'undefined') {
+        try {
+          const localSubmitted: LeaveRecord[] = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+          if (Array.isArray(localSubmitted) && localSubmitted.length > 0) {
+            leavesList = mergeLeavesNonRegressive(leavesList, localSubmitted);
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(leavesList));
+          }
+        } catch (e) {}
+      }
+
+      setLeaves(leavesList);
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
     } catch (err) {
       console.error('Error fetching HR Team Approvals data:', err);
