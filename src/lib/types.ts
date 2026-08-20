@@ -219,3 +219,31 @@ export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryLi
 
   return Array.from(map.values());
 }
+
+export function calculateWorkingDaysCount(startDateStr: string, endDateStr?: string, dayType?: string): number {
+  if (dayType === 'first_half' || dayType === 'second_half') {
+    return 0.5;
+  }
+  if (!startDateStr) return 0;
+
+  const start = new Date(startDateStr);
+  const end = endDateStr ? new Date(endDateStr) : new Date(startDateStr);
+  if (isNaN(start.getTime()) || isNaN(end.getTime())) return 1;
+
+  let count = 0;
+  const current = new Date(start);
+  current.setHours(0, 0, 0, 0);
+
+  const targetEnd = new Date(end);
+  targetEnd.setHours(0, 0, 0, 0);
+
+  while (current <= targetEnd) {
+    // 0 is Sunday (Weekly Off)
+    if (current.getDay() !== 0) {
+      count++;
+    }
+    current.setDate(current.getDate() + 1);
+  }
+
+  return count;
+}

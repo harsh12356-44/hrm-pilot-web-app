@@ -94,12 +94,22 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   useEffect(() => {
     fetchNotifications();
     loadActiveUser();
-    const savedTheme = (localStorage.getItem('hrm_theme') as 'light' | 'dark') || 'light';
-    setTheme(savedTheme);
-    if (savedTheme === 'light') {
-      document.documentElement.classList.add('light');
-    } else {
+    
+    // Light mode removed from employee/manager dashboard area per user request
+    const activeEmpId = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : null;
+    const isHrAdmin = activeEmpId === 'emp-1' || activeEmpId === 'rk001' || currentRole === 'ADMIN';
+
+    if (!isHrAdmin) {
       document.documentElement.classList.remove('light');
+      setTheme('dark');
+    } else {
+      const savedTheme = (localStorage.getItem('hrm_theme') as 'light' | 'dark') || 'light';
+      setTheme(savedTheme);
+      if (savedTheme === 'light') {
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.remove('light');
+      }
     }
 
     window.addEventListener('roleChange', loadActiveUser);
@@ -174,14 +184,14 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
   const isRavinaUser = activeEmpId === 'emp-1' || activeEmpId === 'rk001' || currentRole === 'ADMIN';
 
   return (
-    <header className="bg-white border-b border-slate-200 text-slate-900 sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-sm transition-colors duration-300">
+    <header className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-slate-900 dark:text-slate-100 sticky top-0 z-40 px-6 py-3 flex items-center justify-between shadow-sm transition-colors duration-300">
       <div className="flex items-center space-x-6">
         <Link href={isRavinaUser ? "/admin" : "/employee"} onClick={() => setRoleCookie(isRavinaUser ? 'ADMIN' : 'EMPLOYEE')} className="flex items-center space-x-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-black text-lg shadow-md text-white">
             H
           </div>
           <div>
-            <span className="font-black text-base tracking-tight text-slate-900 font-heading">
+            <span className="font-black text-base tracking-tight text-slate-900 dark:text-white font-heading">
               HRM Pilot
             </span>
             <span className="ml-2 text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 border border-blue-500/20 font-bold uppercase tracking-wider">
@@ -190,84 +200,84 @@ export default function Navbar({ currentRole = 'ADMIN' }: NavbarProps) {
           </div>
         </Link>
 
-        {/* Dynamic Portal Switcher Links (Restricted for regular Employees; HR Admin Suite strictly for Ravina) */}
-        <div className="hidden lg:flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 space-x-1">
-          {isRavinaUser && (
+        {/* Dynamic Portal Switcher Links (Strictly restricted to HR Admin Ravina) */}
+        {isRavinaUser && (
+          <div className="hidden lg:flex items-center bg-slate-100 dark:bg-slate-800 p-1 rounded-xl border border-slate-200 dark:border-slate-700 space-x-1">
             <Link
               href="/admin"
               onClick={() => setRoleCookie('ADMIN')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
                 pathname.startsWith('/admin')
                   ? 'bg-blue-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span>HR Admin Suite</span>
             </Link>
-          )}
 
-          {currentRole !== 'EMPLOYEE' && (
             <Link
               href="/manager"
               onClick={() => setRoleCookie('MANAGER')}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
                 pathname === '/manager'
                   ? 'bg-purple-600 text-white shadow-sm'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
               }`}
             >
               <UserCheck2 className="w-3.5 h-3.5" />
               <span>Manager Desk</span>
             </Link>
-          )}
 
-          <Link
-            href="/employee"
-            onClick={() => setRoleCookie('EMPLOYEE')}
-            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
-              pathname === '/employee'
-                ? 'bg-emerald-600 text-white shadow-sm'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200'
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            <span>Employee Portal</span>
-          </Link>
-        </div>
+            <Link
+              href="/employee"
+              onClick={() => setRoleCookie('EMPLOYEE')}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition flex items-center space-x-1.5 ${
+                pathname === '/employee'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-700'
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>Employee Portal</span>
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center space-x-3 sm:space-x-4">
         {/* Authenticated Role Badge */}
-        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-700">
+        <div className="flex items-center space-x-2 px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300">
           {currentRole === 'ADMIN' ? (
             <Shield className="w-3.5 h-3.5 text-blue-600" />
           ) : (
             <UserCheck className="w-3.5 h-3.5 text-purple-600" />
           )}
-          <span className="font-bold text-[11px] uppercase tracking-wider text-slate-600">
-            Role: <span className="text-slate-900 font-extrabold">{currentRole}</span>
+          <span className="font-bold text-[11px] uppercase tracking-wider text-slate-600 dark:text-slate-400">
+            Role: <span className="text-slate-900 dark:text-white font-extrabold">{currentRole}</span>
           </span>
         </div>
 
-        {/* Theme Switcher Toggle (Light / Dark Mode) */}
-        <button
-          onClick={toggleTheme}
-          className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-indigo-600 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm border border-slate-200"
-          title={theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
-        >
-          {theme === 'light' ? (
-            <>
-              <Moon className="w-4 h-4 text-indigo-600" />
-              <span className="hidden xl:inline text-indigo-600">Dark Mode</span>
-            </>
-          ) : (
-            <>
-              <Sun className="w-4 h-4 text-amber-500" />
-              <span className="hidden xl:inline text-amber-500">Light Mode</span>
-            </>
-          )}
-        </button>
+        {/* Theme Switcher Toggle (Light / Dark Mode) - Restricted strictly to HR Admin */}
+        {isRavinaUser && (
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-indigo-600 transition flex items-center space-x-1.5 text-xs font-bold shadow-sm border border-slate-200 dark:border-slate-700"
+            title={theme === 'light' ? 'Switch to Dark Theme' : 'Switch to Light Theme'}
+          >
+            {theme === 'light' ? (
+              <>
+                <Moon className="w-4 h-4 text-indigo-600" />
+                <span className="hidden xl:inline text-indigo-600">Dark Mode</span>
+              </>
+            ) : (
+              <>
+                <Sun className="w-4 h-4 text-amber-500" />
+                <span className="hidden xl:inline text-amber-500">Light Mode</span>
+              </>
+            )}
+          </button>
+        )}
 
         {/* Notifications Bell */}
         <div className="relative">

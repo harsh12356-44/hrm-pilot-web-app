@@ -29,7 +29,7 @@ import {
 import AttendanceLogTab from '@/components/AttendanceLogTab';
 import HolidaysTab from '@/components/HolidaysTab';
 import LeaveTrackerTab from '@/components/LeaveTrackerTab';
-import { Employee, AttendanceLog, LeaveRecord, mergeLeavesNonRegressive } from '@/lib/types';
+import { Employee, AttendanceLog, LeaveRecord, mergeLeavesNonRegressive, calculateWorkingDaysCount } from '@/lib/types';
 
 function EmployeePortalContent() {
   const searchParams = useSearchParams();
@@ -233,13 +233,8 @@ function EmployeePortalContent() {
 
   const calcDaysCount = () => {
     if (!fromDate) return 1;
-    if (leaveDuration.includes('Half Day')) return 0.5;
-    if (!toDate || fromDate === toDate) return 1;
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
-    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 1;
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+    const dayTypeStr = leaveDuration.includes('Half Day') ? 'first_half' : 'full';
+    return calculateWorkingDaysCount(fromDate, toDate || fromDate, dayTypeStr);
   };
 
   const handleApplyLeaveSubmit = async (e: React.FormEvent) => {

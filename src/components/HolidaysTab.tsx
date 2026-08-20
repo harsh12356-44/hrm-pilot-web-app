@@ -179,6 +179,10 @@ export default function HolidaysTab() {
     }
   };
 
+  const activeEmpId = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_id') : null;
+  const activeEmpRole = typeof window !== 'undefined' ? localStorage.getItem('hrm_active_employee_role') : null;
+  const isHrAdmin = activeEmpId === 'emp-1' || activeEmpId === 'rk001' || activeEmpRole === 'ADMIN';
+
   return (
     <div className="space-y-6 text-slate-100 pb-12">
       {/* Header Banner */}
@@ -188,16 +192,18 @@ export default function HolidaysTab() {
             <CalendarDays className="w-5 h-5 text-purple-400" />
             <span>Company Holidays Calendar</span>
           </h2>
-          <p className="text-xs text-slate-400">Manage annual public holidays, optional leaves, and bulk import holiday schedules.</p>
+          <p className="text-xs text-slate-400">View annual public holidays and optional restricted leaves.</p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition flex items-center space-x-2"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add Holiday</span>
-        </button>
+        {isHrAdmin && (
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-blue-600/30 transition flex items-center space-x-2"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add Holiday</span>
+          </button>
+        )}
       </div>
 
       {message && (
@@ -214,63 +220,65 @@ export default function HolidaysTab() {
         </div>
       )}
 
-      {/* 1:1 Import Holidays List Card Matching User Screenshot */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-5 max-w-xl mx-auto shadow-2xl">
-        <h3 className="text-lg font-bold text-white font-heading">
-          Import Holidays List
-        </h3>
+      {/* 1:1 Import Holidays List Card (Strictly for HR Admin) */}
+      {isHrAdmin && (
+        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 md:p-8 space-y-5 max-w-xl mx-auto shadow-2xl">
+          <h3 className="text-lg font-bold text-white font-heading">
+            Import Holidays List
+          </h3>
 
-        <form onSubmit={handleImportHolidaysSubmit} className="space-y-4 text-xs">
-          <div className="space-y-2">
-            <label className="block font-semibold text-slate-300">
-              Select File (.csv, .xls, .xlsx)
-            </label>
-
-            <div className="flex items-center space-x-3 bg-slate-800 border border-slate-700 rounded-xl p-2.5">
-              <label className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg cursor-pointer transition shrink-0">
-                <span>Choose File</span>
-                <input
-                  type="file"
-                  accept=".csv, .xls, .xlsx"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
+          <form onSubmit={handleImportHolidaysSubmit} className="space-y-4 text-xs">
+            <div className="space-y-2">
+              <label className="block font-semibold text-slate-300">
+                Select File (.csv, .xls, .xlsx)
               </label>
-              <span className="text-slate-400 truncate text-xs font-mono">
-                {file ? file.name : 'No file chosen'}
-              </span>
+
+              <div className="flex items-center space-x-3 bg-slate-800 border border-slate-700 rounded-xl p-2.5">
+                <label className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white font-semibold rounded-lg cursor-pointer transition shrink-0">
+                  <span>Choose File</span>
+                  <input
+                    type="file"
+                    accept=".csv, .xls, .xlsx"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </label>
+                <span className="text-slate-400 truncate text-xs font-mono">
+                  {file ? file.name : 'No file chosen'}
+                </span>
+              </div>
+
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Header row columns should contain &quot;Holiday Name&quot; (or &quot;Name&quot;) and &quot;Holiday Date&quot; (or &quot;Date&quot;). Date formats: YYYY-MM-DD or DD/MM/YYYY.
+              </p>
             </div>
 
-            <p className="text-[11px] text-slate-400 leading-relaxed">
-              Header row columns should contain &quot;Holiday Name&quot; (or &quot;Name&quot;) and &quot;Holiday Date&quot; (or &quot;Date&quot;). Date formats: YYYY-MM-DD or DD/MM/YYYY.
-            </p>
-          </div>
+            <button
+              type="submit"
+              disabled={importing}
+              className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30 transition disabled:opacity-50"
+            >
+              {importing ? 'Importing Holiday List...' : 'Import Holidays'}
+            </button>
+          </form>
 
-          <button
-            type="submit"
-            disabled={importing}
-            className="w-full py-3.5 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30 transition disabled:opacity-50"
-          >
-            {importing ? 'Importing Holiday List...' : 'Import Holidays'}
-          </button>
-        </form>
-
-        {parsedRows.length > 0 && (
-          <div className="pt-3 border-t border-slate-800 space-y-2">
-            <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
-              Parsed Preview ({parsedRows.length} Holidays):
-            </p>
-            <div className="max-h-36 overflow-y-auto border border-slate-800 rounded-xl p-2 bg-slate-950 space-y-1">
-              {parsedRows.slice(0, 5).map((r, idx) => (
-                <div key={idx} className="flex items-center justify-between text-[11px] text-slate-300 font-mono">
-                  <span>{r['Holiday Name'] || r['Name'] || r.name || Object.values(r)[0]}</span>
-                  <span className="text-blue-400 font-bold">{r['Holiday Date'] || r['Date'] || r.date || Object.values(r)[1]}</span>
-                </div>
-              ))}
+          {parsedRows.length > 0 && (
+            <div className="pt-3 border-t border-slate-800 space-y-2">
+              <p className="text-[11px] font-bold text-slate-300 uppercase tracking-wider">
+                Parsed Preview ({parsedRows.length} Holidays):
+              </p>
+              <div className="max-h-36 overflow-y-auto border border-slate-800 rounded-xl p-2 bg-slate-950 space-y-1">
+                {parsedRows.slice(0, 5).map((r, idx) => (
+                  <div key={idx} className="flex items-center justify-between text-[11px] text-slate-300 font-mono">
+                    <span>{r['Holiday Name'] || r['Name'] || r.name || Object.values(r)[0]}</span>
+                    <span className="text-blue-400 font-bold">{r['Holiday Date'] || r['Date'] || r.date || Object.values(r)[1]}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
+      )}
 
       {/* Current Company Holidays Grid */}
       <div className="space-y-3">
@@ -290,13 +298,15 @@ export default function HolidaysTab() {
                   }`}>
                     {h.isOptional ? 'Optional' : 'Public Holiday'}
                   </span>
-                  <button
-                    onClick={() => handleDeleteHoliday(h.id, h.name)}
-                    title="Remove Holiday"
-                    className="text-slate-500 hover:text-red-400 transition p-1"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {isHrAdmin && (
+                    <button
+                      onClick={() => handleDeleteHoliday(h.id, h.name)}
+                      title="Remove Holiday"
+                      className="text-slate-500 hover:text-red-400 transition p-1"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
               </div>
 

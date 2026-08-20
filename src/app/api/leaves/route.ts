@@ -3,7 +3,7 @@ export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
 import { getDbData, saveDbData, getQuarterlyLeaveSummaries, getEmployeeAllQuarters, addNotification, logAudit, ensureCloudSync } from '@/lib/store';
-import { LeaveRecord, Employee, mergeLeavesNonRegressive } from '@/lib/types';
+import { LeaveRecord, Employee, mergeLeavesNonRegressive, calculateWorkingDaysCount } from '@/lib/types';
 
 export async function GET(request: Request) {
   await ensureCloudSync();
@@ -280,11 +280,7 @@ export async function POST(request: Request) {
     // Optional Overlap Check (bypassed to allow multiple leave submissions for testing)
     // if (!body.allowOverlap) { ... }
 
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    let daysCount = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
-    if (dayType === 'first_half' || dayType === 'second_half') {
-      daysCount = 0.5;
-    }
+    let daysCount = calculateWorkingDaysCount(startDate, endDate, dayType);
     if (typeof body.daysCount === 'number') {
       daysCount = body.daysCount;
     }
