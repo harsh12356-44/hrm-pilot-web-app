@@ -172,34 +172,44 @@ function EmployeePortalContent() {
         const empCodeStr = String(currentEmp.employeeId || '').trim().toLowerCase();
         const empNameStr = String(currentEmp.name || '').trim().toLowerCase();
 
-        let localSaved: LeaveRecord[] = [];
-        if (typeof window !== 'undefined') {
-          try {
-            localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
-          } catch (e) {}
+        if (leavesList.length === 0) {
+          setLeaves([]);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.removeItem('hrm_user_submitted_leaves');
+              localStorage.removeItem('hrm_leave_records_backup');
+            } catch (e) {}
+          }
+        } else {
+          let localSaved: LeaveRecord[] = [];
+          if (typeof window !== 'undefined') {
+            try {
+              localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+            } catch (e) {}
+          }
+
+          const empLeaves = leavesList.filter(l => {
+            if (!l) return false;
+            const target = String(l.employeeId || '').trim().toLowerCase();
+            const targetName = String(l.employeeName || '').trim().toLowerCase();
+            return (
+              target === empIdStr ||
+              target === empCodeStr ||
+              target === empNameStr ||
+              (targetName && targetName === empNameStr) ||
+              (empNameStr.length > 2 && target.includes(empNameStr)) ||
+              (empNameStr.length > 2 && empNameStr.includes(target))
+            );
+          });
+
+          setLeaves(prev => {
+            const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved.filter(l => {
+              const target = String(l?.employeeId || '').trim().toLowerCase();
+              return target === empIdStr || target === empCodeStr || target === empNameStr;
+            })), empLeaves);
+            return merged;
+          });
         }
-
-        const empLeaves = leavesList.filter(l => {
-          if (!l) return false;
-          const target = String(l.employeeId || '').trim().toLowerCase();
-          const targetName = String(l.employeeName || '').trim().toLowerCase();
-          return (
-            target === empIdStr ||
-            target === empCodeStr ||
-            target === empNameStr ||
-            (targetName && targetName === empNameStr) ||
-            (empNameStr.length > 2 && target.includes(empNameStr)) ||
-            (empNameStr.length > 2 && empNameStr.includes(target))
-          );
-        });
-
-        setLeaves(prev => {
-          const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved.filter(l => {
-            const target = String(l?.employeeId || '').trim().toLowerCase();
-            return target === empIdStr || target === empCodeStr || target === empNameStr;
-          })), empLeaves);
-          return merged;
-        });
       }
     } catch (err) {
       console.error(err);

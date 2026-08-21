@@ -25,29 +25,31 @@ export default function ManagerPortalPage() {
 
       const serverLeaves: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
 
-      let localSaved: LeaveRecord[] = [];
-      if (typeof window !== 'undefined') {
-        try {
-          localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
-        } catch (e) {}
-      }
-
-      setLeaves((prev) => {
-        const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved), serverLeaves);
-        if (typeof window !== 'undefined' && merged.length > 0) {
+      if (serverLeaves.length === 0) {
+        setLeaves([]);
+        if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(merged));
+            localStorage.removeItem('hrm_user_submitted_leaves');
+            localStorage.removeItem('hrm_leave_records_backup');
           } catch (e) {}
         }
-        return merged;
-      });
+      } else {
+        let localSaved: LeaveRecord[] = [];
+        if (typeof window !== 'undefined') {
+          try {
+            localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+          } catch (e) {}
+        }
 
-      if (localSaved.length > 0) {
-        fetch('/api/leaves', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'sync_client_backup', records: localSaved }),
-        }).catch(() => {});
+        setLeaves((prev) => {
+          const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved), serverLeaves);
+          if (typeof window !== 'undefined' && merged.length > 0) {
+            try {
+              localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(merged));
+            } catch (e) {}
+          }
+          return merged;
+        });
       }
 
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
