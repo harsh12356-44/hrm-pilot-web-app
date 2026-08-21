@@ -42,6 +42,14 @@ export default function ManagerPortalPage() {
         return merged;
       });
 
+      if (localSaved.length > 0) {
+        fetch('/api/leaves', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'sync_client_backup', records: localSaved }),
+        }).catch(() => {});
+      }
+
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
     } catch (err) {
       console.error(err);

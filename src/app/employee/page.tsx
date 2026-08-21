@@ -318,6 +318,12 @@ function EmployeePortalContent() {
               const existing = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
               const updatedList = Array.isArray(existing) ? mergeLeavesNonRegressive([newRecord], existing) : [newRecord];
               localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(updatedList));
+
+              fetch('/api/leaves', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'sync_client_backup', records: updatedList }),
+              }).catch(() => {});
             } catch (e) {}
           }
         }

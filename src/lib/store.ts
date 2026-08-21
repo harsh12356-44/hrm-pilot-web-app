@@ -562,19 +562,46 @@ export function getDbData(): InitialState {
   return memoryDb;
 }
 
+const PERSISTENT_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e';
+
 export async function ensureCloudSync() {
-  // Sync from writable temp file if available on serverless container
   try {
     const db = getDbData();
     if (fs.existsSync(TMP_DB_FILE)) {
-      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed.leaveRecords)) {
-        db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], parsed.leaveRecords);
-        memoryDb = db;
-        (globalThis as any)._inMemoryDbData = db;
+      try {
+        const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed.leaveRecords)) {
+          db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], parsed.leaveRecords);
+        }
+      } catch (e) {}
+    }
+
+    const res = await fetch(PERSISTENT_CLOUD_URL, { cache: 'no-store' });
+    if (res.ok) {
+      const json = await res.json();
+      const cloudLeaves = json?.data?.leaveRecords;
+      if (Array.isArray(cloudLeaves) && cloudLeaves.length > 0) {
+        db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], cloudLeaves);
       }
     }
+    memoryDb = db;
+    (globalThis as any)._inMemoryDbData = db;
+  } catch (e) {}
+}
+
+async function syncCloudStorageAsync(data: InitialState) {
+  try {
+    fetch(PERSISTENT_CLOUD_URL, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'hrm_pilot_leaves',
+        data: {
+          leaveRecords: data.leaveRecords || [],
+        },
+      }),
+    }).catch(() => {});
   } catch (e) {}
 }
 
@@ -588,12 +615,9 @@ export function saveDbData(data: InitialState): void {
     // Read-only filesystem on Vercel
   }
 
-  // Writable /tmp filesystem fallback on Vercel lambdas
   try {
     fs.writeFileSync(TMP_DB_FILE, JSON.stringify(data, null, 2));
-  } catch (err) {
-    console.warn('Could not write to tmp db file:', err);
-  }
+  } catch (err) {}
 
   syncCloudStorageAsync(data);
 }
