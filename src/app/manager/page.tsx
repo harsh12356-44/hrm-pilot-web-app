@@ -23,10 +23,25 @@ export default function ManagerPortalPage() {
       const leaveData = await leaveRes.json();
       const empData = await empRes.json();
 
-      const leavesList: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
-      const sortedLeavesList = [...leavesList].sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
+      const serverLeaves: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
 
-      setLeaves(sortedLeavesList);
+      let localSaved: LeaveRecord[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+        } catch (e) {}
+      }
+
+      setLeaves((prev) => {
+        const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved), serverLeaves);
+        if (typeof window !== 'undefined' && merged.length > 0) {
+          try {
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(merged));
+          } catch (e) {}
+        }
+        return merged;
+      });
+
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
     } catch (err) {
       console.error(err);

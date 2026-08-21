@@ -184,24 +184,41 @@ export function getLeaveTimestamp(l: Partial<LeaveRecord> | undefined | null): n
   return 0;
 }
 
-export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryList: LeaveRecord[] = []): LeaveRecord[] {
+export function mergeLeavesNonRegressive(primaryList: LeaveRecord[] = [], secondaryList: LeaveRecord[] = []): LeaveRecord[] {
+  const combined = [...(primaryList || []), ...(secondaryList || [])].filter(Boolean);
   const map = new Map<string, LeaveRecord>();
 
-  const getCleanKey = (l: LeaveRecord) => {
-    if (!l) return '';
-    if (l.id) return String(l.id).replace(/[^0-9a-zA-Z_-]/g, '').toLowerCase();
-    return `${String(l.employeeId).toLowerCase()}_${l.startDate}_${l.leaveType}`.toLowerCase();
-  };
-
-  const processRecord = (record: LeaveRecord) => {
+  combined.forEach(record => {
     if (!record) return;
-    const key = getCleanKey(record);
-    if (!key) return;
 
-    const existing = map.get(key);
-    if (!existing) {
-      map.set(key, { ...record });
+    const cleanId = record.id ? String(record.id).replace(/[^0-9a-zA-Z]/g, '').toLowerCase() : '';
+    const empRef = String(record.employeeId || record.employeeName || '').replace(/[^0-9a-zA-Z]/g, '').toLowerCase();
+    const startDate = String(record.startDate || '').trim();
+
+    let matchKey: string | null = null;
+
+    for (const [key, existing] of map.entries()) {
+      const exCleanId = existing.id ? String(existing.id).replace(/[^0-9a-zA-Z]/g, '').toLowerCase() : '';
+      const exEmpRef = String(existing.employeeId || existing.employeeName || '').replace(/[^0-9a-zA-Z]/g, '').toLowerCase();
+      const exStartDate = String(existing.startDate || '').trim();
+
+      const isExactId = cleanId && exCleanId && cleanId === exCleanId;
+      const isIdMatch = cleanId && exCleanId && (cleanId.endsWith(exCleanId) || exCleanId.endsWith(cleanId));
+      const isEmpDateMatch = startDate && exStartDate && startDate === exStartDate &&
+        (empRef === exEmpRef || (empRef && exEmpRef && (empRef.includes(exEmpRef) || exEmpRef.includes(empRef))));
+
+      if (isExactId || isIdMatch || isEmpDateMatch) {
+        matchKey = key;
+        break;
+      }
+    }
+
+    if (!matchKey) {
+      const newKey = cleanId || `${empRef}_${startDate}_${record.leaveType}`;
+      map.set(newKey, { ...record });
     } else {
+      const existing = map.get(matchKey)!;
+
       const bestManagerStatus =
         existing.managerStatus === 'Approved' || record.managerStatus === 'Approved'
           ? 'Approved'
@@ -216,27 +233,32 @@ export function mergeLeavesNonRegressive(primaryList: LeaveRecord[], secondaryLi
           ? 'Rejected'
           : record.hrStatus || existing.hrStatus || 'Pending';
 
-      const bestStatus =
+      const isApproved =
         (bestManagerStatus === 'Approved' && bestHrStatus === 'Approved') ||
         existing.status === 'APPROVED' ||
-        record.status === 'APPROVED'
-          ? 'APPROVED'
-          : existing.status === 'REJECTED' || record.status === 'REJECTED'
-          ? 'REJECTED'
-          : record.status || existing.status || 'PENDING';
+        record.status === 'APPROVED';
 
-      map.set(key, {
+      const isRejected =
+        existing.status === 'REJECTED' ||
+        record.status === 'REJECTED' ||
+        bestManagerStatus === 'Rejected' ||
+        bestHrStatus === 'Rejected';
+
+      const bestStatus = isApproved ? 'APPROVED' : isRejected ? 'REJECTED' : (record.status || existing.status || 'PENDING');
+
+      map.set(matchKey, {
         ...existing,
         ...record,
+        id: existing.id || record.id,
         managerStatus: bestManagerStatus,
         hrStatus: bestHrStatus,
         status: bestStatus,
+        note: record.note && record.note !== 'Leave application' ? record.note : existing.note || record.note,
+        createdAt: getLeaveTimestamp(record) > getLeaveTimestamp(existing) ? record.createdAt : existing.createdAt,
       });
     }
-  };
+  });
 
-  primaryList.forEach(processRecord);
-  secondaryList.forEach(processRecord);
   return Array.from(map.values()).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
 }
 

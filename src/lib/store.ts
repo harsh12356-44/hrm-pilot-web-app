@@ -562,45 +562,19 @@ export function getDbData(): InitialState {
   return memoryDb;
 }
 
-const PERSISTENT_CLOUD_URL = 'https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e';
-
 export async function ensureCloudSync() {
+  // Sync from writable temp file if available on serverless container
   try {
     const db = getDbData();
-    const res = await fetch(PERSISTENT_CLOUD_URL, { cache: 'no-store' });
-    if (res.ok) {
-      const json = await res.json();
-      const cloudLeaves = json?.data?.leaveRecords;
-      if (Array.isArray(cloudLeaves)) {
-        if (cloudLeaves.length === 0) {
-          db.leaveRecords = [];
-        } else {
-          db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], cloudLeaves);
-        }
+    if (fs.existsSync(TMP_DB_FILE)) {
+      const raw = fs.readFileSync(TMP_DB_FILE, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed.leaveRecords)) {
+        db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], parsed.leaveRecords);
         memoryDb = db;
         (globalThis as any)._inMemoryDbData = db;
-        try {
-          fs.writeFileSync(TMP_DB_FILE, JSON.stringify(db, null, 2));
-        } catch (e) {}
       }
     }
-  } catch (e) {
-    console.warn('Cloud sync read skipped:', e);
-  }
-}
-
-async function syncCloudStorageAsync(data: InitialState) {
-  try {
-    fetch(PERSISTENT_CLOUD_URL, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'hrm_pilot_leaves',
-        data: {
-          leaveRecords: data.leaveRecords || [],
-        },
-      }),
-    }).catch(err => console.warn('Cloud sync write error:', err));
   } catch (e) {}
 }
 

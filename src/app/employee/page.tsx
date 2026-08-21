@@ -172,6 +172,13 @@ function EmployeePortalContent() {
         const empCodeStr = String(currentEmp.employeeId || '').trim().toLowerCase();
         const empNameStr = String(currentEmp.name || '').trim().toLowerCase();
 
+        let localSaved: LeaveRecord[] = [];
+        if (typeof window !== 'undefined') {
+          try {
+            localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+          } catch (e) {}
+        }
+
         const empLeaves = leavesList.filter(l => {
           if (!l) return false;
           const target = String(l.employeeId || '').trim().toLowerCase();
@@ -184,8 +191,15 @@ function EmployeePortalContent() {
             (empNameStr.length > 2 && target.includes(empNameStr)) ||
             (empNameStr.length > 2 && empNameStr.includes(target))
           );
-        }).sort((a, b) => getLeaveTimestamp(b) - getLeaveTimestamp(a));
-        setLeaves(empLeaves);
+        });
+
+        setLeaves(prev => {
+          const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved.filter(l => {
+            const target = String(l?.employeeId || '').trim().toLowerCase();
+            return target === empIdStr || target === empCodeStr || target === empNameStr;
+          })), empLeaves);
+          return merged;
+        });
       }
     } catch (err) {
       console.error(err);

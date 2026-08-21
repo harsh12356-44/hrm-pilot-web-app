@@ -45,8 +45,15 @@ export default function AdminDashboardPage() {
 
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
       setAttendance(Array.isArray(attData.logs) ? attData.logs : Array.isArray(attData) ? attData : attData.attendance || []);
-      const recs: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
-      setLeaves(recs);
+      const serverLeaves: LeaveRecord[] = leaveData.records || (Array.isArray(leaveData) ? leaveData : []);
+      let localSaved: LeaveRecord[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+        } catch (e) {}
+      }
+
+      setLeaves((prev) => mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved), serverLeaves));
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {

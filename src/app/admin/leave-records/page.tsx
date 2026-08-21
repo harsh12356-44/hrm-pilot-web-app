@@ -45,8 +45,25 @@ export default function LeaveRecordsAdminPage() {
       const leaveData = await leaveRes.json();
       const empData = await empRes.json();
 
-      const leavesList: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
-      setLeaves(leavesList);
+      const serverLeaves: LeaveRecord[] = Array.isArray(leaveData) ? leaveData : leaveData.records || [];
+
+      let localSaved: LeaveRecord[] = [];
+      if (typeof window !== 'undefined') {
+        try {
+          localSaved = JSON.parse(localStorage.getItem('hrm_user_submitted_leaves') || '[]');
+        } catch (e) {}
+      }
+
+      setLeaves((prev) => {
+        const merged = mergeLeavesNonRegressive(mergeLeavesNonRegressive(prev, localSaved), serverLeaves);
+        if (typeof window !== 'undefined' && merged.length > 0) {
+          try {
+            localStorage.setItem('hrm_user_submitted_leaves', JSON.stringify(merged));
+          } catch (e) {}
+        }
+        return merged;
+      });
+
       setEmployees(Array.isArray(empData) ? empData : empData.employees || []);
     } catch (err) {
       console.error('Error fetching leave requests data:', err);

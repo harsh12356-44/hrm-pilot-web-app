@@ -58,19 +58,6 @@ export async function POST(request: Request) {
       db.leaveRecords = [];
       saveDbData(db);
 
-      try {
-        await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e', {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'hrm_pilot_leaves',
-            data: { leaveRecords: [] },
-          }),
-        });
-      } catch (cloudErr) {
-        console.warn('Cloud clear warning:', cloudErr);
-      }
-
       logAudit('Clear All Leaves', 'LeaveRecord', 'all', undefined, 'All leave records cleared by HR');
       const summaries = getQuarterlyLeaveSummaries(targetQ, 'ALL');
       return NextResponse.json({ success: true, message: 'All leave records have been cleared!', summaries, records: [] });
@@ -503,17 +490,6 @@ export async function DELETE(request: Request) {
     const db = getDbData();
     db.leaveRecords = [];
     saveDbData(db);
-
-    try {
-      await fetch('https://api.restful-api.dev/objects/ff8081819ff5b11001a01eda01715b3e', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: 'hrm_pilot_leaves',
-          data: { leaveRecords: [] },
-        }),
-      });
-    } catch (cloudErr) {}
 
     logAudit('Clear All Leaves History', 'LeaveRecord', 'all', undefined, 'All leave records cleared by HR');
     return NextResponse.json({ success: true, message: 'All leave history records cleared successfully', records: [] });
