@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Sidebar from '@/components/Sidebar';
-import { Clock, LayoutGrid, List, Upload, FileSpreadsheet, CheckCircle2, X, FileCheck } from 'lucide-react';
+import { Clock, LayoutGrid, List, Upload, FileSpreadsheet, CheckCircle2, X, FileCheck, RefreshCw, CheckCircle } from 'lucide-react';
 import { AttendanceLog, Employee } from '@/lib/types';
 import * as XLSX from 'xlsx';
 
@@ -44,6 +44,22 @@ export default function WorkingHoursPage() {
   const [previewRows, setPreviewRows] = useState<any[]>([]);
   const [uploading, setUploading] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [recalculating, setRecalculating] = useState(false);
+  const [syncToast, setSyncToast] = useState('');
+
+  const handleRecalculateSync = async () => {
+    setRecalculating(true);
+    setSyncToast('');
+    try {
+      await fetchWorkingHours();
+      setSyncToast('✓ Successfully calculated & synced working hours from attendance grid!');
+      setTimeout(() => setSyncToast(''), 4500);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRecalculating(false);
+    }
+  };
 
   // Synchronize modal target month/year with main filters on open
   const openImportModal = () => {
@@ -323,8 +339,25 @@ export default function WorkingHoursPage() {
               </p>
             </div>
 
-            {/* View Switcher & Import Working Hours Button */}
+            {/* View Switcher, Recalculate Button & Import Working Hours Button */}
             <div className="flex flex-wrap items-center gap-3 shrink-0">
+              {syncToast && (
+                <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-md">
+                  <CheckCircle className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <span>{syncToast}</span>
+                </div>
+              )}
+
+              <button
+                onClick={handleRecalculateSync}
+                disabled={recalculating}
+                className="flex items-center space-x-2 px-4 py-2 bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-emerald-600/30 transition active:scale-95 disabled:opacity-50"
+                title="Recalculate working hours dynamically from attendance grid records"
+              >
+                <RefreshCw className={`w-4 h-4 ${recalculating ? 'animate-spin' : ''}`} />
+                <span>{recalculating ? 'Syncing...' : 'Recalculate & Sync Hours'}</span>
+              </button>
+
               <button
                 onClick={openImportModal}
                 className="flex items-center space-x-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-600/30 transition active:scale-95"
