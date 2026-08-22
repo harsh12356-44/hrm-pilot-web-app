@@ -126,51 +126,52 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
 
   const logs: AttendanceLog[] = [];
 
-  // Robust employee matcher handling numeric IDs (e.g. 2 vs 002 vs NB002) and name variations
-  function matchEmployee(rawName: string, empCode: string): Employee | undefined {
-    if (!rawName && !empCode) return undefined;
-    const normRawCode = (empCode || '').toLowerCase().trim();
-    const cleanRawNum = normRawCode.replace(/[^0-9]/g, '');
-    const rawNumVal = cleanRawNum ? parseInt(cleanRawNum, 10) : NaN;
+  // Matcher prioritizing Name matching across row cells over arbitrary numbers
+  function matchEmployeeByNameOrCode(rowCells: string[]): Employee | undefined {
+    if (!Array.isArray(rowCells) || rowCells.length === 0) return undefined;
 
-    const matched = employees.find(e => {
-      // 1. Exact Employee ID or Code match
-      if (empCode && (e.id.toLowerCase() === normRawCode || e.employeeId.toLowerCase() === normRawCode)) return true;
+    const cleanCells = rowCells.map(c => String(c || '').trim()).filter(Boolean);
 
-      // 2. Numeric ID match (e.g. Code 8 -> LG008 / emp-8)
-      const sysIdNum = parseInt(e.id.replace(/[^0-9]/g, ''), 10);
-      const sysEmpCodeNum = parseInt(e.employeeId.replace(/[^0-9]/g, ''), 10);
+    // 1. Primary Priority: Match by Name across all row cells
+    for (const cell of cleanCells) {
+      const normCell = cell.toLowerCase().trim();
+      if (!normCell || normCell.length < 2) continue;
+      if (['generated', 'total', 'summary', 'present', 'absent', 'weekly', 'department', 'designation', 'status', 'code', 'name', 's.no', 'sno'].some(k => normCell.includes(k))) continue;
 
-      if (!isNaN(rawNumVal)) {
-        if (!isNaN(sysEmpCodeNum) && sysEmpCodeNum === rawNumVal) return true;
-        if (!isNaN(sysIdNum) && sysIdNum === rawNumVal) return true;
-      }
+      for (const emp of employees) {
+        const normName = emp.name.toLowerCase().trim();
+        if (normName === normCell) return emp;
 
-      // 3. Precise Name Match
-      if (rawName) {
-        const normSys = e.name.toLowerCase().trim();
-        const normInput = rawName.toLowerCase().trim();
-        if (normSys === normInput) return true;
+        const sysParts = normName.split(' ').filter(Boolean);
+        const inputParts = normCell.split(' ').filter(Boolean);
 
-        const sysParts = normSys.split(' ').filter(Boolean);
-        const inputParts = normInput.split(' ').filter(Boolean);
-
-        // Exact first name match if input is single word (e.g. "Ravina", "Sonu", "Bulbul")
-        if (inputParts.length === 1 && inputParts[0].length >= 3 && sysParts[0] === inputParts[0]) {
-          return true;
-        }
-
-        // Full name parts match (e.g. "Ravina Khimani")
+        // Full name parts match (e.g. "Ravina Khimani", "Sonu Goswami", "Naman Bangia")
         if (inputParts.length >= 2 && sysParts.length >= 2) {
           if (sysParts[0] === inputParts[0] && sysParts[sysParts.length - 1] === inputParts[inputParts.length - 1]) {
-            return true;
+            return emp;
+          }
+        }
+
+        // Single name match (e.g. "Lochita", "Bulbul", "Sonu", "Ravina", "Divyanshu", "Meenal", "Rajvardhan", "Mudita", "Garv")
+        if (inputParts.length === 1 && inputParts[0].length >= 3) {
+          if (sysParts[0] === inputParts[0] || normName.includes(inputParts[0])) {
+            return emp;
           }
         }
       }
-      return false;
-    });
+    }
 
-    return matched;
+    // 2. Secondary Priority: Match by exact System Employee Code (e.g. RK001, NB002, LG008, BB011, SG012)
+    for (const cell of cleanCells) {
+      const normCell = cell.toLowerCase().trim();
+      for (const emp of employees) {
+        if (emp.id.toLowerCase() === normCell || emp.employeeId.toLowerCase() === normCell) {
+          return emp;
+        }
+      }
+    }
+
+    return undefined;
   }
 
   // 1. Process 2D Array Matrix (ONtime / Secureye / ESSL 2D exports)
@@ -209,26 +210,8 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
         const row = rawData[r];
         if (!Array.isArray(row) || row.length < 2) continue;
 
-        const empCode = String(row[0] || '').trim();
-        const rawName = String(row[2] || row[1] || '').trim();
-
-        if (!rawName && !empCode) continue;
-        if (rawName.toLowerCase().includes('generated') || rawName.toLowerCase().includes('total')) continue;
-
-        let matchedEmp: Employee | undefined;
-        for (let c = 0; c < Math.min(5, row.length); c++) {
-          const cellStr = String(row[c] || '').trim();
-          if (cellStr) {
-            matchedEmp = matchEmployee(cellStr, cellStr);
-            if (matchedEmp) break;
-          }
-        }
-
-        if (!matchedEmp && (empCode || rawName)) {
-          matchedEmp = matchEmployee(rawName, empCode);
-        }
-
-        if (!matchedEmp) continue;
+        const rowTextCells = row.slice(0, 8).map(c => String(c || '').trim());
+        const matchedEmp = matchEmployeeByNameOrCode(rowTextCells);
 
         if (!matchedEmp) continue;
 
@@ -268,16 +251,9 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
   rawData.forEach((row: any, idx: number) => {
     if (!row || Array.isArray(row)) return;
 
-    const keys = Object.keys(row);
-    const findKeyVal = (patterns: string[]) => {
-      const matchedKey = keys.find(k => patterns.some(p => k.toLowerCase().replace(/[^a-z0-9]/g, '').includes(p)));
-      return matchedKey ? String(row[matchedKey] || '').trim() : '';
-    };
+    const rowTextCells = Object.values(row).map(c => String(c || '').trim());
+    const matchedEmp = matchEmployeeByNameOrCode(rowTextCells);
 
-    const empCode = findKeyVal(['employeeid', 'empcode', 'code', 'empid', 'id']);
-    const rawName = findKeyVal(['employeename', 'empname', 'name', 'fullname', 'staffname']);
-
-    const matchedEmp = matchEmployee(rawName, empCode);
     if (!matchedEmp) return;
 
     let foundDayCols = false;
@@ -313,6 +289,12 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
 
     // 3. Process Flat Date Row Object (e.g. { Date: "2026-08-01", "In Time": "09:15 AM", "Out Time": "06:30 PM", ... })
     if (!foundDayCols) {
+      const keys = Object.keys(row);
+      const findKeyVal = (patterns: string[]) => {
+        const matchedKey = keys.find(k => patterns.some(p => k.toLowerCase().replace(/[^a-z0-9]/g, '').includes(p)));
+        return matchedKey ? String(row[matchedKey] || '').trim() : '';
+      };
+
       const dateVal = findKeyVal(['date', 'workdate', 'attendancedate', 'day']);
       if (dateVal) {
         let dateStr = dateVal;
