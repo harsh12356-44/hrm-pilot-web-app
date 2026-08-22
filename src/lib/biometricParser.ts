@@ -126,52 +126,70 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
 
   const logs: AttendanceLog[] = [];
 
-  // Matcher prioritizing Name matching across row cells over arbitrary numbers
+  // Robust Matcher prioritizing Employee Name across all row cells
   function matchEmployeeByNameOrCode(rowCells: string[]): Employee | undefined {
     if (!Array.isArray(rowCells) || rowCells.length === 0) return undefined;
 
     const cleanCells = rowCells.map(c => String(c || '').trim()).filter(Boolean);
 
-    // 1. Primary Priority: Match by Name across all row cells
     for (const cell of cleanCells) {
       const normCell = cell.toLowerCase().trim();
       if (!normCell || normCell.length < 2) continue;
-      if (['generated', 'total', 'summary', 'present', 'absent', 'weekly', 'department', 'designation', 'status', 'code', 'name', 's.no', 'sno'].some(k => normCell.includes(k))) continue;
 
-      for (const emp of employees) {
-        const normName = emp.name.toLowerCase().trim();
-        if (normName === normCell) return emp;
+      // Filter out header words, labels, status terms, and pure numbers
+      if (['generated', 'total', 'summary', 'present', 'absent', 'weekly', 'department', 'designation', 'status', 'code', 'name', 's.no', 'sno', 'sl.no', 'slno', 'date', 'hours', 'time', 'shift', 'page'].some(k => normCell.includes(k))) continue;
 
-        const sysParts = normName.split(' ').filter(Boolean);
-        const inputParts = normCell.split(' ').filter(Boolean);
-
-        // Full name parts match (e.g. "Ravina Khimani", "Sonu Goswami", "Naman Bangia")
-        if (inputParts.length >= 2 && sysParts.length >= 2) {
-          if (sysParts[0] === inputParts[0] && sysParts[sysParts.length - 1] === inputParts[inputParts.length - 1]) {
-            return emp;
-          }
-        }
-
-        // Single name match (e.g. "Lochita", "Bulbul", "Sonu", "Ravina", "Divyanshu", "Meenal", "Rajvardhan", "Mudita", "Garv")
-        if (inputParts.length === 1 && inputParts[0].length >= 3) {
-          if (sysParts[0] === inputParts[0] || normName.includes(inputParts[0])) {
-            return emp;
-          }
-        }
-      }
-    }
-
-    // 2. Secondary Priority: Match by exact System Employee Code (e.g. RK001, NB002, LG008, BB011, SG012)
-    for (const cell of cleanCells) {
-      const normCell = cell.toLowerCase().trim();
+      // 1. Direct Employee ID / System Code Match (e.g. RK001, NB002, emp-1, LG008, BB011, SG012)
       for (const emp of employees) {
         if (emp.id.toLowerCase() === normCell || emp.employeeId.toLowerCase() === normCell) {
           return emp;
         }
       }
+
+      // 2. Name Matching
+      const inputParts = normCell.split(/[\s,._\-]+/).filter(Boolean);
+      const inputFirstName = inputParts[0] || '';
+
+      for (const emp of employees) {
+        const normName = emp.name.toLowerCase().trim();
+        const sysParts = normName.split(/[\s,._\-]+/).filter(Boolean);
+        const sysFirstName = sysParts[0] || '';
+
+        // Exact full name match (e.g. "Ravina Khimani" === "ravina khimani")
+        if (normName === normCell) return emp;
+
+        // First Name match (e.g. "Lochita", "Bulbul", "Sonu", "Naman", "Ravina", "Jigyasa", "Divyanshu", "Meenal", "Anup", "Rajvardhan", "Mudita", "Shweta", "Charubhati", "Shryanshu", "Garv", "Charu")
+        if (inputFirstName && inputFirstName.length >= 3 && sysFirstName === inputFirstName) {
+          return emp;
+        }
+
+        // Full name parts match (e.g. "Ravina K" or "Khimani Ravina" or "Sonu G")
+        if (inputParts.length >= 2 && sysParts.length >= 2) {
+          if (sysParts.some(p => inputParts.includes(p)) && (sysParts[0] === inputParts[0] || sysParts[sysParts.length - 1] === inputParts[inputParts.length - 1])) {
+            return emp;
+          }
+        }
+      }
     }
 
     return undefined;
+  }
+
+  // Helper to dynamically extract cell value for day numbers 1..31 from row object
+  function getCellForDay(rowObj: any, rowKeys: string[], dayNum: number) {
+    const dayStr = String(dayNum);
+    const padDayStr = String(dayNum).padStart(2, '0');
+
+    const matchedKey = rowKeys.find(k => {
+      const cleanK = k.trim().toLowerCase();
+      if (cleanK === dayStr || cleanK === padDayStr) return true;
+      if (cleanK === `day ${dayStr}` || cleanK === `day ${padDayStr}`) return true;
+      if (cleanK === `day${dayStr}` || cleanK === `day${padDayStr}`) return true;
+      const numVal = parseInt(cleanK, 10);
+      return !isNaN(numVal) && numVal === dayNum && String(numVal) === cleanK;
+    });
+
+    return matchedKey ? rowObj[matchedKey] : undefined;
   }
 
   // 1. Process 2D Array Matrix (ONtime / Secureye / ESSL 2D exports)
@@ -256,11 +274,12 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
 
     if (!matchedEmp) return;
 
+    const rowKeys = Object.keys(row);
     let foundDayCols = false;
+
     for (let dayNum = 1; dayNum <= 31; dayNum++) {
-      const dayStrKey = String(dayNum);
       const padDayKey = String(dayNum).padStart(2, '0');
-      const cellVal = row[dayStrKey] !== undefined ? row[dayStrKey] : row[padDayKey];
+      const cellVal = getCellForDay(row, rowKeys, dayNum);
 
       if (cellVal !== undefined && cellVal !== null) {
         foundDayCols = true;
