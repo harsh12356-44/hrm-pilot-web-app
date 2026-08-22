@@ -161,6 +161,31 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId,
 
   useEffect(() => {
     fetchAttendance();
+
+    const handleUpdate = (e: Event) => {
+      const customEvt = e as CustomEvent;
+      if (customEvt && customEvt.detail) {
+        const { month, year, monthYear } = customEvt.detail;
+        if (monthYear) {
+          const parts = monthYear.split('-');
+          if (parts[0]) setSelectedYear(parts[0]);
+          if (parts[1]) setSelectedMonth(String(Number(parts[1])));
+        } else {
+          if (month) setSelectedMonth(String(month));
+          if (year) setSelectedYear(String(year));
+        }
+      }
+      fetchAttendance();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('attendanceUpdated', handleUpdate);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('attendanceUpdated', handleUpdate);
+      }
+    };
   }, [viewMode, selectedMonth, selectedYear, department, date, targetEmployeeId]);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -246,17 +271,31 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId,
     }
   };
 
+  const normalizeDateKey = (dStr: string) => {
+    if (!dStr) return '';
+    const parts = dStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[0]}-${String(parts[1]).padStart(2, '0')}-${String(parts[2]).padStart(2, '0')}`;
+    }
+    return dStr;
+  };
+
   // Helper map for fast lookup in matrix grid across emp.id and emp.employeeId
   const logsMap: { [key: string]: any } = {};
   logs.forEach(l => {
     if (l && l.date) {
+      const normDate = normalizeDateKey(l.date);
+      logsMap[`${l.employeeId}_${normDate}`] = l;
       logsMap[`${l.employeeId}_${l.date}`] = l;
+
       const emp = employees.find(
         e => e.id === l.employeeId || e.employeeId === l.employeeId || (e.name && l.employeeId && e.name.toLowerCase() === l.employeeId.toLowerCase())
       );
       if (emp) {
+        logsMap[`${emp.id}_${normDate}`] = l;
         logsMap[`${emp.id}_${l.date}`] = l;
         if (emp.employeeId) {
+          logsMap[`${emp.employeeId}_${normDate}`] = l;
           logsMap[`${emp.employeeId}_${l.date}`] = l;
         }
       }
