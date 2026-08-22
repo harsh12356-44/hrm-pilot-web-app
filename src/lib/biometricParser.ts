@@ -134,23 +134,38 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
     const rawNumVal = cleanRawNum ? parseInt(cleanRawNum, 10) : NaN;
 
     const matched = employees.find(e => {
+      // 1. Exact Employee ID or Code match
       if (empCode && (e.id.toLowerCase() === normRawCode || e.employeeId.toLowerCase() === normRawCode)) return true;
-      
+
+      // 2. Numeric ID match (e.g. Code 8 -> LG008 / emp-8)
       const sysIdNum = parseInt(e.id.replace(/[^0-9]/g, ''), 10);
       const sysEmpCodeNum = parseInt(e.employeeId.replace(/[^0-9]/g, ''), 10);
 
       if (!isNaN(rawNumVal)) {
-        if (!isNaN(sysIdNum) && sysIdNum === rawNumVal) return true;
         if (!isNaN(sysEmpCodeNum) && sysEmpCodeNum === rawNumVal) return true;
+        if (!isNaN(sysIdNum) && sysIdNum === rawNumVal) return true;
       }
 
+      // 3. Precise Name Match
       if (rawName) {
         const normSys = e.name.toLowerCase().trim();
         const normInput = rawName.toLowerCase().trim();
-        if (normSys === normInput || normSys.includes(normInput) || normInput.includes(normSys)) return true;
-        const sysFirst = normSys.split(' ')[0];
-        const rawFirst = normInput.split(' ')[0];
-        if (rawFirst && rawFirst.length >= 2 && sysFirst === rawFirst) return true;
+        if (normSys === normInput) return true;
+
+        const sysParts = normSys.split(' ').filter(Boolean);
+        const inputParts = normInput.split(' ').filter(Boolean);
+
+        // Exact first name match if input is single word (e.g. "Ravina", "Sonu", "Bulbul")
+        if (inputParts.length === 1 && inputParts[0].length >= 3 && sysParts[0] === inputParts[0]) {
+          return true;
+        }
+
+        // Full name parts match (e.g. "Ravina Khimani")
+        if (inputParts.length >= 2 && sysParts.length >= 2) {
+          if (sysParts[0] === inputParts[0] && sysParts[sysParts.length - 1] === inputParts[inputParts.length - 1]) {
+            return true;
+          }
+        }
       }
       return false;
     });
@@ -213,10 +228,7 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
           matchedEmp = matchEmployee(rawName, empCode);
         }
 
-        if (!matchedEmp) {
-          const empIdx = (r - (headerRowIdx + 1)) % employees.length;
-          matchedEmp = employees[empIdx];
-        }
+        if (!matchedEmp) continue;
 
         if (!matchedEmp) continue;
 
@@ -265,7 +277,7 @@ export function parseBiometricPunches(rawData: any[], employees: Employee[], mon
     const empCode = findKeyVal(['employeeid', 'empcode', 'code', 'empid', 'id']);
     const rawName = findKeyVal(['employeename', 'empname', 'name', 'fullname', 'staffname']);
 
-    const matchedEmp = matchEmployee(rawName, empCode) || (empCode || rawName ? employees[idx % employees.length] : undefined);
+    const matchedEmp = matchEmployee(rawName, empCode);
     if (!matchedEmp) return;
 
     let foundDayCols = false;
