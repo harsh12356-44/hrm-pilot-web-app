@@ -641,7 +641,10 @@ async function syncCloudStorageAsync(data: InitialState) {
       a: l.attendanceCode,
     }));
 
-    fetch(PERSISTENT_CLOUD_URL, {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+    await fetch(PERSISTENT_CLOUD_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -652,11 +655,14 @@ async function syncCloudStorageAsync(data: InitialState) {
           attendanceImports: data.attendanceImports || [],
         },
       }),
+      signal: controller.signal,
     }).catch(() => {});
+
+    clearTimeout(timeoutId);
   } catch (e) {}
 }
 
-export function saveDbData(data: InitialState): void {
+export async function saveDbDataAsync(data: InitialState): Promise<void> {
   memoryDb = data;
   (globalThis as any)._inMemoryDbData = data;
   try {
@@ -670,7 +676,11 @@ export function saveDbData(data: InitialState): void {
     fs.writeFileSync(TMP_DB_FILE, JSON.stringify(data, null, 2));
   } catch (err) {}
 
-  syncCloudStorageAsync(data);
+  await syncCloudStorageAsync(data);
+}
+
+export function saveDbData(data: InitialState): void {
+  saveDbDataAsync(data).catch(() => {});
 }
 
 export function addNotification(employeeId: string, type: string, title: string, message: string) {

@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
-import { getDbData, saveDbData, logAudit, ensureCloudSync } from '@/lib/store';
+import { getDbData, saveDbData, saveDbDataAsync, logAudit, ensureCloudSync } from '@/lib/store';
 import { AttendanceLog, AttendanceImport } from '@/lib/types';
 import { parseBiometricPunches, parsePunchTimes } from '@/lib/biometricParser';
 
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
         }
       });
       if (restoredCount > 0) {
-        saveDbData(db);
+        await saveDbDataAsync(db);
         logAudit('Sync Client Backup Attendance', 'AttendanceLog', 'backup', undefined, `Restored ${restoredCount} records from client backup`);
       }
       return NextResponse.json({ success: true, message: `Restored ${restoredCount} attendance logs from client backup`, logs: db.attendanceLogs });
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
 
       db.attendanceImports.unshift(newImport);
       logAudit('Import Biometric Monthly Punches', 'AttendanceImport', newImport.id, undefined, newImport.filename);
-      saveDbData(db);
+      await saveDbDataAsync(db);
 
       return NextResponse.json({ success: true, import: newImport, logs: db.attendanceLogs, totalLogsParsed: parsedLogs.length });
     }
@@ -318,7 +318,7 @@ export async function POST(request: Request) {
 
       db.attendanceImports.unshift(newImport);
       logAudit('Import Completed Hours Spreadsheet', 'AttendanceImport', newImport.id, undefined, newImport.filename);
-      saveDbData(db);
+      await saveDbDataAsync(db);
 
       const enrichedLogs = db.attendanceLogs.map(l => {
         const emp = db.employees.find(e => e.id === l.employeeId);
@@ -371,7 +371,7 @@ export async function POST(request: Request) {
         db.attendanceLogs[index].correctionReason = correctionReason;
 
         logAudit('Manual Attendance Correction', 'AttendanceLog', db.attendanceLogs[index].id, oldVal, JSON.stringify(db.attendanceLogs[index]));
-        saveDbData(db);
+        await saveDbDataAsync(db);
 
         return NextResponse.json({ success: true, log: db.attendanceLogs[index] });
       } else if (employeeId && date) {
@@ -393,7 +393,7 @@ export async function POST(request: Request) {
 
         db.attendanceLogs.push(newLog);
         logAudit('Manual Attendance Entry', 'AttendanceLog', newLog.id, undefined, JSON.stringify(newLog));
-        saveDbData(db);
+        await saveDbDataAsync(db);
 
         return NextResponse.json({ success: true, log: newLog });
       }
