@@ -269,9 +269,31 @@ export default function WorkingHoursPage() {
     }
   });
 
-  const totalWorkedMins = logs.reduce((sum, l) => sum + (l.workedMinutes || 0), 0);
-  const totalShortMins = logs.reduce((sum, l) => sum + (l.shortMinutes || 0), 0);
-  const totalExtraMins = logs.reduce((sum, l) => sum + (l.extraMinutes || 0), 0);
+  const getLogWorkedMins = (log: AttendanceLog): number => {
+    if (!log) return 0;
+    if (log.workedMinutes && log.workedMinutes > 0) return log.workedMinutes;
+
+    if (log.checkIn && log.checkOut && log.checkIn.includes(':') && log.checkOut.includes(':')) {
+      try {
+        const [inH, inM] = log.checkIn.split(':').map(Number);
+        let [outH, outM] = log.checkOut.split(':').map(Number);
+        if (!isNaN(inH) && !isNaN(outH)) {
+          if (outH < inH && outH < 12) outH += 12;
+          const inMins = inH * 60 + (inM || 0);
+          const outMins = outH * 60 + (outM || 0);
+          return Math.max(0, outMins - inMins);
+        }
+      } catch (e) {}
+    }
+
+    if (log.attendanceCode === 'P') return 480;
+    if (log.attendanceCode === 'HD') return 240;
+    return 0;
+  };
+
+  const totalWorkedMins = logs.reduce((sum, l) => sum + getLogWorkedMins(l), 0);
+  const totalShortMins = logs.reduce((sum, l) => sum + (l.shortMinutes || Math.max(0, 480 - getLogWorkedMins(l))), 0);
+  const totalExtraMins = logs.reduce((sum, l) => sum + (l.extraMinutes || Math.max(0, getLogWorkedMins(l) - 480)), 0);
 
   // Helper to format minutes as "Xh Ym"
   const formatMins = (mins: number) => {
@@ -472,7 +494,7 @@ export default function WorkingHoursPage() {
                     ) : employees.map(emp => {
                       // Calculate employee total worked mins for the month
                       const empLogs = logs.filter(l => l.employeeId === emp.id || l.employeeId === emp.employeeId || (l.employeeId && emp.name && l.employeeId.toLowerCase() === emp.name.toLowerCase()));
-                      const empTotalMins = empLogs.reduce((sum, l) => sum + (l.workedMinutes || 0), 0);
+                      const empTotalMins = empLogs.reduce((sum, l) => sum + getLogWorkedMins(l), 0);
 
                       return (
                         <tr key={emp.id} className="hover:bg-slate-850/50 transition">
@@ -494,6 +516,7 @@ export default function WorkingHoursPage() {
 
                             const isWeeklyOff = (log && (log.attendanceCode === 'WO-I' || log.attendanceCode === 'WO')) || (isSunday && (!log || log.attendanceCode === 'WO-I' || log.attendanceCode === 'WO'));
                             const holiday = holidays.find(h => h.date === dateStr);
+                            const cellMins = getLogWorkedMins(log);
 
                             return (
                               <td
@@ -528,10 +551,10 @@ export default function WorkingHoursPage() {
                                     <span className="inline-block px-2 py-1 rounded bg-purple-500/20 border border-purple-500/30 text-purple-300 font-bold text-[10px]">
                                       {log.attendanceCode}
                                     </span>
-                                  ) : log.workedMinutes > 0 ? (
+                                  ) : cellMins > 0 ? (
                                     /* Automatically Calculated Daily Completed Hours */
                                     <span className="font-mono text-[11px] font-extrabold text-emerald-400">
-                                      {formatMins(log.workedMinutes)}
+                                      {formatMins(cellMins)}
                                     </span>
                                   ) : (
                                     <span className="text-slate-600 text-xs font-mono">-</span>
