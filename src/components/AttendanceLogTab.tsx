@@ -113,7 +113,18 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId,
       if (Array.isArray(data.logs) && data.logs.length > 0) {
         if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('hrm_attendance_backup', JSON.stringify(data.logs));
+            const existingCached = localStorage.getItem('hrm_attendance_backup');
+            let mergedCached = data.logs;
+            if (existingCached) {
+              const parsed = JSON.parse(existingCached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const map: any = {};
+                parsed.forEach((l: any) => { if (l && l.id) map[l.id] = l; });
+                data.logs.forEach((l: any) => { if (l && l.id) map[l.id] = l; });
+                mergedCached = Object.values(map);
+              }
+            }
+            localStorage.setItem('hrm_attendance_backup', JSON.stringify(mergedCached));
           } catch (e) {}
         }
       } else if (typeof window !== 'undefined') {
@@ -122,11 +133,17 @@ export default function AttendanceLogTab({ hideImport = false, targetEmployeeId,
           if (cached) {
             const parsedCached = JSON.parse(cached);
             if (Array.isArray(parsedCached) && parsedCached.length > 0) {
-              fetch('/api/attendance', {
+              const syncRes = await fetch('/api/attendance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'sync_client_backup', logs: parsedCached }),
               });
+              const syncData = await syncRes.json();
+              if (syncData && Array.isArray(syncData.logs) && syncData.logs.length > 0) {
+                logsList = syncData.logs;
+              } else {
+                logsList = parsedCached;
+              }
             }
           }
         } catch (e) {}

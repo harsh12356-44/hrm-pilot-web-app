@@ -151,11 +151,23 @@ export default function WorkingHoursPage() {
       const empData = await empRes.json();
       const holData = await holRes.json();
 
-      const fetchedLogs = Array.isArray(attData.logs) ? attData.logs : [];
+      let fetchedLogs = Array.isArray(attData.logs) ? attData.logs : [];
+
       if (fetchedLogs.length > 0) {
         if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('hrm_attendance_backup', JSON.stringify(fetchedLogs));
+            const existingCached = localStorage.getItem('hrm_attendance_backup');
+            let mergedCached = fetchedLogs;
+            if (existingCached) {
+              const parsed = JSON.parse(existingCached);
+              if (Array.isArray(parsed) && parsed.length > 0) {
+                const map: any = {};
+                parsed.forEach((l: any) => { if (l && l.id) map[l.id] = l; });
+                fetchedLogs.forEach((l: any) => { if (l && l.id) map[l.id] = l; });
+                mergedCached = Object.values(map);
+              }
+            }
+            localStorage.setItem('hrm_attendance_backup', JSON.stringify(mergedCached));
           } catch (e) {}
         }
       } else if (typeof window !== 'undefined') {
@@ -164,11 +176,17 @@ export default function WorkingHoursPage() {
           if (cached) {
             const parsedCached = JSON.parse(cached);
             if (Array.isArray(parsedCached) && parsedCached.length > 0) {
-              fetch('/api/attendance', {
+              const syncRes = await fetch('/api/attendance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'sync_client_backup', logs: parsedCached }),
               });
+              const syncData = await syncRes.json();
+              if (syncData && Array.isArray(syncData.logs) && syncData.logs.length > 0) {
+                fetchedLogs = syncData.logs;
+              } else {
+                fetchedLogs = parsedCached;
+              }
             }
           }
         } catch (e) {}

@@ -598,7 +598,21 @@ export async function ensureCloudSync() {
 
       const cloudAttendance = json?.data?.attendanceLogs;
       if (Array.isArray(cloudAttendance) && cloudAttendance.length > 0) {
-        cloudAttendance.forEach((l: AttendanceLog) => {
+        cloudAttendance.forEach((rawL: any) => {
+          const l: AttendanceLog = {
+            id: rawL.id || `att-${rawL.e || rawL.employeeId}-${rawL.d || rawL.date}`,
+            employeeId: rawL.e || rawL.employeeId,
+            date: rawL.d || rawL.date,
+            checkIn: rawL.c || rawL.checkIn || '09:00',
+            checkOut: rawL.o || rawL.checkOut || '18:00',
+            workedMinutes: rawL.w !== undefined ? rawL.w : rawL.workedMinutes || 480,
+            requiredMinutes: 480,
+            shortMinutes: Math.max(0, 480 - (rawL.w !== undefined ? rawL.w : rawL.workedMinutes || 480)),
+            extraMinutes: Math.max(0, (rawL.w !== undefined ? rawL.w : rawL.workedMinutes || 480) - 480),
+            sundayWorkedMinutes: 0,
+            attendanceCode: rawL.a || rawL.attendanceCode || 'P',
+            isManual: false,
+          };
           const idx = db.attendanceLogs.findIndex(existing => existing.id === l.id || (existing.employeeId === l.employeeId && existing.date === l.date));
           if (idx !== -1) db.attendanceLogs[idx] = l;
           else db.attendanceLogs.push(l);
@@ -617,6 +631,16 @@ export async function ensureCloudSync() {
 
 async function syncCloudStorageAsync(data: InitialState) {
   try {
+    const compactLogs = (data.attendanceLogs || []).map(l => ({
+      id: l.id,
+      e: l.employeeId,
+      d: l.date,
+      c: l.checkIn,
+      o: l.checkOut,
+      w: l.workedMinutes,
+      a: l.attendanceCode,
+    }));
+
     fetch(PERSISTENT_CLOUD_URL, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -624,7 +648,7 @@ async function syncCloudStorageAsync(data: InitialState) {
         name: 'hrm_pilot_leaves',
         data: {
           leaveRecords: data.leaveRecords || [],
-          attendanceLogs: data.attendanceLogs || [],
+          attendanceLogs: compactLogs,
           attendanceImports: data.attendanceImports || [],
         },
       }),
