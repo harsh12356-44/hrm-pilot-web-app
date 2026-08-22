@@ -26,7 +26,7 @@ const YEARS = ['2024', '2025', '2026', '2027'];
 
 export default function WorkingHoursPage() {
   const [viewMode, setViewMode] = useState<'matrix' | 'daily'>('matrix');
-  const [selectedMonth, setSelectedMonth] = useState('7'); // July default
+  const [selectedMonth, setSelectedMonth] = useState('8'); // August default
   const [selectedYear, setSelectedYear] = useState('2026');
   const [department, setDepartment] = useState('ALL');
 
@@ -37,7 +37,7 @@ export default function WorkingHoursPage() {
 
   // Import Modal State
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [importMonth, setImportMonth] = useState('7');
+  const [importMonth, setImportMonth] = useState('8');
   const [importYear, setImportYear] = useState('2026');
   const [file, setFile] = useState<File | null>(null);
   const [objectRows, setObjectRows] = useState<any[]>([]);
@@ -105,6 +105,12 @@ export default function WorkingHoursPage() {
         const count = data.totalEmployeesUpdated || data.import?.importedRows || objectRows.length;
         setStatusMessage(`Successfully imported working hours for ${count} employees for ${MONTHS.find(m => m.value === importMonth)?.name} ${importYear}!`);
         
+        if (typeof window !== 'undefined' && Array.isArray(data.logs) && data.logs.length > 0) {
+          try {
+            localStorage.setItem('hrm_attendance_backup', JSON.stringify(data.logs));
+          } catch (e) {}
+        }
+
         // Update main page filters to match imported month/year
         setSelectedMonth(importMonth);
         setSelectedYear(importYear);
@@ -112,7 +118,7 @@ export default function WorkingHoursPage() {
 
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new CustomEvent('attendanceUpdated', {
-            detail: { month: importMonth, year: importYear, monthYear }
+            detail: { month: importMonth, year: importYear, monthYear, logs: data.logs }
           }));
         }
 
@@ -214,17 +220,31 @@ export default function WorkingHoursPage() {
   const totalDaysInMonth = new Date(Number(selectedYear), Number(selectedMonth), 0).getDate();
   const daysArray = Array.from({ length: totalDaysInMonth }, (_, i) => i + 1);
 
+  const normalizeDateKey = (dStr: string) => {
+    if (!dStr) return '';
+    const parts = dStr.split('-');
+    if (parts.length === 3) {
+      return `${parts[0]}-${String(parts[1]).padStart(2, '0')}-${String(parts[2]).padStart(2, '0')}`;
+    }
+    return dStr;
+  };
+
   // Map logs by keys: employeeId_date and empId_date for robust matching
   const logsMap: { [key: string]: AttendanceLog } = {};
   logs.forEach(l => {
     if (l && l.date) {
+      const normDate = normalizeDateKey(l.date);
+      logsMap[`${l.employeeId}_${normDate}`] = l;
       logsMap[`${l.employeeId}_${l.date}`] = l;
+
       const emp = employees.find(
         e => e.id === l.employeeId || e.employeeId === l.employeeId || (e.name && l.employeeId && e.name.toLowerCase() === l.employeeId.toLowerCase())
       );
       if (emp) {
+        logsMap[`${emp.id}_${normDate}`] = l;
         logsMap[`${emp.id}_${l.date}`] = l;
         if (emp.employeeId) {
+          logsMap[`${emp.employeeId}_${normDate}`] = l;
           logsMap[`${emp.employeeId}_${l.date}`] = l;
         }
       }

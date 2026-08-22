@@ -177,8 +177,11 @@ git push origin main
 45. **Elimination of Zombie Leave Resurrection Loop & Permanent Clear Persistence Architecture**:
     - **Root Cause Identified**: Discovered that background client polling was executing `sync_client_backup` loops on every 3-second cycle. When HR cleared leaves on the server, other client browser tabs containing old `localStorage` items (`hrm_user_submitted_leaves`) automatically re-uploaded their deleted leaves back to the server, resurrecting deleted leaves infinitely.
     - **Removal of Automatic Re-Upload Loops**: Removed background `sync_client_backup` re-upload loops from client page polling cycles across `/admin/leave-records`, `/manager`, `/employee`, `/admin/team-approvals`, and `/admin`.
-    - **Zero-Length Server Clear Propagation**: Updated `ensureCloudSync()` in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) to evaluate `if (Array.isArray(cloudLeaves) && cloudLeaves.length === 0) db.leaveRecords = []`. Previously `cloudLeaves.length > 0` condition skipped resetting memoryDb when cloud store was empty.
+    - **Zero-Length Server Clear Propagation**: Updated `ensureCloudSync()` in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) to evaluate `if (Array.isArray(cloudLeaves) && cloudLeaves.length === 0) db.leaveRecords = []`.
     - **Universal Client localStorage Wipe on Server Clear**: Updated all portal fetch handlers so when `GET /api/leaves` returns an empty array (`records: []`), client portals automatically execute `setLeaves([])` and `localStorage.removeItem('hrm_user_submitted_leaves')`, ensuring cleared leave history stays 100% cleared across all devices permanently.
+46. **Automatic Working Hours Calculation from Punches & Multi-Container Vercel Persistence**:
+    - **12-Hour AM/PM & Multi-Separator Punch Parsing**: Implemented `parsePunchTimes` in [`src/lib/biometricParser.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/biometricParser.ts) supporting 12-hour AM/PM punch formats, 12h clock rollover, single punches, dash/space/slash/newline/comma delimiters, Excel float time fractions, and expanded column name matching.
+    - **Real-Time Vercel Multi-Container Cloud Sync**: Updated `syncCloudStorageAsync` and `ensureCloudSync()` in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) and `GET /api/attendance` in [`src/app/api/attendance/route.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to push and pull `attendanceLogs` and `attendanceImports` to persistent cloud store, guaranteeing cold-started Vercel lambda instances serve uploaded attendance records dynamically.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -220,3 +223,4 @@ git push origin main
 - [x] **Item 37: Leave Tracker Synchronous Cloud Wipe & Multi-Key Storage Clear**: Completed ✓
 - [x] **Item 38: ensureCloudSync Zero-Length Cloud Array Handler Resolution**: Completed ✓
 - [x] **Item 39: Elimination of Automatic Client Backup Re-Upload Resurrection Loops**: Completed ✓
+- [x] **Item 40: Automatic Working Hours Calculation from Punches & Multi-Container Vercel Persistence**: Completed ✓

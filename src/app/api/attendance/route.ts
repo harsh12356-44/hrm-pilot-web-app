@@ -2,11 +2,13 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 import { NextResponse } from 'next/server';
-import { getDbData, saveDbData, logAudit } from '@/lib/store';
+import { getDbData, saveDbData, logAudit, ensureCloudSync } from '@/lib/store';
 import { AttendanceLog, AttendanceImport } from '@/lib/types';
-import { parseBiometricPunches } from '@/lib/biometricParser';
+import { parseBiometricPunches, parsePunchTimes } from '@/lib/biometricParser';
 
 export async function GET(request: Request) {
+  await ensureCloudSync();
+
   const { searchParams } = new URL(request.url);
   const date = searchParams.get('date');
   const month = searchParams.get('month');

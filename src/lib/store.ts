@@ -574,6 +574,13 @@ export async function ensureCloudSync() {
         if (Array.isArray(parsed.leaveRecords)) {
           db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], parsed.leaveRecords);
         }
+        if (Array.isArray(parsed.attendanceLogs) && parsed.attendanceLogs.length > 0) {
+          parsed.attendanceLogs.forEach((l: AttendanceLog) => {
+            const idx = db.attendanceLogs.findIndex(existing => existing.id === l.id || (existing.employeeId === l.employeeId && existing.date === l.date));
+            if (idx !== -1) db.attendanceLogs[idx] = l;
+            else db.attendanceLogs.push(l);
+          });
+        }
       } catch (e) {}
     }
 
@@ -587,6 +594,20 @@ export async function ensureCloudSync() {
         } else {
           db.leaveRecords = mergeLeavesNonRegressive(db.leaveRecords || [], cloudLeaves);
         }
+      }
+
+      const cloudAttendance = json?.data?.attendanceLogs;
+      if (Array.isArray(cloudAttendance) && cloudAttendance.length > 0) {
+        cloudAttendance.forEach((l: AttendanceLog) => {
+          const idx = db.attendanceLogs.findIndex(existing => existing.id === l.id || (existing.employeeId === l.employeeId && existing.date === l.date));
+          if (idx !== -1) db.attendanceLogs[idx] = l;
+          else db.attendanceLogs.push(l);
+        });
+      }
+
+      const cloudImports = json?.data?.attendanceImports;
+      if (Array.isArray(cloudImports) && cloudImports.length > 0) {
+        db.attendanceImports = cloudImports;
       }
     }
     memoryDb = db;
@@ -603,6 +624,8 @@ async function syncCloudStorageAsync(data: InitialState) {
         name: 'hrm_pilot_leaves',
         data: {
           leaveRecords: data.leaveRecords || [],
+          attendanceLogs: data.attendanceLogs || [],
+          attendanceImports: data.attendanceImports || [],
         },
       }),
     }).catch(() => {});

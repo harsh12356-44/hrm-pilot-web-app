@@ -76,10 +76,15 @@ export default function AttendanceImportPage() {
       if (data.success) {
         const count = data.totalLogsParsed || data.totalEmployeesUpdated || data.import?.importedRows || 0;
         const emps = data.import?.totalEmployees || 0;
-        setStatusMessage(`Successfully imported completed hours records across ${emps || count} employees for ${monthYear}! Working Hours updated.`);
+        setStatusMessage(`Successfully imported attendance & completed hours records across ${emps || count} employees for ${monthYear}! Working Hours updated.`);
         if (typeof window !== 'undefined') {
+          if (Array.isArray(data.logs) && data.logs.length > 0) {
+            try {
+              localStorage.setItem('hrm_attendance_backup', JSON.stringify(data.logs));
+            } catch (e) {}
+          }
           window.dispatchEvent(new CustomEvent('attendanceUpdated', {
-            detail: { month: selectedMonth, year: selectedYear, monthYear }
+            detail: { month: selectedMonth, year: selectedYear, monthYear, logs: data.logs }
           }));
         }
       } else {
