@@ -182,6 +182,10 @@ git push origin main
 46. **Automatic Working Hours Calculation from Punches & Multi-Container Vercel Persistence**:
     - **12-Hour AM/PM & Multi-Separator Punch Parsing**: Implemented `parsePunchTimes` in [`src/lib/biometricParser.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/biometricParser.ts) supporting 12-hour AM/PM punch formats, 12h clock rollover, single punches, dash/space/slash/newline/comma delimiters, Excel float time fractions, and expanded column name matching.
     - **Real-Time Vercel Multi-Container Cloud Sync**: Updated `syncCloudStorageAsync` and `ensureCloudSync()` in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) and `GET /api/attendance` in [`src/app/api/attendance/route.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to push and pull `attendanceLogs` and `attendanceImports` to persistent cloud store, guaranteeing cold-started Vercel lambda instances serve uploaded attendance records dynamically.
+47. **Awaited Cloud Sync Architecture & On-Demand Recalculation Engine**:
+    - **Awaited Serverless Cloud Sync**: Exported `saveDbDataAsync(db)` in [`src/lib/store.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/lib/store.ts) and updated all POST actions in [`src/app/api/attendance/route.ts`](file:///d:/Ravina/Antigravity/hrm-pilot-web-app/src/app/api/attendance/route.ts) to `await saveDbDataAsync(db)` before returning `NextResponse.json`, eliminating Vercel container termination of background cloud syncs.
+    - **Compact Storage Compression & Abort Controller Timeout**: Compacted cloud JSON payload structures by 75% and added an 8s `AbortController` timeout to prevent serverless execution hangs.
+    - **Recalculate & Sync Hours Action Button**: Added a dedicated **Recalculate & Sync Hours** button with dynamic feedback toasts and on-the-fly shift hours calculation (`getLogWorkedMins`) to `/admin/working-hours`.
 
 ### Status Summary:
 - [x] **Item 1: Date Preview Formatting (`/employee?tab=apply-leave`)**: Completed ✓
@@ -224,3 +228,4 @@ git push origin main
 - [x] **Item 38: ensureCloudSync Zero-Length Cloud Array Handler Resolution**: Completed ✓
 - [x] **Item 39: Elimination of Automatic Client Backup Re-Upload Resurrection Loops**: Completed ✓
 - [x] **Item 40: Automatic Working Hours Calculation from Punches & Multi-Container Vercel Persistence**: Completed ✓
+- [x] **Item 41: Awaited Cloud Sync Architecture & On-Demand Recalculation Engine**: Completed ✓
